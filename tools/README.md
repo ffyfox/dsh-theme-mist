@@ -148,6 +148,22 @@ node tools/e2e-dual-version.mjs --desktop-runtime /path/to/resources/app/dsh
 
 比对前会**强制两侧切到同一外观**（profile 里记住的深色不是版本差异），跑完恢复原样；宿主的行数与样式表总数只打印、不参与 diff。
 
+## 8. `e2e-scenarios.mjs`
+
+交叉场景回归（T4.3）：在真实浏览器里把主题推到几种边界状态，每个状态留一张截图。
+
+```bash
+pnpm build
+node tools/e2e-scenarios.mjs --desktop-runtime /path/to/resources/app/dsh
+# 可选 --profile t1verify --home `/.dsh --shots /tmp/shots --keep
+```
+
+它**只读**现有 profile 的会话：不建会话、不发消息，唯一变化是「当前打开哪个会话」。原因写在脚本头部——手写的会话日志能被服务端投影（`session/projections` 返回 ok，`session/list` 也包含它），但客户端侧栏不列它，从 UI 打不开（2026-11-02 实测）。
+
+15 条断言：会话页上主题在、有 markdown 可看、设置弹窗能开且**插件自身不注入任何 DOM**（宿主最高 z-index 1000，插件 0）、模糊仍只有 1 处、侧栏折叠成 55px 后材质仍在、代码面取到调色板的 code well、语法高亮保留、800px 宽度无横向溢出、2x 下不破版、六套配色在内容多的页面上仍能切、全程无页面异常。
+
+**未覆盖**（脚本会打印）：右栏、含长表格 / diff 的会话、交互式终端面板——侧栏只列每个工作区的最新会话，扫不到这些内容，需要先在应用里把这些会话打开过一次。
+
 ## 参考源码
 
 两个脚本都不联网。需要参考源码时：

@@ -123,6 +123,7 @@ pnpm verify           # build + typecheck + test + 两个契约校验
 pnpm e2e:lifecycle --url 'http://127.0.0.1:PORT/?token=...' --profile ~/.dsh/profiles/<profile>
 pnpm e2e:degraded                                            # 降级路径，自带静态服务与 headless Chrome
 pnpm e2e:dual --desktop-runtime <桌面端 resources/app/dsh>    # 双版本逐字段 diff
+pnpm e2e:scenarios --desktop-runtime <桌面端 resources/app/dsh>  # 8 个交叉场景 + 截图
 ```
 
 ## 四条约束

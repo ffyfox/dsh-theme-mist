@@ -43,7 +43,8 @@
     "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm check:palettes && pnpm check:tokens",
     "e2e:lifecycle": "node tools/e2e-lifecycle.mjs",
     "e2e:degraded": "node tools/e2e-degraded.mjs",
-    "e2e:dual": "node tools/e2e-dual-version.mjs"
+    "e2e:dual": "node tools/e2e-dual-version.mjs",
+    "e2e:scenarios": "node tools/e2e-scenarios.mjs"
   },
   "license": "MIT",
   "peerDependencies": {

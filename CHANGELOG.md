@@ -36,6 +36,7 @@
   （`light-dark()` 对形式），官方令牌保持出厂值，作用域属性、设置行与偏好照旧，并记一条 warn。
   「官方令牌一个都不手写」这条由 e2e 断言守住。
 - **工程与验证**：`pnpm verify` 串起构建、类型检查、单元测试、配色一致性检查与令牌契约检查；
+  `tools/e2e-scenarios.mjs` 把主题推到折叠侧栏、设置弹窗、800px 宽度与 2x 显示四种边界。
   `tools/e2e-lifecycle.mjs` 覆盖安装 → 切换配色 → 卸载的完整生命周期；`tools/e2e-degraded.mjs`
   在真浏览器里验降级路径，`tools/e2e-dual-version.mjs` 把两个客户端版本拉起来逐字段 diff。
 
