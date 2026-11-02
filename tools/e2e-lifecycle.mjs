@@ -221,6 +221,11 @@ try {
   // ------------------------------------------------------- persistence (T1.5)
   await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: 'dusk' }))")
   await sleep(200)
+  // Snapshot right before the reload: the reload must land on this exact accent,
+  // whatever it was. Comparing against `enabled` instead would only work on a
+  // profile whose storage was empty on first load — a second run against the same
+  // profile starts on the previously persisted accent and the check misfires.
+  const beforeReload = await snapshot()
   const stored = await evaluate("(function () { try { return localStorage.getItem('dsh.go-theme.preferences.v1') } catch (e) { return null } })()")
   check('preference persisted to localStorage', typeof stored === 'string' && stored.indexOf('dusk') >= 0, String(stored))
 
@@ -230,8 +235,9 @@ try {
   const afterReload = await snapshot()
   check('accent survives a reload', afterReload.accent === 'dusk', String(afterReload.accent))
   check('tokens follow the restored accent',
-    afterReload.tokens['--dsw-alias-brand-primary'] !== enabled.tokens['--dsw-alias-brand-primary'],
-    afterReload.tokens['--dsw-alias-brand-primary'] + ' vs mist ' + enabled.tokens['--dsw-alias-brand-primary'])
+    afterReload.tokens['--dsw-alias-brand-primary'] === beforeReload.tokens['--dsw-alias-brand-primary'],
+    'after reload ' + afterReload.tokens['--dsw-alias-brand-primary']
+      + ' vs before reload ' + beforeReload.tokens['--dsw-alias-brand-primary'])
 
   // ------------------------------------------------------------ disable again
   setPatch(DISABLED_PATCH)
