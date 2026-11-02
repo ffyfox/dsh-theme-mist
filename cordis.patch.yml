@@ -3,4 +3,4 @@
 # declares dsh.bundle in package.json so reconcile() puts it into `bundles`.
 - insert:
     - id: ui-theme-go
-      name: '@dsh-external/dsh-client-ui-theme-go'
+      name: 'dsh-client-ui-theme-go'

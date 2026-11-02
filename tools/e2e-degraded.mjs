@@ -35,6 +35,8 @@ if (!existsSync(BUNDLE)) {
   process.exit(2)
 }
 const bundle = await readFile(BUNDLE, 'utf8')
+/** Module id the loader should see; read from the manifest so a rename stays a one-line change. */
+const EXPECTED_ID = JSON.parse(await readFile(join(REPO, 'package.json'), 'utf8')).name
 
 /* The page: a stub module loader plus a fake context. The React shim is inert —
    the settings rows are registered through `slots.inject`, which this fake never
@@ -162,7 +164,7 @@ try {
     }
   })()`)
 
-  check('the bundle loads through the stub loader', state.pluginId === '@dsh-external/dsh-client-ui-theme-go', state.pluginId)
+  check('the bundle loads through the stub loader', state.pluginId === EXPECTED_ID, state.pluginId)
   check('apply() survives a theme service without overrideTokens', state.result?.ok === true, JSON.stringify(state.result))
   check('exactly one warning naming the missing capability', state.warnings.length === 1 && /overrideTokens/.test(state.warnings[0]), JSON.stringify(state.warnings))
   check('the warning goes through ctx.logger, not the console', /^dsh-go-theme: /.test(state.warnings[0] ?? ''), state.warnings[0])

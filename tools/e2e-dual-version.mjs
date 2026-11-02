@@ -40,7 +40,8 @@ const arg = (name, fallback) => {
   return index >= 0 ? argv[index + 1] : fallback
 }
 const KEEP = argv.includes('--keep')
-const PKG = '@dsh-external/dsh-client-ui-theme-go'
+/** Package name, read from the manifest so a rename never needs a sweep here. */
+const PKG = JSON.parse(await readFile(join(REPO, 'package.json'), 'utf8')).name
 const DESKTOP_RUNTIME = arg('desktop-runtime')
 const WEB_PROFILE = arg('web-profile', 't1verify')
 const DSH = arg('dsh', 'dsh')
@@ -416,7 +417,7 @@ try {
 
   const desktopPort = await freePort()
   const profileDir = join(temporaryHome, 'profiles', 'dtverify')
-  await mkdir(join(profileDir, 'node_modules', '@dsh-external'), { recursive: true })
+  await mkdir(join(profileDir, 'node_modules'), { recursive: true })
   await writeFile(
     join(profileDir, 'package.json'),
     JSON.stringify(
@@ -432,7 +433,7 @@ try {
     ) + '\n',
   )
   await writeFile(join(profileDir, 'cordis.yml'), '[]\n')
-  await symlink(REPO, join(profileDir, 'node_modules', '@dsh-external', 'dsh-client-ui-theme-go'), 'dir')
+  await symlink(REPO, join(profileDir, 'node_modules', PKG), 'dir')
   const desktopServer = start('node', [DESKTOP_BIN, '--profile', 'dtverify', '--no-open', '--port', String(desktopPort)], {
     env: { ...process.env, DSH_HOME: temporaryHome },
   })

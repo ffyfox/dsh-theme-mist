@@ -31,6 +31,8 @@ dsh plugin --profile web add "$(pwd)"          # 装进自带的 web profile
 
 包清单里声明了 `dsh.bundle`，所以 `add` 之后会被写进该 profile 的 `dsh.profile.bundles` —— 这是「能不能当层」的唯一开关，只进 `dependencies` 而不进 `bundles` 的包完全惰性。
 
+包名是 `dsh-client-ui-theme-go`（无 scope），卸载时用的就是它。
+
 **想用独立 profile，先按 web 模板建一个**：
 
 ```bash
@@ -43,7 +45,7 @@ dsh plugin --profile themego add "$(pwd)"
 ### 卸载
 
 ```bash
-dsh plugin --profile <profile> remove @dsh-external/dsh-client-ui-theme-go
+dsh plugin --profile <profile> remove dsh-client-ui-theme-go
 ```
 
 桌面端在「插件」页移除。这条命令实测（2026-11-02）：它同时摘掉 `dependencies` 里的条目**和** `dsh.profile.bundles` 里的那一项，再 `add` 回来会重新装回原位。

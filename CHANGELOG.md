@@ -59,6 +59,14 @@
   在真浏览器里验降级路径，`tools/e2e-dual-version.mjs` 把两个客户端版本拉起来逐字段 diff，
   `tools/e2e-uninstall.mjs` 做卸载审计。
 
+### Changed
+
+- **包名定为 `dsh-client-ui-theme-go`（无 scope）**。此前的 `@dsh-external/dsh-client-ui-theme-go` 是
+  计划里随手起的占位名：DSH 文档没有这个约定，npm 上也没有这个 scope（同机上另一个 `@dsh-external/` 包同样是
+  本地 `private: true` 的链接，同样 404）。发布到不属于自己的 scope 会在 `npm publish` 最后一步被拒，
+  所以改成与生态一致的无 scope 名（`dsh-pet` / `dsh-cost-meter` / `dsh-ops` 都是这个形状），
+  也就不需要 `publishConfig.access`。三个 e2e 脚本里的包名改从 `package.json` 读，以后改名只动两处。
+
 ### Notes
 
 - 性能：玻璃层在滚动场景的 A/B 实测未测到代价（同机同 Chromium 交替跑，两个条件

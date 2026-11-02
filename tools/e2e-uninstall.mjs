@@ -39,7 +39,8 @@ const arg = (name, fallback) => {
   return index >= 0 ? argv[index + 1] : fallback
 }
 const KEEP = argv.includes('--keep')
-const PKG = '@dsh-external/dsh-client-ui-theme-go'
+/** Package name, read from the manifest so a rename never needs a sweep here. */
+const PKG = JSON.parse(await readFile(join(REPO, 'package.json'), 'utf8')).name
 const DSH = arg('dsh', 'dsh')
 const CHROME = arg('chrome', process.env.CHROME_PATH ?? 'google-chrome-stable')
 const SHOTS = arg('shots', join(REPO, 'docs', 'reference', 't44-preview'))
@@ -243,7 +244,7 @@ const check = (name, ok, detail) => {
 
 let session
 try {
-  await mkdir(join(profileDir, 'node_modules', '@dsh-external'), { recursive: true })
+  await mkdir(join(profileDir, 'node_modules'), { recursive: true })
   await writeFile(
     join(profileDir, 'package.json'),
     JSON.stringify(
@@ -259,7 +260,7 @@ try {
     ) + '\n',
   )
   await writeFile(join(profileDir, 'cordis.yml'), '[]\n')
-  await symlink(REPO, join(profileDir, 'node_modules', '@dsh-external', 'dsh-client-ui-theme-go'), 'dir')
+  await symlink(REPO, join(profileDir, 'node_modules', PKG), 'dir')
   await writeFile(PATCH_FILE, PATCH_DISABLED)
 
   const port = await freePort()

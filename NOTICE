@@ -1,5 +1,5 @@
 dsh-Go-theme — a client theme for DeepSeek Harness
-Package: @dsh-external/dsh-client-ui-theme-go
+Package: dsh-client-ui-theme-go
 License: MIT (see LICENSE)
 =======================================================================
 
