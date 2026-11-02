@@ -79,7 +79,7 @@ window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: t
 
 ## 六套配色
 
-同一页面的六种强调色（点开看大图）。左侧侧栏、按钮、开关与选中态都跟着当前配色走，背景渐变与玻璃材质不变。
+同一页面的六种强调色（点开看大图）。右上角光晕、左侧栏、发送按钮与选中态都跟着配色走，背景渐变与玻璃材质不变——把六张并排看，右上角那一块的色相差异最大（雾蓝偏冷、琥珀偏暖、石墨几乎中性）。
 
 <table>
   <tr>
@@ -94,13 +94,14 @@ window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: t
   </tr>
 </table>
 
-截图来自一个全新 profile 的空状态，设置面板停在「通用」——所以每张图里都能看到「配色」行当前选中的色块，以及同一页的「减少透明效果」开关。图由脚本生成，不是手工截的：
+拍的是**主页面**（不是设置面板）在全新 profile 下的空状态：没有会话内容，所以不会把任何人的对话带进仓库。图由脚本生成，不是手工截的：
 
 ```bash
-pnpm preview:accents --dialog --language zh     # 需要先 pnpm build，并有一个装好本插件的 profile
+pnpm preview:accents --language zh   # 需要先 pnpm build，并有一个装好本插件的 profile
+# 设置面板那张单图：加 --dialog
 ```
 
-脚本会自己起实例、切六次配色、各拍一张（用法见 [tools/README](tools/README.md) §11）。
+脚本会自己起实例、关掉首启弹窗、切六次配色、各拍一张（用法见 [tools/README](tools/README.md) §11）。
 
 ## 性能
 

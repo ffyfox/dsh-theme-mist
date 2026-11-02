@@ -288,7 +288,10 @@ try {
    */
   const dismissModals = async () => {
     for (let attempt = 0; attempt < 5; attempt++) {
-      const closed = await browser.evaluate('(() => { for (const dialog of [...document.querySelectorAll("[role=dialog]")]) { const button = [...dialog.querySelectorAll("button")].find((node) => { const text = (node.textContent || "").trim(); return /(continue|got it|close|dismiss|cancel|not now|later|skip)$/i.test(text) || /稍后|以后|跳过|关闭|取消/.test(text) || /close/i.test(node.getAttribute("aria-label") ?? "") }); if (button) { button.click(); return true } } return false })()')
+      // Broadened after a first-run "预览版说明" notice slipped past the
+      // [role=dialog] scope: it is the same kind of blocking overlay, only
+      // marked differently, and it appears *after* the first pass.
+      const closed = await browser.evaluate('(() => { const roots = [...document.querySelectorAll("[role=dialog], [aria-modal], [data-dsh-modal]")]; if (roots.length === 0) roots.push(document.body); for (const dialog of roots) { const buttons = [...dialog.querySelectorAll("button")]; const button = buttons.find((node) => { const text = (node.textContent || "").trim(); return /(continue|got it|close|dismiss|cancel|not now|later|skip|ok)$/i.test(text) || /稍后|以后|跳过|关闭|取消|知道了|继续/.test(text) || /close/i.test(node.getAttribute("aria-label") ?? "") }); if (button && button.offsetParent !== null) { button.click(); return true } } return false })()')
       if (!closed) return
       await sleep(600)
     }
@@ -373,6 +376,9 @@ try {
   // --- six accents -----------------------------------------------------------
   const sizes = []
   for (const accent of ACCENTS) {
+    // Again here: the preview notice lands a few seconds after the shell does,
+    // so a single pass at startup can still be too early.
+    await dismissModals()
     await browser.evaluate('window.dispatchEvent(new CustomEvent("dsh-go-theme:accent", { detail: ' + JSON.stringify(accent) + ' }))')
     await sleep(600)
     const applied = await browser.evaluate('document.body.getAttribute("data-dsh-go-accent")')
