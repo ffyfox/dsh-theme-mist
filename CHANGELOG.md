@@ -61,11 +61,13 @@
 
 ### Changed
 
-- **包名定为 `dsh-client-ui-theme-go`（无 scope）**。此前的 `@dsh-external/dsh-client-ui-theme-go` 是
+- **名字定为 `dsh-Go-theme` / npm `dsh-go-theme`**。此前的 `@dsh-external/dsh-client-ui-theme-go` 是
   计划里随手起的占位名：DSH 文档没有这个约定，npm 上也没有这个 scope（同机上另一个 `@dsh-external/` 包同样是
-  本地 `private: true` 的链接，同样 404）。发布到不属于自己的 scope 会在 `npm publish` 最后一步被拒，
-  所以改成与生态一致的无 scope 名（`dsh-pet` / `dsh-cost-meter` / `dsh-ops` 都是这个形状），
-  也就不需要 `publishConfig.access`。三个 e2e 脚本里的包名改从 `package.json` 读，以后改名只动两处。
+  本地 `private: true` 的链接，同样 404）。发布到不属于自己的 scope 会在 `npm publish` 最后一步被拒。
+  现在仓库名用 `dsh-Go-theme`，包名是全小写 `dsh-go-theme`——npm 从 2017 年起不接受新包名里的
+  大写字母（`validate-npm-package-name` 对 `dsh-Go-theme` 报 “name can no longer contain capital letters”，
+  对 `dsh-go-theme` 通过）。无 scope 也就顺带不需要 `publishConfig.access`。三个 e2e 脚本里的包名
+  改从 `package.json` 读，以后改名只动两处。
 
 ### Notes
 

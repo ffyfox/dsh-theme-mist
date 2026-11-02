@@ -193,7 +193,7 @@ const OUR_ROW_EXPR = '(' + ROWS_EXPR + ').find((entry) => (entry.textContent ?? 
  * both shells; the class names the host generates are never read, only attribute
  * hooks, which is what makes the two sides comparable at all.
  */
-function probeInPage(tokens) {
+function probeInPage(tokens, pkg) {
   const read = (name) => getComputedStyle(document.body).getPropertyValue(name).trim()
   const tokensOut = {}
   for (const token of tokens) tokensOut[token] = read(token)
@@ -228,7 +228,7 @@ function probeInPage(tokens) {
     host: {
       themed: document.body.hasAttribute('data-dsh-go-theme'),
       accent: document.body.getAttribute('data-dsh-go-accent'),
-      ourStyles: [...document.querySelectorAll('style[data-plugin]')].filter((tag) => (tag.getAttribute('data-plugin') ?? '').includes('theme-go')).length,
+      ourStyles: [...document.querySelectorAll('style[data-plugin]')].filter((tag) => (tag.getAttribute('data-plugin') ?? '').includes(pkg)).length,
       styleTags: document.querySelectorAll('style[data-plugin]').length,
       rows: rows.length,
       hasAccentRow: rows.some((row) => (row.textContent ?? '').includes('Graphite')),
@@ -241,7 +241,7 @@ function probeInPage(tokens) {
 const TRIGGER = '[data-slot="settings.trigger"]'
 const LAUNCHER = '[data-slot="settings.launcher"] button'
 const CLOSE = '[data-slot="settings.close"]'
-const PROBE = '(' + String(probeInPage).replace('__rows__', ROWS_EXPR) + ')(' + JSON.stringify(TOKENS) + ')'
+const PROBE = '(' + String(probeInPage).replace('__rows__', ROWS_EXPR) + ')(' + JSON.stringify(TOKENS) + ', ' + JSON.stringify(PKG) + ')'
 
 const rowCount = (session) => session.evaluate('document.querySelectorAll(' + JSON.stringify(ROWS_SELECTOR) + ').length')
 const colorScheme = (session) => session.evaluate('getComputedStyle(document.documentElement).colorScheme')

@@ -21,7 +21,8 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // ------------------------------------------------------------------ arguments
 const argv = process.argv.slice(2)
@@ -45,6 +46,8 @@ if (!profileDir.startsWith(profilesRoot)) {
   process.exit(2)
 }
 const PATCH_FILE = join(profileDir, 'cordis.patch.yml')
+/** Package name, read from the manifest so a rename never needs a sweep here. */
+const PKG = JSON.parse(readFileSync(join(dirname(dirname(fileURLToPath(import.meta.url))), 'package.json'), 'utf8')).name
 
 // ------------------------------------------------------------------- CDP client
 const BASE = 'http://127.0.0.1:' + CDP_PORT
@@ -116,7 +119,7 @@ const snapshotExpr = (tokens) => [
   "  out.reduce = document.body.hasAttribute('data-dsh-go-reduce-material')",
   '  out.classes = [...document.body.classList].filter((c) => /_root$/.test(c)).sort()',
   '  for (const name of ' + JSON.stringify(tokens) + ') out.tokens[name] = cs.getPropertyValue(name).trim()',
-  "  out.styles = [...document.querySelectorAll('style[data-plugin]')].filter((s) => s.dataset.plugin && s.dataset.plugin.includes('theme-go')).length",
+  "  out.styles = [...document.querySelectorAll('style[data-plugin]')].filter((s) => s.dataset.plugin && s.dataset.plugin.includes(" + JSON.stringify(PKG) + ")).length",
   '  out.inlineProps = document.body.style.length',
   '  return JSON.stringify(out)',
   '})()',

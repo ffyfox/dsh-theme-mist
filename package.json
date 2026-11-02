@@ -1,5 +1,5 @@
 {
-  "name": "dsh-client-ui-theme-go",
+  "name": "dsh-go-theme",
   "description": "DSH Go visual language as a hot-pluggable client theme for DeepSeek Harness — six accents, light/dark/system, zero DOM rewrite.",
   "version": "0.0.0",
   "private": true,

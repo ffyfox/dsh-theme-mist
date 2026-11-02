@@ -173,7 +173,7 @@ try {
   check('all nine material variables carry a light-dark() pair', state.goInline.length === 9 && state.goPairs, state.goInline.length + ' vars, pairs=' + state.goPairs + ', e.g. ' + state.pageBase)
   check('no official token is overridden by hand', state.inlineDsw.length === 0, JSON.stringify(state.inlineDsw))
   check('the page gradient still paints', /gradient/.test(state.backgroundImage), state.backgroundImage.slice(0, 90))
-  check('the material stylesheet is injected', state.styleTags.some((tag) => /theme-go/.test(tag)), JSON.stringify(state.styleTags))
+  check('the material stylesheet is injected', state.styleTags.some((tag) => typeof tag === 'string' && tag.includes(EXPECTED_ID)), JSON.stringify(state.styleTags))
   check('no uncaught exception', exceptions.length === 0, JSON.stringify(exceptions))
 
   const after = await evaluate(`(() => {

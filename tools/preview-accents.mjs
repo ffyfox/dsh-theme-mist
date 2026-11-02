@@ -33,7 +33,7 @@
 import { spawn } from 'node:child_process'
 import { createServer } from 'node:net'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -66,6 +66,9 @@ const LANGUAGE = arg('language')
 
 /** Order matches the settings row, so the table in README reads the same way. */
 const ACCENTS = ['mist', 'daiqing', 'dusk', 'turquoise', 'amber', 'graphite']
+
+/** Package name, read from the manifest so a rename never needs a sweep here. */
+const PKG = JSON.parse(await readFile(join(REPO, 'package.json'), 'utf8')).name
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -294,7 +297,7 @@ try {
 
   check('the plugin mounted', await browser.evaluate('document.body.hasAttribute("data-dsh-go-theme")'))
   check('three stylesheets are injected',
-    (await browser.evaluate('[...document.querySelectorAll("style[data-plugin-css]")].filter((node) => node.dataset.pluginCss.includes("theme-go")).length')) === 3)
+    (await browser.evaluate('[...document.querySelectorAll("style[data-plugin-css]")].filter((node) => node.dataset.pluginCss.includes(' + JSON.stringify(PKG) + ')).length')) === 3)
 
   // --- open a session with content ------------------------------------------
   // The welcome screen is ~650 characters of boilerplate, so "the body has text"

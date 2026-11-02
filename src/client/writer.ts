@@ -22,7 +22,7 @@ import { MATERIAL_VARS, type TokenLayer } from './tokens.ts'
  * Layer identity for `overrideTokens`. One layer per source, so re-issuing with
  * the same source replaces the previous layer instead of stacking on top.
  */
-export const LAYER_SOURCE = 'dsh-client-ui-theme-go'
+export const LAYER_SOURCE = 'dsh-go-theme'
 
 /** Prefix on every line this plugin logs, so a message names its owner. */
 const LOG_PREFIX = 'dsh-go-theme: '
