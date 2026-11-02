@@ -19,6 +19,7 @@
  * Options:
  *   --desktop-runtime <dir>   required; the desktop app's bundled runtime tree
  *   --profile <name>          CLI profile that carries this plugin (default: t1verify)
+ *   --workspace <substring>    workspace to open sessions from (default: the expanded one)
  *   --home <dir>              DSH home to read (default: $DSH_HOME or ~/.dsh)
  *   --chrome <path>           Chromium binary (default: google-chrome-stable)
  *   --shots <dir>             screenshot directory (default: docs/reference/t43-preview)
@@ -41,6 +42,8 @@ const arg = (name, fallback) => {
 const KEEP = argv.includes('--keep')
 const DESKTOP_RUNTIME = arg('desktop-runtime')
 const PROFILE = arg('profile', 't1verify')
+/** Workspace substring to open; default is whichever one the sidebar left expanded. */
+const WORKSPACE = arg('workspace')
 const HOME = arg('home', process.env.DSH_HOME ?? join(process.env.HOME ?? '', '.dsh'))
 const CHROME = arg('chrome', process.env.CHROME_PATH ?? 'google-chrome-stable')
 const SHOTS = arg('shots', join(REPO, 'docs', 'reference', 't43-preview'))
@@ -250,18 +253,75 @@ try {
   }
 
   // --- open a session that has real content --------------------------------
-  const workspacePoint = await browser.evaluate('(() => { const node = [...document.querySelectorAll("[role=treeitem]")].find((entry) => (entry.getAttribute("aria-expanded") ?? "") !== ""); if (!node) return null; const box = node.getBoundingClientRect(); return [Math.round(box.x + 10), Math.round(box.y + box.height / 2)] })()')
+  //
+  // Three things here are timing rather than content, and each of them used to be
+  // one fixed sleep: the sidebar lists every workspace, a workspace's session rows
+  // appear a beat after the workspace itself (titles load lazily), and a big
+  // transcript paints after the click. Measured 2026-11-02 on a cold browser
+  // profile: the session list can still be empty 1.5s after expanding the
+  // workspace, which read as "no session has history" when it only meant "wait".
+  const SESSIONS_EXPR = [
+    '(() => [...document.querySelectorAll("[role=treeitem]")]',
+    '  .filter((node) => (node.getAttribute("aria-expanded") ?? "") === ""',
+    '    && !/^New Session$/i.test((node.textContent || "").trim()))',
+    '  .slice(0, 8)',
+    '  .map((node) => { const box = node.getBoundingClientRect()',
+    '    return [Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2)] }))()',
+  ].join('\n')
+
+  /** Where the session rows are, right now. */
+  const sessionPoints = async () => browser.evaluate(SESSIONS_EXPR)
+
+  /** Wait for the list to fill in; [] means this workspace really has none. */
+  const waitForSessions = async (timeoutMs = 12000) => {
+    const started = Date.now()
+    for (;;) {
+      const points = await sessionPoints()
+      if (points.length > 0) return points
+      if (Date.now() - started > timeoutMs) return []
+      await sleep(400)
+    }
+  }
+
+  // Which workspace: an explicit --workspace substring, otherwise the one the app
+  // left expanded (that is the folder the sidebar opened on).
+  const workspacePoint = await browser.evaluate([
+    '(() => {',
+    '  const items = [...document.querySelectorAll("[role=treeitem]")]',
+    '  const wanted = ' + JSON.stringify(WORKSPACE ?? null),
+    '  const expanded = (entry) => (entry.getAttribute("aria-expanded") ?? "") !== ""',
+    '  const node = wanted === null',
+    '    ? items.find(expanded)',
+    '    : (items.find((entry) => expanded(entry) && (entry.textContent ?? "").includes(wanted))',
+    '       ?? items.find((entry) => (entry.textContent ?? "").includes(wanted)))',
+    '  if (!node) return null',
+    '  const box = node.getBoundingClientRect()',
+    '  return [Math.round(box.x + 10), Math.round(box.y + box.height / 2)]',
+    '})()',
+  ].join('\n'))
+
+  let candidates = []
   if (workspacePoint !== null) {
     await browser.clickPoint(workspacePoint)
-    await sleep(1500)
+    candidates = await waitForSessions()
+    if (candidates.length === 0) {
+      // A collapsed workspace opens on click; one that was already expanded closes,
+      // so a second click is what re-opens it.
+      await browser.clickPoint(workspacePoint)
+      candidates = await waitForSessions()
+    }
+  } else {
+    candidates = await waitForSessions(3000)
   }
+  check('the sidebar lists a session to open', candidates.length > 0, candidates.length + ' candidate(s)')
+
   // Prefer a session that actually contains a table: the sweep wants a wide
-  // markdown surface, and the newest session is often a short one.
+  // markdown surface, and the newest session is often a short one. The row
+  // positions are captured once — the sidebar reorders (and re-renders) as each
+  // session opens, so re-reading them mid-loop would click the same row twice.
   let picked = -1
-  for (let index = 0; index < 4; index++) {
-    const point = await browser.evaluate('(() => { const nodes = [...document.querySelectorAll("[role=treeitem]")].filter((entry) => (entry.getAttribute("aria-expanded") ?? "") === "" && !/^New Session$/i.test((entry.textContent || "").trim())); const node = nodes[' + index + ']; if (!node) return null; const box = node.getBoundingClientRect(); return [Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2)] })()')
-    if (point === null) break
-    await browser.clickPoint(point)
+  for (let index = 0; index < Math.min(candidates.length, 6); index++) {
+    await browser.clickPoint(candidates[index])
     await sleep(3500)
     picked = index
     if (await browser.evaluate('!!document.querySelector("table")')) break
