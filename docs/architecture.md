@@ -626,5 +626,7 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 
 ### 9.5 这次修法接不住的地方
 
-bg-base 归零后，靠它当填充的表面必须在语义钩子上重绑。宿主 14 个包里有 24 处 `background: var(--dsw-alias-bg-base)`：页面级与遮罩级 15 处透明正好；卡片级 9 处多数有语义钩子（`[data-tool]`、`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）；**3 处只剩哈希类名**（cordis 业务卡、trajectory 工具目录条目、会话图片缩略图），会失去填充。接受这个缺口，不为此引入哈希选择器——代价是这三处在次要页面偏平。
+bg-base 归零后，靠它当填充的表面必须在语义钩子上重绑。宿主 14 个包里有 24 处 `background: var(--dsw-alias-bg-base)`：页面级与遮罩级 15 处透明正好；卡片级 9 处多数有语义钩子（`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）；**4 处只剩哈希类名**（cordis 业务卡、trajectory 工具目录条目、会话图片缩略图、AskQuestionCard 提问卡），会失去填充。接受这个缺口，不为此引入哈希选择器。
+
+**一处需要澄清的误记**：`[data-tool]` 钩子在 0.2.2 上是空操作——ToolRow 根节点本身不画背景，工具包里唯一用 `bg-base` 的是 AskQuestionCard。因此桌面端「思考 / 代码 / 运行命令」几行没有卡片底色是**宿主自己的设计**，不是 T5.5 的回归。要让它们像 DSH Go 那样成卡，需要我们在 `[data-tool]` 上自己画背景，那是新决策。
 

@@ -659,9 +659,11 @@ wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-b
 
 必须是伪元素：直接给 seat 加 mask 会把里面的输入条卡片一起羽化。伪元素 `z-index: -1`，seat 本身已是层叠上下文（`position: sticky` + `z-index: 7`），所以它落在 seat 背景之上、卡片之下。实测 y 逐行扫描（列 x=300，跨过 mask 边界 y=672→708）：最大相邻差 **3/255**，没有硬边；`background-attachment` 实际解析为 `fixed, fixed, fixed`（seat 上的 `backdrop-filter` 没有把 fixed 背景改成相对 seat 解析）。
 
-#### 接不住的三处
+#### 接不住的四类
 
-bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 处 `background: var(--dsw-alias-bg-base)`，其中页面级 / 遮罩级（15 处）透明正好；卡片级 9 处大多数能接语义钩子（`[data-tool]`、`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）。**只剩 3 处只有哈希类名**：cordis 业务卡、trajectory 工具目录条目、会话里的图片缩略图。这三处会失去填充，记在 README 的已知限制里——接受，不为此破例用哈希选择器。
+bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 处 `background: var(--dsw-alias-bg-base)`，其中页面级 / 遮罩级（15 处）透明正好；卡片级 9 处大多数能接语义钩子（`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）。**剩下 4 处只有哈希类名**：cordis 业务卡、trajectory 工具目录条目、会话里的图片缩略图，以及 **AskQuestionCard**（提问卡；它是唯一一个既有 `bg-base` 填充又完全没有语义属性的卡片，确定会失去填充）。记在 README 已知限制里——接受这个缺口，不为此破例用哈希选择器。
+
+> 澄清一处误记：`[data-tool]` 钩子在 0.2.2 上是**空操作**。ToolRow 根节点本身不画背景（工具包里唯一用 `bg-base` 的是 AskQuestionCard），所以桌面端「思考 / 代码 / 运行命令」这几行没有卡片底色是宿主自己的设计，不是本次改动的回归。若要让它们像 DSH Go 那样成卡，得由我们在 `[data-tool]` 上自己画背景——那是新决策，不是修 bug。
 
 #### card / pill 与统一的高度配方（T2.4 + T2.5）
 
