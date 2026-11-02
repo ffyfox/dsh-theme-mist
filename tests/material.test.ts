@@ -40,41 +40,73 @@ const alphaOf = (value: string): number => {
   return Number(match[4])
 }
 
-describe('surface translucency (T2.7)', () => {
-  const SURFACES = ['--dsw-alias-bg-base', '--dsw-specific-sidebar-fill'] as const
+describe('page surfaces (T2.7 -> T5.5)', () => {
+  const SIDEBAR = '--dsw-specific-sidebar-fill'
 
-  it('binds exactly two official tokens to alpha', () => {
+  it('leaves the page to the backdrop: bg-base is transparent', () => {
+    // The wash this token used to carry sat on top of the gradient at 0.59
+    // effective opacity and cut the accent glow to 41% of DSH Go's. Measured
+    // in docs/architecture.md §9; the fix is to stop painting there at all.
+    for (const id of ACCENT_IDS) {
+      const layer = buildTokenLayer(PALETTES[id])
+      expect(layer['--dsw-alias-bg-base'].light).toBe('transparent')
+      expect(layer['--dsw-alias-bg-base'].dark).toBe('transparent')
+    }
+  })
+
+  it('binds exactly one official token to alpha', () => {
     for (const id of ACCENT_IDS) {
       const layer = buildTokenLayer(PALETTES[id])
       const translucent = TOKEN_NAMES.filter((name) => RGBA.test(layer[name].light) || RGBA.test(layer[name].dark))
-      expect(translucent).toEqual([...SURFACES])
+      expect(translucent).toEqual([SIDEBAR])
     }
   })
 
-  it.each(ACCENT_IDS)('%s: the stacked wash stays in the calibrated window', (id) => {
-    const layer = buildTokenLayer(PALETTES[id])
-    for (const name of SURFACES) {
-      for (const scheme of ['light', 'dark'] as const) {
-        const alpha = alphaOf(layer[name][scheme])
-        // Per-layer alpha: two nested surfaces paint each token, so the wash
-        // the eye sees is 1 - (1 - alpha)^2 (measured on 0.2.2, see
-        // docs/visual-spec.md §7). Both ends are calibrated numbers: below
-        // ~0.45 the surface stops reading as a surface, above ~0.75 the page
-        // gradient is gone and T2.7 becomes a no-op.
-        const wash = 1 - (1 - alpha) ** 2
-        expect(alpha, name + '[' + scheme + '] alpha').toBeGreaterThan(0.2)
-        expect(wash, name + '[' + scheme + '] wash').toBeGreaterThanOrEqual(0.45)
-        expect(wash, name + '[' + scheme + '] wash').toBeLessThanOrEqual(0.75)
-      }
-    }
+  it.each(ACCENT_IDS)('%s: the sidebar reproduces upstream fill', (id) => {
+    const p = PALETTES[id]
+    const layer = buildTokenLayer(p)
+    // Fitted against DSH Go's own wide-sidebar goldens, light and dark: the
+    // column is a sheet at 0.82 / 0.86, not the 0.40 the wash used to hide.
+    // Reproduction error 1.5 and 0.6 / 255 (docs/architecture.md §9).
+    expect(layer[SIDEBAR].light).toBe(rgba(p.light.mistLow, 0.82))
+    expect(layer[SIDEBAR].dark).toBe(rgba(p.dark.sheetDark, 0.86))
   })
 
-  it.each(ACCENT_IDS)('%s: the sidebar stays distinguishable from the page', (id) => {
+  it.each(ACCENT_IDS)('%s: the sidebar stays liftable from the page', (id) => {
     const layer = buildTokenLayer(PALETTES[id])
     for (const scheme of ['light', 'dark'] as const) {
-      expect(layer['--dsw-specific-sidebar-fill'][scheme])
-        .not.toBe(layer['--dsw-alias-bg-base'][scheme])
+      expect(layer[SIDEBAR][scheme]).not.toBe(layer['--dsw-alias-bg-base'][scheme])
     }
+  })
+})
+
+describe('glass tiers (T5.5)', () => {
+  it.each(ACCENT_IDS)('%s: card and pill are white glass, sheet follows the palette', (id) => {
+    const p = PALETTES[id]
+    const layer = buildTokenLayer(p)
+    // surfaces.dart:157-158: the glass stays white whatever the accent — only
+    // the page underneath changes hue.
+    expect(layer['--dsh-go-card-fill'].light).toBe('rgba(255, 255, 255, 0.62)')
+    expect(layer['--dsh-go-card-fill'].dark).toBe('rgba(255, 255, 255, 0.05)')
+    expect(layer['--dsh-go-pill-fill'].light).toBe('rgba(255, 255, 255, 0.55)')
+    expect(layer['--dsh-go-pill-fill'].dark).toBe('rgba(255, 255, 255, 0.06)')
+    expect(layer['--dsh-go-sheet-fill'].light).toBe(rgba(p.light.mistLow, 0.82))
+    expect(layer['--dsh-go-sheet-fill'].dark).toBe(rgba(p.dark.sheetDark, 0.86))
+  })
+
+  it.each(ACCENT_IDS)('%s: the blurred tiers keep a near-opaque fallback', (id) => {
+    const layer = buildTokenLayer(PALETTES[id])
+    // Only the tiers that blur need one: without it, scrolling text would run
+    // into the input line and the menus (surfaces.dart:38-41).
+    expect(alphaOf(layer['--dsh-go-chrome-solid'].light)).toBeGreaterThanOrEqual(0.95)
+    expect(alphaOf(layer['--dsh-go-chrome-solid'].dark)).toBeGreaterThanOrEqual(0.95)
+    expect(RGBA.test(layer['--dsh-go-sheet-solid'].light)).toBe(false)
+    expect(RGBA.test(layer['--dsh-go-sheet-solid'].dark)).toBe(false)
+    // card and pill use upstream's fallbackFill verbatim: still translucent.
+    expect(layer['--dsh-go-card-solid'].light).toBe('rgba(255, 255, 255, 0.72)')
+    expect(layer['--dsh-go-card-solid'].dark).toBe('rgba(255, 255, 255, 0.06)')
+    expect(layer['--dsh-go-pill-solid'].light).toBe('rgba(255, 255, 255, 0.66)')
+    expect(layer['--dsh-go-pill-solid'].dark).toBe('rgba(255, 255, 255, 0.07)')
   })
 })
 
@@ -146,17 +178,22 @@ describe('chrome glass (T2.3)', () => {
     //     not re-resolve an inherited custom property inside a gradient;
     //  2. a bare attribute selector loses to the official
     //     .root[data-phase=active] .composerSeat rule.
-    const seatSelector = "[data-composer-seat][data-conversation-region='composer']"
-    expect(CSS.split(seatSelector).length - 1).toBe(4) // normal + three paths
-    expect(CSS.split('--dsh-go-seat-end: var(--dsh-go-chrome-solid)').length - 1).toBe(3)
+    expect(CSS.split('--dsh-go-veil-mask: none').length - 1).toBe(3)
     expect(CSS.split('--dsh-go-glass-fill: var(--dsh-go-chrome-solid)').length - 1).toBe(3)
+    // The tiers follow the same three paths, or a reduced-transparency card
+    // would keep its translucent fill over an unblurred backdrop.
+    expect(CSS.split('--dsh-go-card-token: var(--dsh-go-card-solid)').length - 1).toBe(3)
+    expect(CSS.split('--dsh-go-sheet-token: var(--dsh-go-sheet-solid)').length - 1).toBe(3)
+    expect(CSS.split('--dsh-go-pill-token: var(--dsh-go-pill-solid)').length - 1).toBe(3)
   })
 })
 
 describe('card, pill and elevation (T2.4 / T2.5)', () => {
   /** The card/pill section: from the first card rule to the elevation block. */
+  // Last occurrence: the tier re-binds earlier in the sheet also mention the
+  // bubble, and they are not part of this section.
   const CARD_SECTION = CSS_RULES.slice(
-    CSS_RULES.indexOf('[data-message-bubble]'),
+    CSS_RULES.lastIndexOf('[data-message-bubble]'),
     CSS_RULES.indexOf('--dsw-elevation-panel'),
   )
 
@@ -277,9 +314,11 @@ describe('material stylesheet', () => {
     expect(PAGE_RULE.match(/linear-gradient\(/g)).toHaveLength(1)
   })
 
-  it('keeps full-window dialogs opaque by re-binding the token only', () => {
+  it('gives full-window dialogs the sheet tier by re-binding the token only', () => {
+    // The dialog's own surfaces read bg-base; re-binding it hands them the
+    // sheet fill without us painting anyone else's background.
     expect(CSS).toContain("[role='dialog'][aria-modal='true']")
-    expect(CSS).toContain('--dsw-alias-bg-base: var(--dsh-go-page-base)')
+    expect(CSS).toContain('--dsw-alias-bg-base: var(--dsh-go-sheet-token)')
   })
 
   it('never uses !important', () => {

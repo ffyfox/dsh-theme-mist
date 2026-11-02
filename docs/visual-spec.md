@@ -595,78 +595,83 @@ body[data-dsh-go-theme] {
 
 ```css
 body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
-  --dsw-alias-bg-base: var(--dsh-go-page-base);
+  --dsw-alias-bg-base: var(--dsh-go-sheet-token);
 }
 ```
 
-只重绑变量、不改组件自己的 `background`：本来就自己画了底的弹窗不受影响，真正全窗口的那类拿回不透明页面色。实测（0.2.2）：守卫内 `--dsw-alias-bg-base` 解析为 `#F0F4FD`，深色 `#1C1F28`。
+只重绑变量、不改组件自己的 `background`：本来就自己画了底的弹窗不受影响，真正全窗口的那类拿回 sheet 档填充（T5.5 起是 `mistLow`@0.82 / `sheetDark`@0.86，不再是页面实色）。
 
-#### 半透明取值与「叠加两层」的实测（T2.7）
+#### 页面不透光层：从「两层半透明」到「干脆不画」（T2.7 → T5.5）
 
-两个表面 token 取**带 alpha 的调色板本色**（不是纯白/纯黑）：渐变透上来时仍带配色色相，六套配色共用一份 CSS。
+**T5.5 的结论与 T2.7 相反**：bg-base 不该带 alpha，它应该**完全不画**。理由不是审美，是实测——上游 DSH Go 的页面就是背景本身（`backdrop.dart:303-333`），内容直接铺在渐变上，中间没有第三层：
 
-⚠️ **叠加必须算进去**：实测 0.2.2 上中栏的 `bg-base` 被**连画两次**（AppFrame 一次、ConversationRoot 再一次），侧栏的 `sidebar-fill` 同样两次。眼睛看到的不透明度是 `1-(1-α)²`，不是 α：
+| token | 浅色 | 深色 | 说明 |
+|---|---|---|---|
+| `--dsw-alias-bg-base` | `transparent` | `transparent` | 页面即背景，不再叠一层雾 |
+| `--dsw-specific-sidebar-fill` | `mistLow` @ 0.82 | `sheetDark` @ 0.86 | 侧栏是 sheet，不是页面 |
 
-| token | 浅色 α | 浅色合成 | 深色 α | 深色合成 |
+侧栏两个数是**逐像素拟合上游自己的 golden**（`app/test/shell/adaptive/goldens/wide_sidebar_{light,dark}.png`）得到的，复现误差 1.5 / 0.6 per 255。旧值 `mistLow`@0.40 / `nightLowest`@0.42 是错的——颜色错、alpha 也错，只是因为页面 wash 在替它兜底才没被发现。
+
+**为什么必须改成 0**：旧实现叠两层 0.36，眼睛实际看到 0.59 的不透明罩子，把光晕和竖向渐变一起压到 41%。对上游 golden 复算，六套配色在右上角的最大色差 ΔE00 只有 15.75，而上游是 28.27 —— 这就是「六套配色看不出区别」的量化来源。改成 0 之后实测像素：
+
+| 位置 | 上游 golden 实测 | 我们（T5.5 后） | 差 |
+|---|---|---|---|
+| 右上角（雾蓝） | `#D3E0FD` (211,224,253) | (211,224,253) | ΔE00 0.19 |
+| 右上角（琥珀） | (237,221,204) | (237,221,203) | ΔE00 0.24 |
+| 侧栏（雾蓝，浅） | (244,247,254) | (246,249,254) | ΔE00 ≈1 |
+| 右上角（雾蓝，深） | (41,51,71) | (41,51,71) | 0 |
+| 侧栏（雾蓝，深） | (35,39,50) | (35,39,50) | 0 |
+
+#### 光晕几何：圆，不是椭圆
+
+`backdrop.dart:314-320` 画的是**圆**：半径 `0.62 × 最长边`，圆心 `(92%, 0)`，线性淡到 0；雾罩同理，`0.55 × 最长边`，圆心 `(0, 100%)`。CSS 里 `62vmax` 就是那个半径（`vmax` = 最长边），1280×800 下 793.6px，与 Dart 侧同一个数。
+
+旧实现是 `120% 80% at 100% 0%` 且 70% 就淡完：纵向有效半径只有 448px，页面下半截一点颜色都没有。整页平均光晕 alpha 0.052，上游 0.084；页面正中上游还有 0.065，我们是 0。
+
+几何只吃掉其中一半，剩下的全在 wash 上：
+
+| 配置 | 六套配色最大 ΔE00（右上角） |
+|---|---|
+| 上游 DSH Go | 28.27 |
+| 旧：椭圆 + wash 0.36×2 | 15.75 |
+| 只修几何 | 16.38 |
+| 几何 + wash 0.10 | 24.42 |
+| **几何 + wash 归零（现状）** | **实测 26.4（采样点在 1270,6，非圆心）** |
+
+#### 四档玻璃，数值全部取上游 `surfaces.dart:159-259`
+
+| 档 | 浅色填充 | 深色填充 | 降级填充（近不透明） | 模糊 |
 |---|---|---|---|---|
-| `--dsw-alias-bg-base` | 0.36 | 0.59 | 0.46 | 0.71 |
-| `--dsw-specific-sidebar-fill` | 0.40 | 0.64 | 0.42 | 0.66 |
+| chrome | 白 0.70 | `smoke` 0.72 | `mistLowest` 0.96 / `smoke` 0.97 | 18px, saturate 1.3 / 1.2 |
+| sheet | `mistLow` 0.82 | `sheetDark` 0.86 | 同色实体 | 24px, saturate 1.4 / 1.2 |
+| card | 白 0.62 | 白 0.05 | 白 0.72 / 0.06 | 无 |
+| pill | 白 0.55 | 白 0.06 | 白 0.66 / 0.07 | 无 |
 
-实测像素（1600×913、雾蓝、真实会话页）：浅色右上角 `#E3EBFC` / 左上 `#EEF2FD` / 侧栏 `#F3F7FE`；深色右上 `#202430` / 左上 `#1C1F28` / 侧栏 `#151921`。
+**浅色玻璃是纯白**：换了配色玻璃还是玻璃（`surfaces.dart:157-158`），只有它底下的页面变。旧实现浅色用 `mistLowest`@0.70，颜色差一点点，alpha 一致。
 
-**这两个数是在「还没有模糊」的前提下定的**：合成链里除 `[data-composer-card]` 官方自带的 `backdrop-filter` 外都没有模糊，α 再低，滚过输入条背后的正文就会透字（深色尤其明显，实测 0.33 已能读出字）。**T2.3 给 chrome / sheet 加上真模糊后，这两个值应当一起再调低。**
+**卡片填充换了之后才看得见**：旧实现卡片读 bg-base（mist 0.36），压在同样偏 mist 的页面上，与页面的 ΔE00 只有 **0.71** —— 等于没有卡片。上游 card 档（白 0.62）对页面是 **5.04**，差 7 倍。这是「界面发平」的第二个来源，与光晕无关。
 
-#### chrome 玻璃（T2.3 已落地）
+**降级路径**：三条（`@supports not (backdrop-filter)` / `prefers-reduced-transparency` / `[data-dsh-go-reduce-material]`），每条同时改四个东西——`--dsh-go-glass-fill`、`--dsh-go-glass-blur`、`--dsh-go-veil-mask`，以及 card / sheet / pill 三档的 token 指针。实测同屏真模糊 1 → 0，输入条填充 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1（不降反升）。
 
-**只做一档，且只有一个表面**：`[data-composer-seat]`（输入条所在的吸底容器）+ 它内部的 `[data-composer-card]`。
+#### 输入条那条带子：重画背景，而不是填一个色（T5.5）
 
-| 项 | 浅色 | 深色 | 说明 |
+wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-base) 36px)` 变成 transparent→transparent，什么也不画。上游的解法是 `BackdropVeil`（`backdrop.dart:111-230`）：**在带子里重画同一张背景**，再把顶边羽化。我们用 `[data-composer-seat]::before` 复刻：同样的三层、同样 `background-attachment: fixed`、`mask-image` 0→1 走 36px。
+
+必须是伪元素：直接给 seat 加 mask 会把里面的输入条卡片一起羽化。伪元素 `z-index: -1`，seat 本身已是层叠上下文（`position: sticky` + `z-index: 7`），所以它落在 seat 背景之上、卡片之下。实测 y 逐行扫描（列 x=300，跨过 mask 边界 y=672→708）：最大相邻差 **3/255**，没有硬边；`background-attachment` 实际解析为 `fixed, fixed, fixed`（seat 上的 `backdrop-filter` 没有把 fixed 背景改成相对 seat 解析）。
+
+#### 接不住的三处
+
+bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 处 `background: var(--dsw-alias-bg-base)`，其中页面级 / 遮罩级（15 处）透明正好；卡片级 9 处大多数能接语义钩子（`[data-tool]`、`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）。**只剩 3 处只有哈希类名**：cordis 业务卡、trajectory 工具目录条目、会话里的图片缩略图。这三处会失去填充，记在 README 的已知限制里——接受，不为此破例用哈希选择器。
+
+#### card / pill 与统一的高度配方（T2.4 + T2.5）
+
+**两档都不模糊**：背后是静态的页面渐变，不是滚动内容（`surfaces.dart:17-19`）。三件套 = 半透明填充 + 0.5px 发丝线 + 1px 顶边高光。
+
+| 档 | 落在哪 | 填充 | 实现 |
 |---|---|---|---|
-| 玻璃填充 `--dsh-go-chrome-fill` | `rgba(251,252,255,0.70)`（mistLowest） | `rgba(41,46,57,0.72)`（smoke） | 用调色板本色，不用纯白，玻璃保住配色色相 |
-| 降级填充 `--dsh-go-chrome-solid` | 同色 `0.97` | 同色 `0.97` | 三条降级路径共用 |
-| 模糊 | `blur(18px) saturate(1.25)` | 同 | 全站唯一的真模糊层 |
-
-**模糊挂在 seat 上，不挂在 card 上**：seat 是 sticky 容器、消息流真的从它背后滚过；card 是 seat 内部那层 70% 填充。这样一次模糊覆盖整条底栏，card 只是"朦胧背景之上的半透明面"，仍然读作玻璃；若 card 自己再模糊一次，就是拿二次模糊去采样已经糊过的背景，白花一倍 GPU。
-
-卡片另外补了 0.5px 内发丝线（`--dsw-alias-border-l1`）、1px 顶边高光与一层很轻的外阴影，数值见 `material.module.css`。
-
-**三个降级路径，一套开关**：`--dsh-go-glass-fill` / `--dsh-go-glass-blur` / `--dsh-go-seat-end` 三个变量，分别被
-
-- `@supports not (backdrop-filter: blur(1px))`
-- `@media (prefers-reduced-transparency: reduce)`
-- `body[data-dsh-go-reduce-material]`（设置项 / 脚本 / e2e 入口）
-
-改成"近不透明 + 无模糊"。降级时 seat 的渐变终点也一并变成实体：**半透明而没有模糊是最差组合**，滚动的正文会直接扎进输入行。
-
-实测（0.2.2 + Chromium 156，CDP 逐项核对）：正常态 `backdrop-filter: blur(18px) saturate(1.25)`、填充 `0.7` / `0.72`；`reduce-material` 事件与 `prefers-reduced-transparency` 模拟下都变成填充 `0.97`、`backdrop-filter: none`、seat 渐变终点同步变 `0.97`，且**同屏真模糊元素从 1 个降到 0 个**。
-
-##### 两个把实现打回重做的实测陷阱
-
-1. **自定义属性不能只写在 `body` 上**。第一版把三个变量声明在 `body[data-dsh-go-theme]`，切到降级时 card 的填充会变，但 seat 的渐变**仍然画旧颜色**——Chromium 不会因为祖先的自定义属性变化而重新解析已经算过的 `linear-gradient()`。改成在每个消费元素上各声明一份，切换当帧就重绘。
-2. **选择器要打过官方的 seat 规则**。官方是 `.root[data-phase=active] .composerSeat`（0,3,0），而 `body[data-dsh-go-theme] [data-composer-seat]` 只有 (0,2,1)，**会静默输掉**——症状是"模糊生效了、渐变没生效"（模糊是新增属性，没有竞争者）。用节点上真实存在的第二个属性 `[data-conversation-region='composer']` 把特异性抬到 (0,3,1)，不用 `!important`。
-
-##### 为什么顶栏 / 菜单 / 对话框没有新增玻璃
-
-- **顶栏**（`[data-slot='conversation.header']`）：实测 `position: static`，滚动容器在它下面，**背后没有任何内容**——加 `backdrop-filter` 只会凭空多一个合成层，看不出区别。
-- **菜单 / 浮层**：官方自己就是玻璃，且用的是**禁止覆盖**的 token：`--dsw-menu-surface-fill: #f8f9fa94` + `--dsw-menu-backdrop-filter: blur(40px) saturate(150%)`，真实节点是菜单里的 `.material` 子层（不是 `[role='menu']` 本身，直接查那个节点的 `backdrop-filter` 会看到 `none`，容易误判成"官方没做玻璃"）。
-- **设置对话框**：0.2.2 上唯一的对话框是 800×800 的整页设置面板，内容以文字与卡片为主；把它改成 82% 半透明等于拿可读性换材质，而且它在 DSH Go 里对应的也不是 sheet 而是"页面"。v1 不做，留给后续版本评估。
-
-> 于是"同屏真模糊 ≤3"的验收实际落在 **≤1**：整站只有输入条这一处真模糊，菜单打开时最多 2。
-
-##### 页面透明度的收尾复核（原 T2.7 遗留）
-
-T2.7 当时把页面 alpha 停在 0.36 / 0.46，理由是"没有模糊时低 alpha 会让正文透字"。T2.3 把输入条的模糊补上后重新复核：`0.30` 与 `0.36` 的角部像素只差 3/255（`#E0EAFC` vs `#E3EBFC`），而透字问题已经被模糊吃掉。**结论：维持 0.36 / 0.46**——多出来的透明度换不到可见收益，却会让所有读 `bg-base` 的面板更淡。
-
-#### card / pill 与统一的高度配方（T2.4 + T2.5 已落地）
-
-**两档材质共用一套三件套**：半透明填充 + 0.5px 发丝线 + 1px 顶边高光。**都不模糊**——它们背后是静态的页面渐变，不是滚动内容，模糊只会白烧合成层（`surfaces.dart:17-19`）。
-
-| 档 | 落在哪 | 填充来源 | 实现 |
-|---|---|---|---|
-| card | 用户气泡 `[data-message-bubble]`、Markdown 代码块 `:global(.md-code-block)` | 气泡：`--dsw-specific-bubble`；代码块：`--dsw-alias-markdown-code-block`（well 是凹陷面，保持实体） | 只补 `inset` 发丝线 + 顶边高光 |
-| pill | composer 里的模型胶囊 `[data-slot='conversation.input.model'] button` | `color-mix(in srgb, var(--dsh-go-chrome-fill) 80%, transparent)` | 填充 + 发丝线 + 高光 |
-
-> **card 的填充是"免费"的**：凡是画 `--dsw-alias-bg-base` 的卡片，在 T2.7 就已经变成半透明了。所以 T2.4 只补描边与高光，不重新定义填充。
+| card | 用户气泡、Markdown 代码块、工具卡、披露头 | `--dsh-go-card-fill`（白 0.62 / 0.05）；气泡与代码块仍用各自的语义 token | 只补 `inset` 发丝线 + 顶边高光 |
+| pill | composer 里的模型胶囊 | `--dsh-go-pill-fill`（白 0.55 / 0.06） | 填充 + 发丝线 + 高光 |
+> **T2.4 当时以为 card 的填充是"免费"的**（凡是画 `--dsw-alias-bg-base` 的卡片自然半透明），这个判断在 T5.5 被推翻：那层 0.36 的 mist 压在同样偏 mist 的页面上，卡片与页面只差 ΔE00 0.71，等于没有卡片。现在 card 档有自己的填充 `--dsh-go-card-fill`（白 0.62 / 0.05），与页面的差是 5.04。
 
 **T2.5：一条高度配方覆盖所有官方浮层。** `--dsw-elevation-*` 我们在**自己的作用域**上重绑（`body[data-dsh-go-theme], body[data-dsh-go-theme] *`），给每档加顶边高光、把中性黑的环境阴影换成调色板的冷墨：
 

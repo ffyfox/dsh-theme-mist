@@ -98,7 +98,7 @@ node tools/e2e-lifecycle.mjs \
 
 **安全**：脚本拒绝操作 `~/.dsh/profiles/` 之外的路径，且退出时（含异常）恢复原始 `cordis.patch.yml`。
 
-实测基线（2026-11-02，0.2.1-alpha.1 web）：`--dsw-alias-bg-base #fff → #F0F4FD → #fff`，六套配色互异，10 次启停零泄漏。
+实测基线（2026-11-03，0.2.1-alpha.1 web）：`--dsw-alias-bg-base #fff → transparent → #fff`（T5.5 起页面不再叠 wash，见 `docs/visual-spec.md` §7），六套配色互异，10 次启停零泄漏。
 
 ## 5. `perf-scroll.mjs`
 
@@ -130,7 +130,7 @@ node tools/e2e-degraded.mjs            # 自带静态服务与 headless Chrome
 node tools/e2e-degraded.mjs --chrome chromium --keep
 ```
 
-14 条断言：装载、`apply()` 不抛、恰好一条含 `overrideTokens` 的 warn（走 `ctx.logger` 而非 console）、作用域属性与 accent 仍写入、两行设置仍注册、九个 `--dsh-go-*` 全是 `light-dark()` 对、**没有任何 `--dsw-*` 被手写**、页面渐变仍绘制、样式表已注入、无未捕获异常，以及卸载后属性 / 变量 / 渐变全部消失。
+14 条断言：装载、`apply()` 不抛、恰好一条含 `overrideTokens` 的 warn（走 `ctx.logger` 而非 console）、作用域属性与 accent 仍写入、两行设置仍注册、全部 `--dsh-go-*`（当前 15 个）是 `light-dark()` 对、**没有任何 `--dsw-*` 被手写**、页面渐变仍绘制、样式表已注入、无未捕获异常，以及卸载后属性 / 变量 / 渐变全部消失。
 
 ## 7. `e2e-dual-version.mjs`
 

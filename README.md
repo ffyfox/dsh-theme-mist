@@ -75,7 +75,7 @@ window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: 'amber' })
 window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: true }))
 ```
 
-「减少透明效果」也有界面开关：「设置 → 通用 → 减少透明效果」。关掉后所有 `backdrop-filter` 消失，玻璃面改用近不透明的 solid 填充（实测卡片填充 alpha 0.70 → 0.97，正文对比度 15.01:1 → 15.30:1，不降反升）。
+「减少透明效果」也有界面开关：「设置 → 通用 → 减少透明效果」。关掉后所有 `backdrop-filter` 消失，玻璃面改用近不透明的 solid 填充（输入条 alpha 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1，不降反升）。
 
 ## 六套配色
 

@@ -170,7 +170,9 @@ try {
   check('the warning goes through ctx.logger, not the console', /^dsh-go-theme: /.test(state.warnings[0] ?? ''), state.warnings[0])
   check('the scope attribute and accent are still set', state.themed && state.accent === 'mist', state.themed + ' / ' + state.accent)
   check('settings rows are still registered', state.injected.filter((key) => key === 'settings.general.item').length === 2, JSON.stringify(state.injected))
-  check('all nine material variables carry a light-dark() pair', state.goInline.length === 9 && state.goPairs, state.goInline.length + ' vars, pairs=' + state.goPairs + ', e.g. ' + state.pageBase)
+  // At least the original nine, and every one of them a pair: the exact count
+  // moves whenever a glass tier is added (T5.5 took it 9 -> 15).
+  check('every material variable carries a light-dark() pair', state.goInline.length >= 9 && state.goPairs, state.goInline.length + ' vars, pairs=' + state.goPairs + ', e.g. ' + state.pageBase)
   check('no official token is overridden by hand', state.inlineDsw.length === 0, JSON.stringify(state.inlineDsw))
   check('the page gradient still paints', /gradient/.test(state.backgroundImage), state.backgroundImage.slice(0, 90))
   check('the material stylesheet is injected', state.styleTags.some((tag) => typeof tag === 'string' && tag.includes(EXPECTED_ID)), JSON.stringify(state.styleTags))

@@ -96,7 +96,9 @@ const collision = MATERIAL_VARS.filter((n) => TOKEN_NAMES.includes(n))
 check('material vars do not shadow official tokens', collision.length === 0, collision.join(' '))
 
 // --------------------------------------------------------- 6. layer output
-const CSS_VALUE = /^(#[0-9A-Fa-f]{3,8}|rgba?\([^)]*\)|color-mix\(in srgb, var\(--dsw-[a-z0-9-]+\) \d+%, transparent\))$/
+// 'transparent' is a real CSS colour and the one value the page token carries
+// when the theme deliberately paints nothing over the backdrop (T5.5).
+const CSS_VALUE = /^(#[0-9A-Fa-f]{3,8}|rgba?\([^)]*\)|transparent|color-mix\(in srgb, var\(--dsw-[a-z0-9-]+\) \d+%, transparent\))$/
 for (const id of ACCENT_IDS) {
   const layer = buildTokenLayer(PALETTES[id])
   const keys = Object.keys(layer)

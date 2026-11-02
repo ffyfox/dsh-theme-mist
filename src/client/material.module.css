@@ -24,9 +24,20 @@
  * content and read as a moving backdrop rather than as the page. */
 body[data-dsh-go-theme] {
   background-color: var(--dsh-go-page-base);
+  /* The geometry is upstream's, not an approximation of it. backdrop.dart:303-333
+     paints a *circle* of radius 0.62 x the longest side anchored at (92%, 0),
+     and the haze at (0, 100%) at 0.55 x the same side, each fading linearly to
+     zero at its radius. vmax *is* the longest side, so 62vmax reproduces the
+     same radius at any viewport — 793.6px at 1280x800, the number the Flutter
+     painter uses.
+
+     What this replaces: an ellipse of 120% x 80% cut off at 70%, which died
+     448px down the page instead of 794 and left the lower half of the window
+     with no colour in it at all. Measured cost: the mean glow alpha over the
+     page was 0.052 where DSH Go paints 0.084. */
   background-image:
-    radial-gradient(120% 80% at 100% 0%, var(--dsh-go-glow), transparent 70%),
-    radial-gradient(100% 70% at 0% 100%, var(--dsh-go-haze), transparent 70%),
+    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-go-glow) 0%, transparent 100%),
+    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-go-haze) 0%, transparent 100%),
     linear-gradient(to bottom, var(--dsh-go-page-top), var(--dsh-go-page-bottom));
   background-repeat: no-repeat;
   background-attachment: fixed;
@@ -44,7 +55,34 @@ body[data-dsh-go-theme] {
  * the true full-window cases simply get the opaque page colour back. aria-modal
  * is the semantic (non-hashed) way to name exactly that set. */
 body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
-  --dsw-alias-bg-base: var(--dsh-go-page-base);
+  --dsw-alias-bg-base: var(--dsh-go-sheet-token);
+}
+
+/* --- Glass tiers, re-bound (T5.5) ---------------------------------------
+ *
+ * bg-base is transparent now (tokens.ts TRANSPARENT), so every surface that was
+ * using it as its fill has a hole. Painting backgrounds ourselves would fight
+ * whatever the host already draws there — borders, dividers, pressed states —
+ * so instead we re-bind the same variable on a semantic container and let the
+ * host keep painting. Numbers are DSH Go's (surfaces.dart:159-259).
+ *
+ * Hooks, never class names: the host's class names carry a per-build hash.
+ * The three surfaces we could not reach — cordis' business card, trajectory's
+ * tool-catalog row and the conversation's image thumbnail — have no semantic
+ * attribute; they are listed in README's known limits. */
+body[data-dsh-go-theme] [data-message-bubble],
+body[data-dsh-go-theme] [data-tool],
+body[data-dsh-go-theme] [data-chat-call-id],
+body[data-dsh-go-theme] [data-disclosure-header],
+body[data-dsh-go-theme] [data-compaction-disclosure],
+body[data-dsh-go-theme] [data-schedule-reminder-entry],
+body[data-dsh-go-theme] [data-session-schedule-task] {
+  --dsw-alias-bg-base: var(--dsh-go-card-token);
+}
+
+body[data-dsh-go-theme] [role='menu'],
+body[data-dsh-go-theme] [role='listbox'] {
+  --dsw-alias-bg-base: var(--dsh-go-sheet-token);
 }
 
 /* --- Glass, tier 1 of 2: chrome (T2.3) -----------------------------------
@@ -72,13 +110,41 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
    we already know are on this node reaches (0,3,1) and wins without
    !important. */
 body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
-  --dsh-go-glass-blur: blur(18px) saturate(1.25);
-  /* Mirrors the official fade — same 36px stop, same geometry — with the end
-     colour on a hook, so the degradation paths can make it opaque without
-     duplicating the gradient. */
-  --dsh-go-seat-end: var(--dsw-alias-bg-base);
-  background-image: linear-gradient(180deg, transparent 0, var(--dsh-go-seat-end) 36px);
+  --dsh-go-glass-blur: blur(18px) saturate(1.3);
+  --dsh-go-veil-mask: linear-gradient(180deg, transparent 0, #000 36px);
+  /* The host's own fade ends in bg-base, which is transparent now, so it paints
+     nothing at all. The band is repainted by the next rule instead. */
+  background-image: none;
   backdrop-filter: var(--dsh-go-glass-blur);
+}
+
+/* The veil: DSH Go's BackdropVeil, in CSS (backdrop.dart:111-230).
+ *
+ * The band under the composer has to hide the message flow scrolling behind it
+ * without reading as a strip of paint, so upstream repaints the *backdrop
+ * itself* in that band and feathers the top edge. Same here: the pseudo carries
+ * the same three layers, anchored to the viewport like body's, and is masked
+ * 0 -> 1 over the first 36px — the same stop the official fade used.
+ *
+ * A pseudo rather than a mask on the seat, which would feather the composer
+ * card sitting inside it. z-index -1 keeps it above the seat's own (now empty)
+ * background and below that card: the seat is already a stacking context
+ * (position: sticky, z-index 7). */
+body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--dsh-go-page-base);
+  background-image:
+    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-go-glow) 0%, transparent 100%),
+    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-go-haze) 0%, transparent 100%),
+    linear-gradient(to bottom, var(--dsh-go-page-top), var(--dsh-go-page-bottom));
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  -webkit-mask-image: var(--dsh-go-veil-mask);
+  mask-image: var(--dsh-go-veil-mask);
 }
 
 /* The card itself: fill, hairline, top highlight, soft lift. Radius and
@@ -107,9 +173,16 @@ body[data-dsh-go-theme] [data-composer-card] {
  * the in-app switch wins either way.
  */
 @supports not (backdrop-filter: blur(1px)) {
+  /* html-qualified so this out-specifies the defaults on body further down
+     (same element, equal specificity, later in the sheet). */
+  html body[data-dsh-go-theme] {
+    --dsh-go-card-token: var(--dsh-go-card-solid);
+    --dsh-go-sheet-token: var(--dsh-go-sheet-solid);
+    --dsh-go-pill-token: var(--dsh-go-pill-solid);
+  }
   body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
     --dsh-go-glass-blur: none;
-    --dsh-go-seat-end: var(--dsh-go-chrome-solid);
+    --dsh-go-veil-mask: none;
   }
   body[data-dsh-go-theme] [data-composer-card] {
     --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
@@ -117,18 +190,29 @@ body[data-dsh-go-theme] [data-composer-card] {
 }
 
 @media (prefers-reduced-transparency: reduce) {
+  html body[data-dsh-go-theme] {
+    --dsh-go-card-token: var(--dsh-go-card-solid);
+    --dsh-go-sheet-token: var(--dsh-go-sheet-solid);
+    --dsh-go-pill-token: var(--dsh-go-pill-solid);
+  }
   body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
     --dsh-go-glass-blur: none;
-    --dsh-go-seat-end: var(--dsh-go-chrome-solid);
+    --dsh-go-veil-mask: none;
   }
   body[data-dsh-go-theme] [data-composer-card] {
     --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
   }
 }
 
+body[data-dsh-go-theme][data-dsh-go-reduce-material] {
+    --dsh-go-card-token: var(--dsh-go-card-solid);
+    --dsh-go-sheet-token: var(--dsh-go-sheet-solid);
+    --dsh-go-pill-token: var(--dsh-go-pill-solid);
+}
+
 body[data-dsh-go-theme][data-dsh-go-reduce-material] [data-composer-seat][data-conversation-region='composer'] {
   --dsh-go-glass-blur: none;
-  --dsh-go-seat-end: var(--dsh-go-chrome-solid);
+  --dsh-go-veil-mask: none;
 }
 
 body[data-dsh-go-theme][data-dsh-go-reduce-material] [data-composer-card] {
@@ -168,7 +252,7 @@ body[data-dsh-go-theme] :global(.md-code-block) {
    painting it would show corners behind the pill. Fill is derived from the
    chrome glass, so the pill reads as part of the same material family. */
 body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
-  background-color: color-mix(in srgb, var(--dsh-go-chrome-fill) 80%, transparent);
+  background-color: var(--dsh-go-pill-token);
   box-shadow:
     inset 0 0 0 0.5px var(--dsw-alias-border-l1),
     inset 0 1px 0 var(--dsh-go-highlight);
@@ -270,6 +354,12 @@ body[data-dsh-go-theme] * {
  * is official DOM we do not own.
  */
 body[data-dsh-go-theme] {
+  /* Tier fills, indirected so the degradation paths can swap all of them at
+     once. The `-fill` values are the blurred/translucent ones, `-solid` the
+     near-opaque fallbacks (surfaces.dart's fallbackFill). */
+  --dsh-go-card-token: var(--dsh-go-card-fill);
+  --dsh-go-sheet-token: var(--dsh-go-sheet-fill);
+  --dsh-go-pill-token: var(--dsh-go-pill-fill);
   --dsh-go-duration-press: 90ms;
   --dsh-go-duration-quick: 160ms;
   --dsh-go-duration-standard: 240ms;

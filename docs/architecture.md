@@ -445,7 +445,7 @@ if (!canOverride) {
 
 **不要**读 `ctx.theme` 的版本号做分支——官方没有暴露版本。用**能力探测 + try/catch**，这是唯一稳定的做法。
 
-落地形态（T4.2）：探测与写入都在 `src/client/writer.ts`。宿主有 `overrideTokens` 时原样转发；没有时只写自有的九个 `--dsh-go-*`（以 `light-dark(light, dark)` 对写入——`light-dark()` 按 `<html>` 上的 `color-scheme` 解析，所以不需要自己监听 `theme/change`），官方令牌一个都不碰，作用域属性、设置行与偏好照旧，并记一条 `ctx.logger.warn`。`ctx.theme` 的读取本身也包在 try/catch 里：未注入的服务一读就抛，能力探测不该把插件带下去。
+落地形态（T4.2）：探测与写入都在 `src/client/writer.ts`。宿主有 `overrideTokens` 时原样转发；没有时只写自有的十五个 `--dsh-go-*`（以 `light-dark(light, dark)` 对写入——`light-dark()` 按 `<html>` 上的 `color-scheme` 解析，所以不需要自己监听 `theme/change`），官方令牌一个都不碰，作用域属性、设置行与偏好照旧，并记一条 `ctx.logger.warn`。`ctx.theme` 的读取本身也包在 try/catch 里：未注入的服务一读就抛，能力探测不该把插件带下去。
 
 **token 存在性**：`overrideTokens` 允许注册**任意** token 名（源码 `:1950-1951` 的 `exportInspectTokens` 会为未内建的 token 生成 `dynamicToken`），所以覆盖一个 0.2.1 不存在的 token **不会报错**——但也**不会生效**（没有消费方读它）。这意味着：**多覆盖无害，少覆盖会掉效果**。策略是覆盖一个跨版本超集，接受旧版冗余。
 
@@ -579,3 +579,52 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 | 兼容门禁到底看什么 | **`engines.dsh` 单独决定**；没有它时只检查 `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` 的 peer（每个都得满足），其它 peer 名字一律跳过；比较用 `{ includePrerelease: true }`，所以 0.2.1-alpha.1 与 0.2.2-alpha.2 都算在 `>=0.2.1-alpha.1 <0.3.0` 里，而 0.2.0 不算 | `dsh-app-boot/lib/index.js` 的 `unmetRequirements` / `evaluatePluginCompatibility`；`tools/check-pack.mjs` 固定这两个字段 |
 
 **阶段 0 已完成**（2026-11-02），完整结论见 `reference/phase0-findings.md`（内部底稿，未入库）。
+
+
+## 9. 视觉复核：为什么六套配色「看不出区别」（T5.5）
+
+2026-11-03 的复核，起因是一句主观判断：界面上的配色变化比 DSH Go 本身小很多。结论是两条真缺陷 + 一条测试盲区。
+
+### 9.1 基准怎么来的
+
+上游是真源，不是印象：取 `ccch1mneyyy/dsh-Go` HEAD 的 `app/lib/ui/theme/backdrop.dart`、`surfaces.dart`，以及上游自己的 golden `app/test/shell/adaptive/goldens/wide_sidebar_{light,dark}.png`（2560×1600 = 1280×800@2x）。
+
+用上游的绘制算法复算那张 golden，用来校准我方的分析模型：
+
+| 采样点 | golden 实测 | 复算 | 差 |
+|---|---|---|---|
+| 右上角（浅） | (211,224,253) | (208,222,253) | ≤3/255 |
+| 页面中心（浅） | (235,240,252) | (236,241,253) | ≤1/255 |
+| 右上角（深） | (41,51,71) | (42,51,72) | ≤1/255 |
+
+模型可信之后，剩下的都是量化对比。
+
+### 9.2 两条真缺陷
+
+| # | 缺陷 | 证据 | 代价 |
+|---|---|---|---|
+| 1 | 光晕/雾罩画成椭圆（`120% 80%` 收到 70%），上游是圆（半径 `0.62 × 最长边`） | `backdrop.dart:303-333` | 整页平均光晕 alpha 0.052 vs 0.084；页面正中 0 vs 0.065 |
+| 2 | 页面 wash 从未按注释下调（`tokens.ts` 旧注释写着 "Re-tune downwards together with that glass"），`PAGE_ALPHA` 自 `b47aec2` 起没改过 | `git log -S PAGE_ALPHA` 只有一个提交 | 叠两层 0.59 不透明，光晕与竖向渐变压到 41% |
+
+两条叠起来，六套配色在右上角的最大色差 ΔE00 只有 15.75，上游是 28.27（56%）。
+
+顺带两个同源问题：卡片填充（`mist`@0.36）与页面的 ΔE00 只有 0.71，等于没有卡片（上游 card 档 5.04）；侧栏填充颜色与 alpha 都不对（`mistLow`@0.40 / `nightLowest`@0.42，应分别是 `mistLow`@0.82 / `sheetDark`@0.86）。
+
+### 9.3 一条测试盲区
+
+`e2e:dual` 比的是 39 个令牌的**值**、布局矩形与模糊清单，因此「两版一致」始终成立；但它没有比**合成结果**。两版其实都叠两层（我核对过 0.2.1 的 `layout` 与 `conversation` 包，`.frame` 与 `.root` 两版都画 bg-base），所以这次没有版本漂移——可真要是有，现有断言看不出来。补足方式：预览脚本现在按配色逐张采样像素，与 golden 的期望值对表。
+
+### 9.4 修法（已落地）
+
+1. 光晕与雾罩改成 `circle 62vmax at 92% 0%` / `circle 55vmax at 0% 100%`，stop 收到 100%（`62vmax` 在 1280×800 下是 793.6px，与 Dart 侧同数）。
+2. bg-base 归零（`transparent`）：页面就是背景，不再叠雾。
+3. 侧栏 `mistLow`@0.82 / `sheetDark`@0.86。
+4. 四档玻璃取上游数值：chrome 白 0.70（深 `smoke` 0.72）、sheet `mistLow` 0.82（深 `sheetDark` 0.86）、card 白 0.62（深 0.05）、pill 白 0.55（深 0.06），每档配一个近不透明降级值。
+5. 输入条那条带子改成重画背景（`BackdropVeil` 的 CSS 版），因为 wash 归零后官方那条渐变的终点已经是透明。
+
+**验收（实测像素，非推算）**：右上角雾蓝 (211,224,253) = golden；琥珀 (237,221,203) vs golden (237,221,204)；深色右上角 (41,51,71) = golden；深色侧栏 (35,39,50) = golden；六套配色右上角最大色差 26.4（上游 28.27，差距是采样点不在圆心）。
+
+### 9.5 这次修法接不住的地方
+
+bg-base 归零后，靠它当填充的表面必须在语义钩子上重绑。宿主 14 个包里有 24 处 `background: var(--dsw-alias-bg-base)`：页面级与遮罩级 15 处透明正好；卡片级 9 处多数有语义钩子（`[data-tool]`、`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）；**3 处只剩哈希类名**（cordis 业务卡、trajectory 工具目录条目、会话图片缩略图），会失去填充。接受这个缺口，不为此引入哈希选择器——代价是这三处在次要页面偏平。
+

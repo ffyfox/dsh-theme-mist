@@ -90,6 +90,12 @@ export const MATERIAL_VARS = [
   '--dsh-go-haze',
   '--dsh-go-chrome-fill',
   '--dsh-go-chrome-solid',
+  '--dsh-go-sheet-fill',
+  '--dsh-go-sheet-solid',
+  '--dsh-go-card-fill',
+  '--dsh-go-card-solid',
+  '--dsh-go-pill-fill',
+  '--dsh-go-pill-solid',
   '--dsh-go-highlight',
   '--dsh-go-shadow',
 ] as const
@@ -111,50 +117,71 @@ const brandMix = (percent: number): string =>
   `color-mix(in srgb, var(--dsw-alias-brand-primary) ${percent}%, transparent)`
 
 /**
- * Opacity of the two page-surface tokens (T2.7).
+ * The page wash is gone (T5.5).
  *
- * The five opaque layers stacked above body — AppFrame, sidebar column,
- * sidebar root, conversation root, composer seat — are painted from exactly
- * these two tokens, so the page gradient only becomes visible once both carry
- * alpha. Measured on 0.2.1 and 0.2.2: docs/reference/phase0-findings.md §3.3.
+ * Until this change bg-base carried the palette's mid surface at 0.36, and the
+ * host paints that token twice (AppFrame + ConversationRoot), so the eye saw a
+ * 0.59 opaque veil sitting on top of the backdrop. That veil — not the palette
+ * — is why the six accents looked alike: it cut the accent glow to 41% of what
+ * DSH Go paints. Measured against upstream's own golden
+ * (app/test/shell/adaptive/goldens/wide_sidebar_light.png), the largest
+ * colour difference across the six accents was dE00 15.75 at the glow corner
+ * where DSH Go reaches 28.27.
  *
- * These are *per-layer* alphas, and the stack depth matters: on 0.2.2 the two
- * page surfaces nest (AppFrame paints bg-base, ConversationRoot paints it
- * again), so the wash the eye sees is 1 - (1 - alpha)^2. Measured by pixel
- * sampling in docs/visual-spec.md §7 — 0.36 light / 0.46 dark lands on an
- * effective 0.59 / 0.71, and that is what the screenshots compared.
+ * DSH Go has no such surface: the backdrop *is* the page (backdrop.dart:303-333)
+ * and every panel above it is a glass tier carrying its own fill
+ * (surfaces.dart:159-259). So bg-base goes fully transparent and the tiers
+ * below take over.
  *
- * The values sit on the opaque side of "the gradient still reads" on purpose:
- * nothing composited above the page has real blur yet (that is T2.3), and
- * without blur a lower alpha lets scrolled text ghost through the composer
- * seat and the sticky headers. Re-tune downwards together with that glass —
- * never to fully transparent, which would flatten the surface hierarchy the
- * whole design rests on.
+ * Consequence, and the reason this is one change and not two: every surface
+ * that used bg-base as its fill loses it, so each tier is re-bound on semantic
+ * hooks in material.module.css.
  */
-const PAGE_ALPHA = { light: 0.36, dark: 0.46 } as const
-const SIDEBAR_ALPHA = { light: 0.4, dark: 0.42 } as const
+const TRANSPARENT = 'transparent'
+
+/**
+ * Sidebar column fill, fitted to upstream's own rendering.
+ *
+ * Was `mistLow` at 0.40 (dark: `nightLowest` at 0.42) — wrong colour *and*
+ * wrong alpha, hidden until now because the page wash was doing the rest of
+ * the work. Fitting the light and dark wide-sidebar goldens pixel by pixel
+ * gives mistLow @ 0.82 and sheetDark @ 0.86, reproducing the measured sidebar
+ * to 1.5 and 0.6 / 255.
+ */
+const SIDEBAR_ALPHA = { light: 0.82, dark: 0.86 } as const
 
 /** Glow and haze opacity at their gradient origin (visual-spec §7). */
 const GLOW_ALPHA = { light: 0.42, dark: 0.28 } as const
 const HAZE_ALPHA = { light: 0.38, dark: 0.24 } as const
 
 /**
- * Chrome glass fill opacity (T2.3), from visual-spec §7's two tiers.
+ * The four glass tiers, taken from DSH Go's surfaces.dart:159-259.
  *
- * Chrome is the tier that carries real blur — it floats over content that
- * scrolls, so the blur has something to work with. The colour underneath is
- * the palette's own lifted surface (mistLowest light, smoke dark), not plain
- * white, so the glass keeps the palette's hue instead of greying the page.
+ * | tier   | light          | dark            | blur            |
+ * |--------|----------------|-----------------|-----------------|
+ * | chrome | white 0.70     | smoke 0.72      | 18px, sat 1.3/1.2 |
+ * | sheet  | mistLow 0.82   | sheetDark 0.86  | 24px, sat 1.4/1.2 |
+ * | card   | white 0.62     | white 0.05      | none            |
+ * | pill   | white 0.55     | white 0.06      | none            |
+ *
+ * Light-mode fills are plain white on purpose: DSH Go's glass stays white
+ * whatever the accent, and only the page underneath changes hue ("换了配色,
+ * 玻璃还是玻璃", surfaces.dart:157-158). Only the tiers that float over moving
+ * content blur; card and pill sit on a static gradient where a blur would cost
+ * a compositing layer and show nothing.
+ *
+ * Each tier has a "solid" twin — upstream's fallbackFill — used where the blur
+ * is unavailable: no backdrop-filter support, "reduce transparency", or the
+ * in-app switch. Those stay near opaque, or text scrolling behind the band
+ * runs into the input line.
  */
 const CHROME_ALPHA = { light: 0.7, dark: 0.72 } as const
-
-/**
- * The same surface with the blur unavailable — "reduce transparency", no
- * backdrop-filter support, or the in-app switch. Near opaque on purpose: an
- * unblurred half-transparent band lets scrolled text run into the input line,
- * which reads worse than losing the material.
- */
-const CHROME_SOLID_ALPHA = 0.97
+const CHROME_SOLID_ALPHA = { light: 0.96, dark: 0.97 } as const
+const SHEET_ALPHA = { light: 0.82, dark: 0.86 } as const
+const CARD_ALPHA = { light: 0.62, dark: 0.05 } as const
+const CARD_SOLID_ALPHA = { light: 0.72, dark: 0.06 } as const
+const PILL_ALPHA = { light: 0.55, dark: 0.06 } as const
+const PILL_SOLID_ALPHA = { light: 0.66, dark: 0.07 } as const
 
 /**
  * The 1px inner line along the top edge of a card or pill (T2.4/T2.5).
@@ -210,13 +237,11 @@ export function buildTokenLayer(p: AccentPalette): TokenLayer {
   return {
     // Surfaces — layer-1 is the brightest surface in light mode and the
     // first lifted surface in dark mode, hence the ramp direction flip.
-    // bg-base carries alpha: it paints the app frame, the conversation column
-    // and the composer seat's sticky fade, so translucency there is exactly
-    // what lets the page gradient through (T2.7). Nested surfaces stay opaque.
-    '--dsw-alias-bg-base': {
-      light: withAlpha(p.light.mist, PAGE_ALPHA.light),
-      dark: withAlpha(p.dark.night, PAGE_ALPHA.dark),
-    },
+    // bg-base is the page itself, and the page is the backdrop: DSH Go paints
+    // nothing on top of it (see TRANSPARENT above). Nested surfaces stay
+    // opaque; the tiers that used to lean on this token are re-bound in
+    // material.module.css.
+    '--dsw-alias-bg-base': { light: TRANSPARENT, dark: TRANSPARENT },
     '--dsw-alias-bg-layer-1': { light: p.light.mistLowest, dark: p.dark.nightLow },
     '--dsw-alias-bg-layer-2': { light: p.light.mistLow, dark: p.dark.nightContainer },
     '--dsw-alias-bg-layer-3': { light: p.light.mistContainer, dark: p.dark.nightHigh },
@@ -257,11 +282,11 @@ export function buildTokenLayer(p: AccentPalette): TokenLayer {
     '--dsw-alias-interactive-bg-hover': { light: brandMix(7), dark: brandMix(10) },
     '--dsw-alias-interactive-bg-active': { light: brandMix(14), dark: brandMix(18) },
 
-    // Same reasoning as bg-base: the sidebar column and the sidebar root both
-    // read this token, so it must be translucent for the gradient to reach them.
+    // The sidebar is a sheet, not a page: upstream keeps it at 0.82/0.86 so the
+    // backdrop only tints it, rather than showing through it.
     '--dsw-specific-sidebar-fill': {
       light: withAlpha(p.light.mistLow, SIDEBAR_ALPHA.light),
-      dark: withAlpha(p.dark.nightLowest, SIDEBAR_ALPHA.dark),
+      dark: withAlpha(p.dark.sheetDark, SIDEBAR_ALPHA.dark),
     },
     '--dsw-specific-sidebar-nav-item-active': { light: p.light.mistContainer, dark: p.dark.nightHigh },
     '--dsw-specific-sidebar-nav-item-active-accent': { light: p.accent.container, dark: p.accent.containerDark },
@@ -291,16 +316,37 @@ export function buildTokenLayer(p: AccentPalette): TokenLayer {
       light: withAlpha(p.accent.haze, HAZE_ALPHA.light),
       dark: withAlpha(p.accent.hazeDark, HAZE_ALPHA.dark),
     },
-    // --- Chrome glass (T2.3) ----------------------------------------------
-    // Two values rather than one because the degradation paths need a fill
-    // that stays legible without a blur (see material.module.css).
+    // --- Glass tiers (T2.3 / T5.5) -----------------------------------------
+    // Two values per tier: the blur fill and the near-opaque fallback the
+    // degradation paths swap in (see material.module.css).
     '--dsh-go-chrome-fill': {
-      light: withAlpha(p.light.mistLowest, CHROME_ALPHA.light),
+      light: withAlpha('#FFFFFF', CHROME_ALPHA.light),
       dark: withAlpha(p.dark.smoke, CHROME_ALPHA.dark),
     },
     '--dsh-go-chrome-solid': {
-      light: withAlpha(p.light.mistLowest, CHROME_SOLID_ALPHA),
-      dark: withAlpha(p.dark.smoke, CHROME_SOLID_ALPHA),
+      light: withAlpha(p.light.mistLowest, CHROME_SOLID_ALPHA.light),
+      dark: withAlpha(p.dark.smoke, CHROME_SOLID_ALPHA.dark),
+    },
+    '--dsh-go-sheet-fill': {
+      light: withAlpha(p.light.mistLow, SHEET_ALPHA.light),
+      dark: withAlpha(p.dark.sheetDark, SHEET_ALPHA.dark),
+    },
+    '--dsh-go-sheet-solid': { light: p.light.mistLow, dark: p.dark.sheetDark },
+    '--dsh-go-card-fill': {
+      light: withAlpha('#FFFFFF', CARD_ALPHA.light),
+      dark: withAlpha('#FFFFFF', CARD_ALPHA.dark),
+    },
+    '--dsh-go-card-solid': {
+      light: withAlpha('#FFFFFF', CARD_SOLID_ALPHA.light),
+      dark: withAlpha('#FFFFFF', CARD_SOLID_ALPHA.dark),
+    },
+    '--dsh-go-pill-fill': {
+      light: withAlpha('#FFFFFF', PILL_ALPHA.light),
+      dark: withAlpha('#FFFFFF', PILL_ALPHA.dark),
+    },
+    '--dsh-go-pill-solid': {
+      light: withAlpha('#FFFFFF', PILL_SOLID_ALPHA.light),
+      dark: withAlpha('#FFFFFF', PILL_SOLID_ALPHA.dark),
     },
     // --- Rim, highlight and shadow (T2.4 / T2.5) ---------------------------
     // Shared by our own card/pill rules and by the elevation recipes below,
