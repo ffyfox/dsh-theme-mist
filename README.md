@@ -12,6 +12,8 @@
 
 阶段 4 已完成：客户端两版（`0.2.1-alpha.1` 与 `0.2.2-alpha.2`）的渲染一致性、八个交叉场景、降级路径与**卸载清洁度**都有脚本可重跑；桌面端 Electron 窗口内的实际效果已确认，不需要版本分支。
 
+阶段 5 进行中：打包内容契约（`pnpm check:pack`）与 `NOTICE` 已就位；README、预览图与卸载说明补齐后，剩下的只有发布闸门本身。
+
 ## 安装
 
 ### 桌面端
@@ -23,11 +25,20 @@
 ### Web 端
 
 ```bash
-pnpm install && pnpm build          # 生成 lib/，缺了它 Host Loader 导入会失败
-dsh plugin --profile <profile> add "$(pwd)"
+pnpm install && pnpm build                     # 生成 lib/，缺了它 Host Loader 导入会失败
+dsh plugin --profile web add "$(pwd)"          # 装进自带的 web profile
 ```
 
 包清单里声明了 `dsh.bundle`，所以 `add` 之后会被写进该 profile 的 `dsh.profile.bundles` —— 这是「能不能当层」的唯一开关，只进 `dependencies` 而不进 `bundles` 的包完全惰性。
+
+**想用独立 profile，先按 web 模板建一个**：
+
+```bash
+dsh themego --from-default-profile web         # 跑一次即建好，然后 Ctrl-C
+dsh plugin --profile themego add "$(pwd)"
+```
+
+> **别用随便一个名字代替 `web`**。`dsh plugin --profile 新名字 add …` 会把一个只有 `dsh-base` 的空 profile 建出来，那里没有 `dsh-web-app`，装完不起 Web UI、也看不到界面。想独立，就先 `--from-default-profile web`。
 
 ### 卸载
 
@@ -35,7 +46,9 @@ dsh plugin --profile <profile> add "$(pwd)"
 dsh plugin --profile <profile> remove @dsh-external/dsh-client-ui-theme-go
 ```
 
-桌面端在插件页移除。卸载会摘掉 `body` 上的主题属性、注入的样式表与事件监听；偏好本身仍留在 `localStorage`，需要的话自行清除：
+桌面端在「插件」页移除。这条命令实测（2026-11-02）：它同时摘掉 `dependencies` 里的条目**和** `dsh.profile.bundles` 里的那一项，再 `add` 回来会重新装回原位。
+
+卸载后页面会回到官方外观：`body` 上的三个 `data-dsh-go-*` 属性、注入的三张样式表、`body` 的内联令牌层与两个事件监听全部被清掉（逐项断言见 `tools/e2e-uninstall.mjs`，两版本各 23 条）。**唯一保留的是偏好本身**——配色与「减少透明效果」记在 `localStorage`，装回来时你上次的选择还在。想彻底清掉：
 
 ```js
 localStorage.removeItem('dsh.go-theme.preferences.v1')
@@ -43,7 +56,11 @@ localStorage.removeItem('dsh.go-theme.preferences.v1')
 
 ## 支持的版本
 
-开发与实测基于 **DSH 0.2.2**（`dsh-client-ui-theme` 提供 `ctx.theme.overrideTokens` 与 `ctx.theme.register` 的版本）。0.2.1 上扩展点同样存在，但令牌清单不同（202 个 vs 404 个），本主题按 0.2.2 的清单编写，在 0.2.1 上的视觉未经核对。
+**0.2.1-alpha.1 与 0.2.2-alpha.2 都实测过**，两侧渲染逐字段一致（39 个令牌 × 明暗、六套配色、布局矩形、模糊清单），所以不需要版本分支。两个版本的自有样式表数、宿主设置行数确实不同（151/158 张样式表、13/15 行设置），那只是宿主自己的差异。
+
+包清单因此声明了 `engines.dsh: ">=0.2.1-alpha.1 <0.3.0"` —— 这是宿主的兼容门禁真正会读的字段（`engines.dsh` 单独决定；没有它时只检查 `@deepseek-ai/dsh*` 的 peer）。0.3.0 起未验证，会被拦下。
+
+插件依赖宿主提供 `ctx.theme.overrideTokens`。宿主没有它时不会崩：只画材质层并记一条 warn，降级路径见 `docs/architecture.md` §5.2。
 
 ## 用法
 
@@ -58,11 +75,49 @@ window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: t
 
 「减少透明效果」也有界面开关：「设置 → 通用 → 减少透明效果」。关掉后所有 `backdrop-filter` 消失，玻璃面改用近不透明的 solid 填充（实测卡片填充 alpha 0.70 → 0.97，正文对比度 15.01:1 → 15.30:1，不降反升）。
 
+## 六套配色
+
+同一页面的六种强调色（点开看大图）。左侧侧栏、按钮、开关与选中态都跟着当前配色走，背景渐变与玻璃材质不变。
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/accents/mist.png" width="400" alt="雾蓝 Mist"><br><sub><b>雾蓝</b> Mist</sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.png" width="400" alt="黛青 Daiqing"><br><sub><b>黛青</b> Daiqing</sub></td>
+    <td align="center"><img src="docs/images/accents/dusk.png" width="400" alt="暮紫 Dusk"><br><sub><b>暮紫</b> Dusk</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/accents/turquoise.png" width="400" alt="松石 Turquoise"><br><sub><b>松石</b> Turquoise</sub></td>
+    <td align="center"><img src="docs/images/accents/amber.png" width="400" alt="琥珀 Amber"><br><sub><b>琥珀</b> Amber</sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.png" width="400" alt="石墨 Graphite"><br><sub><b>石墨</b> Graphite</sub></td>
+  </tr>
+</table>
+
+截图来自一个全新 profile 的空状态，设置面板停在「通用」——所以每张图里都能看到「配色」行当前选中的色块，以及同一页的「减少透明效果」开关。图由脚本生成，不是手工截的：
+
+```bash
+pnpm preview:accents --dialog --language zh     # 需要先 pnpm build，并有一个装好本插件的 profile
+```
+
+脚本会自己起实例、切六次配色、各拍一张（用法见 [tools/README](tools/README.md) §11）。
+
 ## 性能
 
 页面上只有**一处新增的真实模糊**（输入区，`blur(18px) saturate(1.25)`）；菜单的模糊是官方材质，不是本项目加的。滚动场景的 A/B 实测（同机同 Chromium，交替跑 `glass` 与「只关掉这层模糊」）**没测到代价**：两个条件都顶到显示器刷新率上限，帧间隔分布一致。
 
 边界要说清：这是 Chrome 而不是 Electron、是脚本滚动而不是真实滚轮、且只在这一台机器上。这个数字不能当作「所有机器都没问题」的证据。
+
+## 已知限制
+
+完整清单在 [架构文档 §6](docs/architecture.md)，这里只列用户会碰到的几条：
+
+| 限制 | 说明 |
+|---|---|
+| **不是像素级克隆** | DSH Go 是 Flutter、DSH 是 Web DOM，布局引擎、字体栈、滚动模型都不同。复刻的是视觉语言（色彩、材质、节奏、形状），不是逐像素截图。 |
+| **不用自定义字体** | 官方插件资源路由只服务 `.svg .png .webp .jpg .jpeg`，不含 `.woff2`。本主题用系统字体栈——与上游「刻意不打包中文字体」的取舍一致。 |
+| **没有桌宠 / 品牌字标** | 吉祥物与字标不在 AGPL 授权内，也不适合移动端交互。品牌图稿由宿主内联 SVG 渲染，插件改不了。 |
+| **没有移动端交互** | 横向推页、右滑返回、底部 sheet、安全区适配：桌面端没有这些模型，不做。 |
+| **不做壁纸取色** | 桌面端无壁纸概念。六套预设配色 + 界面内切换。 |
+| **不要与其他皮肤同时启用** | 两个皮肤都改同一批 `--dsw-*` 令牌，谁后写谁赢，视觉会打架。见 [架构文档 §7](docs/architecture.md)。 |
 
 ## 文档
 
@@ -83,6 +138,7 @@ package.json                  包清单：dsh.bundle / dsh.client / exports / sc
 cordis.patch.yml              bundle 补丁层（把本包 insert 进 profile 的插件表）
 icon.svg                      插件管理器展示图标
 LICENSE                       MIT
+NOTICE                        来源声明（设计参考、致谢、非官方）
 CHANGELOG.md                  变更日志
 locale/{en,zh}.json           插件管理器静态元数据（插件列表里的标题与描述）
 build/
@@ -94,6 +150,7 @@ src/
   client/state.ts             强调色与「减少透明效果」的状态机
   client/preferences.ts       偏好持久化（localStorage，带降级）
   client/tokens.ts            官方令牌覆盖层 + 材质变量
+  client/writer.ts            令牌层的写入与能力降级（没有 overrideTokens 时只写材质变量）
   client/palettes.ts          六套配色（由脚本生成，勿手改）
   client/settings.tsx         设置 → 通用里的「配色」行（槽位注册 + 组件）
   client/settings.module.css  该行的样式（只读 --dsw-* 令牌）
@@ -105,6 +162,7 @@ src/
 tests/                        单元测试（令牌契约、材质规则、偏好、文案键）
 tools/                        推导脚本、契约校验、e2e 与性能测量
 docs/                         架构、视觉规范、ADR、参考资料
+docs/images/accents/          六套配色的预览图（由 tools/preview-accents.mjs 生成）
 ```
 
 ## 开发
@@ -126,6 +184,7 @@ pnpm e2e:degraded                                            # 降级路径，�
 pnpm e2e:dual --desktop-runtime <桌面端 resources/app/dsh>    # 双版本逐字段 diff
 pnpm e2e:uninstall                                           # 卸载清洁度审计（自带临时 DSH_HOME）
 pnpm e2e:scenarios --desktop-runtime <桌面端 resources/app/dsh>  # 8 个交叉场景 + 截图
+pnpm preview:accents --dialog --language zh                  # 重新生成 README 里的六套配色预览
 ```
 
 ## 四条约束

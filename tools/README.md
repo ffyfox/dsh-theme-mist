@@ -226,6 +226,31 @@ node tools/check-pack.mjs      # 也在 pnpm verify 里
 
 实测（2026-11-02）：9 个文件，22.6 KB 打包 / 69.3 KB 解包，清单里没有任何源码、测试或文档。
 
+## 11. `preview-accents.mjs`
+
+README 里六套配色预览图的生成器（T5.3）：起一个实例、切六次配色、各拍一张，让图片成为**可重跑的产物**而不是谁手贴上去的截图。
+
+```bash
+pnpm build
+node tools/preview-accents.mjs --dialog --language zh        # 写进 docs/images/accents/
+node tools/preview-accents.mjs --home /tmp/x --profile web   # 也可以拿来验「装完能不能用」
+```
+
+选项：`--profile`（默认 `t1verify`）、`--home`（默认 `~/.dsh`）、`--workspace`、`--width/--height`（默认 1280×800）、`--appearance light|dark`、`--language zh|en`、`--dialog`、`--desktop-runtime`、`--shots`、`--keep`。
+
+几件踩过的事写在脚本里：
+
+- **外观与语言用启动器的 `--patch` 覆盖**，不写进 profile——为了一张截图去改别人的配置不合适。顺带记一笔：`--patch` 必须排在 `--no-open --port` **前面**，从第一个 app 参数起解析器就把参数交给 app 了，app 不认 `--patch`。
+- **首启弹窗要先关掉**（“添加一个 API Key 开始使用”）：它盖住页面中心并吞掉点击，不关就永远点不到设置。中英文按钮文案都匹配（中：`稍后配置`）。
+- **会话行按位置取，不按文案**：工作区下面第一行永远是「新会话 / New Session」，中文界面下按英文文案过滤会把它当成真会话点开。
+- **窗口尺寸要钉住**：`--window-size` 只是提示，脚本用 `Emulation.setDeviceMetricsOverride` 把视口固定成目标尺寸，否则可能拍出 800×600 的另一种布局。
+
+11 条断言：插件挂载、三张自有样式表、（有色会话时）正文渲染 markdown、设置里能看到「配色」行与六个色块、六套配色逐个生效、无页面异常。
+
+> `--dialog` 是尽力而为：它依赖宿主当次是否弹出首启模态，以及设置入口在哪个 slot（0.2.1 走侧栏按钮，0.2.2 走账号菜单）。拿不到就打印一行 info 继续拍，不会失败。
+
+实测（2026-11-02）：六张 1280×800 PNG，共约 720 KB，全部来自全新 profile 的空状态——**不含任何用户的会话内容**。
+
 ## 参考源码
 
 两个脚本都不联网。需要参考源码时：

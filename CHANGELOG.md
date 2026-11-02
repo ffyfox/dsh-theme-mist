@@ -50,6 +50,9 @@
   OKLab/OKLCH 矩阵为 public domain，并声明「未复制任何 Dart 源码、不含任何品牌 / 吉祥物 / 展示图」以及本包
   非官方、与上游无关联。README「许可与来源」写同一组事实；`tools/check-pack.mjs` 加一条资产白名单断言——
   包里只允许 `icon.svg` 这一个图形文件。
+- **README 与预览图**：六套配色的预览图由 `tools/preview-accents.mjs`（`pnpm preview:accents`）生成，
+  不是手工截图；图取自全新 profile 的空状态，所以不含任何会话内容。README 补齐了支持版本（两版实测）、
+  卸载行为（同时摘 `dependencies` 与 `dsh.profile.bundles`，实测）、已知限制（引架构 §6）与仓库结构。
 - **工程与验证**：`pnpm verify` 串起构建、类型检查、单元测试与三个契约校验（配色一致性、令牌层、打包内容）；
   `tools/e2e-scenarios.mjs` 把主题推到折叠侧栏、设置弹窗、800px 宽度与 2x 显示四种边界。
   `tools/e2e-lifecycle.mjs` 覆盖安装 → 切换配色 → 卸载的完整生命周期；`tools/e2e-degraded.mjs`
