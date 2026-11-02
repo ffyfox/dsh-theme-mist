@@ -431,6 +431,47 @@ if (!canOverride) {
 
 **token 存在性**：`overrideTokens` 允许注册**任意** token 名（源码 `:1950-1951` 的 `exportInspectTokens` 会为未内建的 token 生成 `dynamicToken`），所以覆盖一个 0.2.1 不存在的 token **不会报错**——但也**不会生效**（没有消费方读它）。这意味着：**多覆盖无害，少覆盖会掉效果**。策略是覆盖一个跨版本超集，接受旧版冗余。
 
+### 5.3 双版本渲染实测（T4.1）
+
+2026-11-02 用同一套探针在两版客户端外壳上各跑一遍，逐字段比对。两侧都是**隔离实例**：0.2.1 用全局 CLI 起临时 profile；0.2.2 直接调用桌面端自带运行时（`resources/app/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js`）配独立 `DSH_HOME`，全程不碰真实 profile、不重启桌面应用。
+
+| | 0.2.1-alpha.1（CLI） | 0.2.2-alpha.2（桌面端运行时） |
+|---|---|---|
+| 页面版本戳 | 品牌文字锁定（无版本串） | `0.2.2-alpha.2-f3803c9` |
+| 插件注入的样式表 | 3 张（宿主共 151 张） | 3 张（宿主共 158 张） |
+| 「通用」面板行数 | 13 | 15 |
+| 我们的两行位置 | Font size 之后、Work details 之前 | 同左 |
+
+比对项与结论：
+
+| 比对项 | 结果 |
+|---|---|
+| 39 个被覆盖 / 被引用的令牌 × 明暗两档 | **逐字一致** |
+| 六套配色的 `--dsw-alias-brand-primary` 与 `--dsh-go-page-base` | 六套 × 2 字段**逐字一致** |
+| 输入区座位 / 输入卡布局矩形 | 一致（1153×238 @ 280,280；774×114 @ 469,372） |
+| 全站 `backdrop-filter` 清单 | 都是 1 处、`blur(18px) saturate(1.25)` |
+| `body` 上的主题属性 | 一致（`data-dsh-go-theme` / `data-dsh-go-accent`） |
+| 页面背景图（`background-image`） | 一致 |
+
+**唯一的差异是宿主自己的类名哈希前缀**：输入区座位在 0.2.1 是 `div.wSkVaW_composerSeat`、在 0.2.2 是 `div.e3z7WW_composerSeat`。我们的规则挂在 `[data-composer-seat]` / `[data-slot=…]` 上，不读这类哈希名，所以不受影响——这条差异正好从反面印证了「不依赖哈希类名」那条约定。
+
+**结论：零兼容性修复。** 两版共用同一份令牌表与材质层，没有版本分支。
+
+宿主侧的口径差异（不是插件差异，但影响复现步骤）：
+
+- **设置入口位置变了**：0.2.1 在侧栏底部齿轮（渲染 `settings.trigger`）；0.2.2 没有这个 slot，入口在账户菜单「更多 → Settings」。两者打开后的「通用」面板都是 `settings.general.item` 容器，插件只依赖后者。
+- 0.2.2 的「通用」面板多了左侧分类导航与两行新的官方条目，我们的两行相对位置不变。
+- 0.2.2 的 `ui-settings` 配置项 `enabled` 默认 `true`（`Schema.boolean().default(true)`），桌面端 profile 里那行 `enabled: true` 是显式重复，不是开关闸门。
+
+### 5.4 Electron 窗口 chrome 的交叉面
+
+桌面端窗口是 `titleBarStyle: "hidden"` 的 Electron 窗口，chrome 由宿主自己的 CSS 与 preload 注入的 shadow DOM 菜单构成。逐项核对：
+
+- **插件不碰任何 chrome 钩子**：自有 CSS / TS 里搜不到 `-webkit-app-region`、`data-platform`、`data-windows-titlebar`、`--dsh-frame-*`、`--dsh-windows-*`。
+- **Linux 分支**：在 0.2.2 客户端里手工加 `data-platform="linux"`，`--dsh-frame-top-clearance: 48px` 与 `--dsh-frame-overlay-top: calc(48px + 20px)` 随即出现，渲染与未加该属性时一致。
+- **Windows 分支**（本机不触发，仅模拟）：加 `data-windows-titlebar` 与 `--dsh-windows-titlebar-height: 40px` 后，40px 拖拽条用 `--dsw-specific-sidebar-fill` 上色——正是我们做成半透明的那个令牌，于是标题条与侧栏同色同透、内容整体下移 20px，无错位。
+- **未做**：真机 Electron 窗口内的确认。要在桌面端看到本插件必须先应用内安装并重启（会断开当前会话），这一步留给维护者。
+
 ---
 
 ## 6. 明确做不到的事
@@ -506,5 +547,6 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 | 5 层背景遮挡链是否必须逐层写选择器 | **不必**：全部由 `--dsw-alias-bg-base` 与 `--dsw-specific-sidebar-fill` 驱动 | 同上 §3.3 |
 | `apply()` 返回值能否当 disposer | **不能**，必须用 `ctx.effect()` | 同上 §2.3 |
 | `corner-shape: superellipse(1.5)` 是否生效（Chromium） | 生效，插件自建元素同样有效 | 同上 §4 |
+| 两版渲染是否一致 | **一致**：39 个令牌 × 明暗、六套配色、布局矩形、模糊清单逐字相同；唯一差异是宿主自己的类名哈希 | 本文 §5.3；截图在 `reference/t41-preview/`（未入库） |
 
 **阶段 0 已完成**（2026-11-02），完整结论见 `reference/phase0-findings.md`（内部底稿，未入库）。
