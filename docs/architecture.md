@@ -554,5 +554,8 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 | `apply()` 返回值能否当 disposer | **不能**，必须用 `ctx.effect()` | 同上 §2.3 |
 | `corner-shape: superellipse(1.5)` 是否生效（Chromium） | 生效，插件自建元素同样有效 | 同上 §4 |
 | 两版渲染是否一致 | **一致**：39 个令牌 × 明暗、六套配色、布局矩形、模糊清单逐字相同；唯一差异是宿主自己的类名哈希 | 本文 §5.3；截图在 `reference/t41-preview/`（未入库） |
+| 两版渲染是否一致 | **一致**：39 个令牌 × 明暗、六套配色、布局矩形、模糊清单逐字相同；唯一差异是宿主自己的类名哈希 | 本文 §5.3；截图在 `reference/t41-preview/`（未入库） |
+| 围栏 `diff` 代码块没有红绿 | **宿主行为，与主题无关**：在桌面端把本插件停用后渲染完全相同 | 2026-11-02 用户实测；代码面只碰 `.md-code-block` 的圆角与底色，未改任何 `--shiki-*` |
+| 右栏与交互式终端 | **能开且正常**：右栏入口是 `aria-label="Open right sidebar"`，启动面板给 Workspace files / New terminal / More tools；终端是 xterm（38 行渲染、`bash` 提示符），终端面自身不透明、不串字，全站真模糊仍 1 处 | 2026-11-02 隔离实例实测；截图 `reference/t43-preview/14-terminal-live.png`（未入库） |
 
 **阶段 0 已完成**（2026-11-02），完整结论见 `reference/phase0-findings.md`（内部底稿，未入库）。
