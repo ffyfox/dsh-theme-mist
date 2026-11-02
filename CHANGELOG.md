@@ -40,11 +40,16 @@
   以及两个 window 监听器。唯一保留项是「配色 / 减少透明效果」这条偏好（有意为之：装回来时用户的选择
   还在）。`tools/e2e-uninstall.mjs` 在隔离实例上跑两轮挂载 → 卸载，并断言与基线逐字相同；
   `0.2.1-alpha.1` 与 `0.2.2-alpha.2` 两个客户端版本都跑过。
-- **打包内容契约**：`tools/check-pack.mjs` 把 `npm pack --dry-run` 的清单变成 20 条断言——
-  九个运行期必需项都在、十三条禁止规则一条不中（其中 `*.map` 会把整份 TypeScript 源码带进包，因为
+- **打包内容契约**：`tools/check-pack.mjs` 把 `npm pack --dry-run` 的清单变成 22 条断言——
+  十个运行期必需项都在、十三条禁止规则一条不中（其中 `*.map` 会把整份 TypeScript 源码带进包，因为
   `sourcesContent` 里就是它）、文件数 ≤ 12、解包 ≤ 300 KB；清单字段也固定下来（`dsh.bundle.patch`、
   三项 `dsh.client.inject`、`engines.dsh`、宿主运行时只作 `peerDependencies`、`dependencies` 为空）。
   实测 9 个文件、22.6 KB 打包 / 69.3 KB 解包，无源码泄漏；脚本已进 `pnpm verify`。
+- **许可与来源**：`LICENSE` 为 MIT；新增 `NOTICE`，写明设计参考 DSH Go（固定提交
+  `ca3c4202f0110a9a10311034d532eafd9ee2e290`）、上游主题文件头注明部分设计源自 PiPilot（MIT，© 2026 CikeSeven）、
+  OKLab/OKLCH 矩阵为 public domain，并声明「未复制任何 Dart 源码、不含任何品牌 / 吉祥物 / 展示图」以及本包
+  非官方、与上游无关联。README「许可与来源」写同一组事实；`tools/check-pack.mjs` 加一条资产白名单断言——
+  包里只允许 `icon.svg` 这一个图形文件。
 - **工程与验证**：`pnpm verify` 串起构建、类型检查、单元测试与三个契约校验（配色一致性、令牌层、打包内容）；
   `tools/e2e-scenarios.mjs` 把主题推到折叠侧栏、设置弹窗、800px 宽度与 2x 显示四种边界。
   `tools/e2e-lifecycle.mjs` 覆盖安装 → 切换配色 → 卸载的完整生命周期；`tools/e2e-degraded.mjs`

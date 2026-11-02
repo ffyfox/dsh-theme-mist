@@ -114,7 +114,7 @@ pnpm install          # tsdown + lightningcss + typescript + @types/{node,react}
 pnpm build            # → lib/index.js（Node 半侧）+ lib/client.js（浏览器半侧）
 pnpm typecheck        # tsc --noEmit
 pnpm test             # vitest 单测
-pnpm check:pack       # 打包内容契约（`npm pack --dry-run` 的 20 条断言）
+pnpm check:pack       # 打包内容契约（`npm pack --dry-run` 的 22 条断言）
 pnpm verify           # build + typecheck + test + 三个契约校验（配色 / 令牌 / 打包）
 ```
 
@@ -137,8 +137,10 @@ pnpm e2e:scenarios --desktop-runtime <桌面端 resources/app/dsh>  # 8 个交�
 
 ## 许可与来源
 
-本仓库代码以 [MIT](LICENSE) 发布。
+本仓库代码以 [MIT](LICENSE) 发布。第三方来源声明见 [NOTICE](NOTICE)。
 
-- 本仓库**不含** DSH Go 的代码、素材、字体或图标。视觉语言是独立重实现，不做代码移植。
+- **非官方**。本项目与 DSH Go、DSH-TUI、ccch1mneyyy、DeepSeek 均无关联，也未获其背书；「DeepSeek Harness」只是它挂载的宿主应用。
+- 设计参考固定在 DSH Go 的 `ca3c4202f0110a9a10311034d532eafd9ee2e290` 这个提交上（源码层是 AGPL-3.0）。上游主题文件头写明部分设计源自 [PiPilot](https://github.com/CikeSeven/pi_pilot)（MIT，© 2026 CikeSeven），NOTICE 里一并致谢。
+- 本仓库**不含** DSH Go 的代码、素材、字体或图标。视觉语言是独立重实现，不做代码移植：色值、色相/彩度参数、圆角与间距刻度都按**事实数据**处理，由 `tools/derive-tokens.py` 重新算出，而不是从源文件里搬过来；`tools/check-dart-constants.py` 只在上游源码在场时做数值比对，仓库里不落地任何上游文件。
 - [色值底账](docs/reference/palette.json) 里的色值属于**功能性数据**，由 `tools/derive-tokens.py` 从 DSH Go 公开仓库的配色常量推导而来；脚本把数值作为常量硬编码，运行时不读取、也不分发上游源码。
 - DSH Go 的品牌与美术素材（名称标识、Deepy、鲸娘、展示图等）版权归 ccch1mneyyy 所有，**不在本项目的许可范围内**，本项目也不使用它们。

@@ -1,0 +1,49 @@
+dsh-Go-theme — a client theme for DeepSeek Harness
+Package: @dsh-external/dsh-client-ui-theme-go
+License: MIT (see LICENSE)
+=======================================================================
+
+This theme is an independent visual reimplementation inspired by DSH Go.
+
+Design reference:
+  DSH Go — https://github.com/ccch1mneyyy/dsh-Go
+  Pinned commit: ca3c4202f0110a9a10311034d532eafd9ee2e290
+  License: AGPL-3.0 (source) — no source code was copied
+  The reference's theme files note portions derived from PiPilot (MIT),
+  Copyright (c) 2026 CikeSeven, https://github.com/CikeSeven/pi_pilot
+
+No brand assets, mascots, character artwork, or README imagery from
+DSH Go are included. All visual assets in this package are original.
+
+Colour derivation follows Björn Ottosson's OKLab/OKLCH publication (2020),
+which the reference also uses; the matrices are public domain.
+
+
+What "independent reimplementation" means here
+----------------------------------------------
+
+* Design values — colour stops, hue and chroma parameters, radii, spacing
+  steps, motion timings, material opacity — are treated as facts, not as
+  expression. They were recomputed from those facts by tools/derive-tokens.py
+  (an OKLCH implementation written for this project) rather than copied out of
+  a source file. tools/check-dart-constants.py compares the two sets of numbers
+  for transcription errors; it reads the reference at check time and never
+  vendors an upstream file into this repository.
+
+* No Dart file from DSH Go was copied, translated or adapted. The TypeScript in
+  src/ is written against the DSH client-plugin API and the palette numbers this
+  project derived. Where the desktop web renderer needed different behaviour
+  (a real page gradient, two tiers of glass, backdrop-filter only on the
+  composer seat), the effect was re-tuned or re-designed, not ported.
+
+* Every surface here is built from official --dsw-* design tokens plus a small
+  amount of plugin-owned CSS. There is no image, sprite, font file or icon from
+  upstream: icon.svg is drawn for this project.
+
+
+Not affiliated
+--------------
+
+This package is not affiliated with, endorsed by, or published by DSH Go,
+DSH-TUI, ccch1mneyyy, or DeepSeek. "DeepSeek Harness" and "DSH" name the host
+application this theme plugs into; the theme is a third-party plugin.

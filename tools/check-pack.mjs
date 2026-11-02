@@ -34,6 +34,7 @@ const REQUIRED = [
   'icon.svg',
   'README.md',
   'LICENSE',
+  'NOTICE',
 ]
 
 /**
@@ -55,6 +56,17 @@ const FORBIDDEN = [
   { pattern: /^pnpm-lock\.yaml$/, why: 'lockfile' },
   { pattern: /^\./, why: 'dotfiles' },
 ]
+
+/**
+ * Image and font extensions, and the one file allowed to carry one (T5.2).
+ *
+ * The licence boundary is "no brand assets, mascots or README imagery from the
+ * reference", which is easy to state and easy to break by dropping a screenshot
+ * into icon.svg's slot. Mapping every asset extension onto a one-entry allowlist
+ * is the machine-checkable form of that sentence.
+ */
+const ASSET_EXTENSIONS = /\.(svg|png|jpe?g|webp|gif|avif|ico|woff2?|ttf|otf)$/i
+const ALLOWED_ASSETS = ['icon.svg']
 
 /** Upper bounds: the bundle is ~57 KB, so anything near these numbers means something crept in. */
 const MAX_FILES = 12
@@ -110,6 +122,9 @@ for (const path of paths) {
   if (rule !== undefined) leaked.push(path + ' (' + rule.why + ')')
 }
 check('nothing private is in the tarball', leaked.length === 0, leaked.join(', '))
+const assets = paths.filter((path) => ASSET_EXTENSIONS.test(path))
+check('the only visual asset is our own icon', assets.every((path) => ALLOWED_ASSETS.includes(path)),
+  assets.length === 0 ? 'none' : assets.join(', '))
 check('the file count stays bounded', packed.entryCount <= MAX_FILES, packed.entryCount + ' of ' + MAX_FILES)
 check('the unpacked size stays bounded', packed.unpackedSize <= MAX_UNPACKED_BYTES,
   (packed.unpackedSize / 1024).toFixed(1) + ' KB of ' + (MAX_UNPACKED_BYTES / 1024) + ' KB')

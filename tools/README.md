@@ -206,7 +206,7 @@ node tools/e2e-uninstall.mjs --dsh /path/to/resources/app/dsh/node_modules/@deep
 
 ## 10. `check-pack.mjs`
 
-打包内容契约（T5.1）：把「`npm pack --dry-run` 看起来对」变成可重跑的 20 条断言。
+打包内容契约（T5.1/T5.2）：把「`npm pack --dry-run` 看起来对」变成可重跑的 22 条断言。
 
 ```bash
 node tools/check-pack.mjs      # 也在 pnpm verify 里
@@ -216,8 +216,8 @@ node tools/check-pack.mjs      # 也在 pnpm verify 里
 
 | 组 | 查什么 |
 |---|---|
-| **完整性** | 九个运行期必需项各在清单里：两个半侧的产物、`cordis.patch.yml`、中英两份字典、图标、README、LICENSE |
-| **无泄漏** | 十三条禁止规则一条不中：`src/` / tests / tools / docs / tasks / build / node_modules / `*.map` / `*.ts(x)` / tsconfig / tsdown.config / lockfile / 点文件；同时卡文件数 ≤ 12、解包体积 ≤ 300 KB |
+| **完整性** | 十个运行期必需项各在清单里：两个半侧的产物、`cordis.patch.yml`、中英两份字典、图标、README、LICENSE、NOTICE |
+| **无泄漏** | 十三条禁止规则一条不中：`src/` / tests / tools / docs / tasks / build / node_modules / `*.map` / `*.ts(x)` / tsconfig / tsdown.config / lockfile / 点文件；同时卡文件数 ≤ 12、解包体积 ≤ 300 KB；图形与字体文件只允许 `icon.svg` 一个（T5.2 的素材边界） |
 | **清单字段** | `dsh.bundle.patch`、`dsh.client.inject` 三项、`platform: web`、`exports` 两侧、`engines.dsh`、宿主运行时在 `peerDependencies` 而不在 `dependencies`、`dependencies` 为空、license/description 就位 |
 
 **为什么专门盯着 `.map`**：`lib/client.js.map` 的 `sourcesContent` 里是**整份 TypeScript 源码**。`files` 现在逐文件点名，所以它进不了包；但哪天有人把它改写成 `"lib"`，泄漏就会无声发生。这条规则是那次改写的哨兵。
