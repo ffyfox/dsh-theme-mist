@@ -4,6 +4,18 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "theme",
+    "client-plugin",
+    "light-dark"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-alpha.1 <0.3.0"
+  },
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
@@ -39,8 +51,9 @@
     "typecheck": "tsc --noEmit",
     "check:palettes": "node tools/check-palettes.mjs",
     "check:tokens": "node tools/check-tokens.mjs",
+    "check:pack": "node tools/check-pack.mjs",
     "test": "vitest run",
-    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm check:palettes && pnpm check:tokens",
+    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm check:palettes && pnpm check:tokens && pnpm check:pack",
     "e2e:lifecycle": "node tools/e2e-lifecycle.mjs",
     "e2e:degraded": "node tools/e2e-degraded.mjs",
     "e2e:dual": "node tools/e2e-dual-version.mjs",

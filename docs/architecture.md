@@ -576,5 +576,6 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 | 自有 `<style>` 由谁回收 | **宿主回收**：插件自身没有删除逻辑，实测卸载后全站 `<style>` 从 152 回到 149 | 同上；宿主 `removeOwnedStyles` 实测 |
 | 卸载后还留下什么 | **只有一条配色偏好**（`localStorage` 的 `dsh.go-theme.preferences.v1`），有意为之：装回来时用户的选择还在 | 同上 |
 | 交叉场景脚本能否重跑 | **能，但工作区要有内容**：默认展开的工作区若只剩空白会话，markdown / 代码面两条断言会红；用 `--workspace <片段>` 指一个有真实对话的工作区 | 2026-11-02 实测；`tools/e2e-scenarios.mjs` |
+| 兼容门禁到底看什么 | **`engines.dsh` 单独决定**；没有它时只检查 `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` 的 peer（每个都得满足），其它 peer 名字一律跳过；比较用 `{ includePrerelease: true }`，所以 0.2.1-alpha.1 与 0.2.2-alpha.2 都算在 `>=0.2.1-alpha.1 <0.3.0` 里，而 0.2.0 不算 | `dsh-app-boot/lib/index.js` 的 `unmetRequirements` / `evaluatePluginCompatibility`；`tools/check-pack.mjs` 固定这两个字段 |
 
 **阶段 0 已完成**（2026-11-02），完整结论见 `reference/phase0-findings.md`（内部底稿，未入库）。

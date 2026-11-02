@@ -114,7 +114,8 @@ pnpm install          # tsdown + lightningcss + typescript + @types/{node,react}
 pnpm build            # → lib/index.js（Node 半侧）+ lib/client.js（浏览器半侧）
 pnpm typecheck        # tsc --noEmit
 pnpm test             # vitest 单测
-pnpm verify           # build + typecheck + test + 两个契约校验
+pnpm check:pack       # 打包内容契约（`npm pack --dry-run` 的 20 条断言）
+pnpm verify           # build + typecheck + test + 三个契约校验（配色 / 令牌 / 打包）
 ```
 
 集成测试要真实浏览器与服务，单独跑（用法见 [tools/README](tools/README.md)）：

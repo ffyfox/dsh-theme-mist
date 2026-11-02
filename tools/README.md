@@ -1,6 +1,6 @@
 # tools/
 
-三个脚本。两个负责**算出** [`docs/visual-spec.md`](../docs/visual-spec.md) 里所有颜色数值（不是手抄），一个负责**校验**产物没有漂移。
+两类脚本：**算出** [`docs/visual-spec.md`](../docs/visual-spec.md) 里的颜色数值（不是手抄），以及**校验**产物没有漂移、边界行为仍然成立。§1–§3 是前者与契约校验，§4 起是集成测试，§10 是打包内容契约。
 
 ## 1. `derive-tokens.py`
 
@@ -203,6 +203,28 @@ node tools/e2e-uninstall.mjs --dsh /path/to/resources/app/dsh/node_modules/@deep
 ```
 
 这条结论也写进了 `docs/architecture.md` §3.2（清理契约）与 §8.1。
+
+## 10. `check-pack.mjs`
+
+打包内容契约（T5.1）：把「`npm pack --dry-run` 看起来对」变成可重跑的 20 条断言。
+
+```bash
+node tools/check-pack.mjs      # 也在 pnpm verify 里
+```
+
+它问 npm 要同一份清单，然后查三件事：
+
+| 组 | 查什么 |
+|---|---|
+| **完整性** | 九个运行期必需项各在清单里：两个半侧的产物、`cordis.patch.yml`、中英两份字典、图标、README、LICENSE |
+| **无泄漏** | 十三条禁止规则一条不中：`src/` / tests / tools / docs / tasks / build / node_modules / `*.map` / `*.ts(x)` / tsconfig / tsdown.config / lockfile / 点文件；同时卡文件数 ≤ 12、解包体积 ≤ 300 KB |
+| **清单字段** | `dsh.bundle.patch`、`dsh.client.inject` 三项、`platform: web`、`exports` 两侧、`engines.dsh`、宿主运行时在 `peerDependencies` 而不在 `dependencies`、`dependencies` 为空、license/description 就位 |
+
+**为什么专门盯着 `.map`**：`lib/client.js.map` 的 `sourcesContent` 里是**整份 TypeScript 源码**。`files` 现在逐文件点名，所以它进不了包；但哪天有人把它改写成 `"lib"`，泄漏就会无声发生。这条规则是那次改写的哨兵。
+
+**反向验证过**：临时把 `files` 改成 `["lib", "src", ...]` 再跑，脚本立刻红——26 个文件、`lib/client.js.map` 与全部 `.ts/.tsx` 被点名。改回去后恢复全绿。
+
+实测（2026-11-02）：9 个文件，22.6 KB 打包 / 69.3 KB 解包，清单里没有任何源码、测试或文档。
 
 ## 参考源码
 
