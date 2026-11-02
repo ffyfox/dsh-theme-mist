@@ -628,5 +628,13 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 
 bg-base 归零后，靠它当填充的表面必须在语义钩子上重绑。宿主 14 个包里有 24 处 `background: var(--dsw-alias-bg-base)`：页面级与遮罩级 15 处透明正好；卡片级 9 处多数有语义钩子（`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）；**4 处只剩哈希类名**（cordis 业务卡、trajectory 工具目录条目、会话图片缩略图、AskQuestionCard 提问卡），会失去填充。接受这个缺口，不为此引入哈希选择器。
 
-**一处需要澄清的误记**：`[data-tool]` 钩子在 0.2.2 上是空操作——ToolRow 根节点本身不画背景，工具包里唯一用 `bg-base` 的是 AskQuestionCard。因此桌面端「思考 / 代码 / 运行命令」几行没有卡片底色是**宿主自己的设计**，不是 T5.5 的回归。要让它们像 DSH Go 那样成卡，需要我们在 `[data-tool]` 上自己画背景，那是新决策。
+**一处已订正的说法（2026-11-03，按上游源码复核）**：此前把「工具行没有卡片底色」记成需要新决策的偏离，错在把上游想成了卡。上游 HEAD 的事实是：
+
+- `app/lib/ui/chat/chat_rows.dart`：`toolGroupThreshold = 3`——**连续 ≥3 次**调用收成一行 `ToolGroupRow`，不足 3 次各占一行 `ToolCallRow`；`_gapBefore` 让相邻过程行之间的间距为 0。
+- `app/lib/ui/chat/widgets/stream_row.dart`：单行外壳 `StreamRowFrame` = `minHeight 32` + 上下各 4 + 左右各 8 的 bleed + `InkWell` + `Squircle.border(AppShape.sm)`，**不画背景**；展开的内容挂在 `StreamThread`（左侧 1px 细线）下。
+- `app/lib/ui/chat/widgets/chat_card.dart`：玻璃卡 `ChatCard`（`GlassSurface(tier: card)`、圆角 20）**只用于**审批卡 / 提问卡 / 改动卡 / 产物卡。
+
+宿主这边 `[data-tool]` 根只有 `flex-direction:column`、`[data-chat-call-id]`（`.callRow`）只有 `radius-sm`，同样不画底色——**两边同构**。因此「在 `[data-tool]` 上补背景」是反方向的改动：它会把密集调用画成一摞小方块，而上游是把它们收成一行。真正的差异只剩分组模型：上游按「连续 ≥3 次」合并，宿主是整轮过程折叠（`data-turn-process` / `data-step-process`），条目粒度 CSS 接不到，记录为接受的缺口。
+
+另：`[data-tool]` / `[data-chat-call-id]` 上把 `--dsw-alias-bg-base` 重绑到 card 档的规则**并非空操作**——AskQuestionCard 渲染在 `[data-tool="ask_user_question"]` 内并声明 `background: var(--dsw-alias-bg-base)`，按继承应已拿到该填充。所以上文「4 处只剩哈希类名」里的**提问卡一项待实景复核**，验过之前不要当作确定缺口。
 

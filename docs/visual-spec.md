@@ -663,7 +663,7 @@ wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-b
 
 bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 处 `background: var(--dsw-alias-bg-base)`，其中页面级 / 遮罩级（15 处）透明正好；卡片级 9 处大多数能接语义钩子（`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）。**剩下 4 处只有哈希类名**：cordis 业务卡、trajectory 工具目录条目、会话里的图片缩略图，以及 **AskQuestionCard**（提问卡；它是唯一一个既有 `bg-base` 填充又完全没有语义属性的卡片，确定会失去填充）。记在 README 已知限制里——接受这个缺口，不为此破例用哈希选择器。
 
-> 澄清一处误记：`[data-tool]` 钩子在 0.2.2 上是**空操作**。ToolRow 根节点本身不画背景（工具包里唯一用 `bg-base` 的是 AskQuestionCard），所以桌面端「思考 / 代码 / 运行命令」这几行没有卡片底色是宿主自己的设计，不是本次改动的回归。若要让它们像 DSH Go 那样成卡，得由我们在 `[data-tool]` 上自己画背景——那是新决策，不是修 bug。
+> 订正（2026-11-03，按上游源码复核）：此前写成「要让工具行像 DSH Go 那样成卡」是误记——上游工具行**本来就是平面行**。`chat_rows.dart` 的 `toolGroupThreshold = 3` 把连续 ≥3 次调用收成一行摘要；单行外壳 `stream_row.dart:StreamRowFrame` 是 `minHeight 32` + 上下 4 + 左右 8 的 bleed + `InkWell` / `Squircle.border(sm)`，不画背景。玻璃卡 `ChatCard`（`GlassSurface(tier: card)`、圆角 20）只给审批 / 提问 / 改动 / 产物四种卡。宿主同为平面行（`[data-tool]` 根只有 `flex-direction:column`），所以 `[data-tool]` 上补背景是反方向改动；剩下的差异只有分组（上游连续 ≥3 次合并，宿主是整轮过程折叠）。
 
 #### card / pill 与统一的高度配方（T2.4 + T2.5）
 
@@ -671,7 +671,7 @@ bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 �
 
 | 档 | 落在哪 | 填充 | 实现 |
 |---|---|---|---|
-| card | 用户气泡、Markdown 代码块、工具卡、披露头 | `--dsh-go-card-fill`（白 0.62 / 0.05）；气泡与代码块仍用各自的语义 token | 只补 `inset` 发丝线 + 顶边高光 |
+| card | 用户气泡、Markdown 代码块、工具行内嵌的提问卡、披露头 | `--dsh-go-card-fill`（白 0.62 / 0.05）；气泡与代码块仍用各自的语义 token | 只补 `inset` 发丝线 + 顶边高光 |
 | pill | composer 里的模型胶囊 | `--dsh-go-pill-fill`（白 0.55 / 0.06） | 填充 + 发丝线 + 高光 |
 > **T2.4 当时以为 card 的填充是"免费"的**（凡是画 `--dsw-alias-bg-base` 的卡片自然半透明），这个判断在 T5.5 被推翻：那层 0.36 的 mist 压在同样偏 mist 的页面上，卡片与页面只差 ΔE00 0.71，等于没有卡片。现在 card 档有自己的填充 `--dsh-go-card-fill`（白 0.62 / 0.05），与页面的差是 5.04。
 
