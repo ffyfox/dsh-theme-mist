@@ -5,8 +5,10 @@
  * and the section strips that border from the last child
  * (`.objMSq_section > [data-slot="settings.general.item"] > :last-child`).
  *
- * Only `--dsw-alias-*` / `--dsw-static-*` / `--dsw-radius-*` tokens are read, so
- * the row re-themes with the six accents for free instead of hard-coding hues.
+ * Chrome reads only `--dsw-alias-*` / `--dsw-radius-*` tokens. The one thing
+ * that must come from our own data is the swatch colour: `--go-seed-light` and
+ * `--go-seed-dark` are set inline per button, and `light-dark()` picks the one
+ * matching the resolved scheme (the host paints `color-scheme` on <html>).
  */
 .row {
   display: flex;
@@ -30,7 +32,11 @@
 }
 
 .option {
+  display: flex;
   flex: 1 1 80px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   box-sizing: border-box;
   padding: 12px 6px;
   border: 0.5px solid var(--dsw-alias-border-l4);
@@ -44,12 +50,37 @@
 }
 
 @media (hover: hover) {
-  .option:hover:not([aria-pressed='true']) {
+  .option:hover:not([aria-checked='true']) {
     background: var(--dsw-alias-interactive-bg-hover);
   }
 }
 
-.option[aria-pressed='true'] {
-  border-color: var(--dsw-static-neutral-bluish-400);
-  background: var(--dsw-alias-bg-module-platform);
+/*
+ * Selected is stated three times over so it never rests on colour alone: the
+ * checkmark inside the chip, an inset brand ring, and a brand-tinted fill.
+ * The ring is a box-shadow rather than a thicker border — border width would
+ * shift the label by half a pixel per side on every selection change.
+ */
+.option[aria-checked='true'] {
+  border-color: color-mix(in srgb, var(--dsw-alias-brand-primary) 55%, transparent);
+  background: var(--dsw-alias-interactive-bg-active);
+  box-shadow: inset 0 0 0 1px var(--dsw-alias-brand-primary);
+}
+
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  /* First declaration is the fallback for engines without light-dark(); the
+     second wins wherever it parses, which is everywhere this ships. */
+  background: var(--go-seed-light);
+  background: light-dark(var(--go-seed-light), var(--go-seed-dark));
+  /* Light-mode seeds are all dark and dark-mode seeds all light, so the glyph
+     has to flip with the mode as well. */
+  color: light-dark(#ffffff, #16181d);
 }

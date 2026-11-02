@@ -278,6 +278,8 @@ T3.1 落地时逐行核对了在册项，发现**原计划的 `order: 12` 已被
 取小数 `11.5` 而不是给现有条目重新编号：语义恰好是「紧贴字号之下」，且不动任何官方条目。0.2.1 上实测渲染顺序为 `#3 Font size → #4 配色 → #5 Work details`。
 
 另两点实测：行容器带 `data-slot="settings.general.item"` 且 `display: contents`，**所有行都是它的子元素**（所以「第几行」要数它的 `children`，不是数 `[data-slot]` 节点）；末行底边由 `>:last-child{border-bottom:none}` 剥掉，因此行必须自画 `.5px solid var(--dsw-alias-border-l2)`。
+另一点对主题插件有用的实测：宿主在 `<html>` 上写了 `style="color-scheme: light|dark;"`（由「跟随系统」解析后的结果，不是偏好值）。
+这意味着**任何需要按明暗取不同颜色的插件 CSS 都不必自己监听 `theme/change`**：把一对值交给 CSS，用 `light-dark()` 让引擎按继承的 `color-scheme` 选。T3.2 的六个色块就是这样实现的（`--go-seed-light` / `--go-seed-dark` 内联在按钮上），既没有新增全局属性，也没有新增事件监听。
 
 **控件自包含约束**（官方明文规定）：
 

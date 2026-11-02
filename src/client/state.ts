@@ -66,6 +66,22 @@ export function subscribeAccent(listener: (accent: AccentId) => void): () => voi
   }
 }
 
+/**
+ * Walk the accent order by `delta` positions, wrapping at both ends.
+ *
+ * The picker's arrow keys and the order the row renders come from the same
+ * source ({@link ACCENT_IDS}), so this stays correct if the list ever changes.
+ * @param from - current accent; an unknown value is treated as the first.
+ * @param delta - positions to move; negative walks backwards.
+ * @returns the accent reached.
+ */
+export function stepAccent(from: AccentId, delta: number): AccentId {
+  const size = ACCENT_IDS.length
+  const start = ACCENT_IDS.indexOf(from)
+  const base = start < 0 ? 0 : start
+  return ACCENT_IDS[((base + delta) % size + size) % size]
+}
+
 /** Whether the material layer is degraded to opaque surfaces. */
 export function getReduceMaterial(): boolean {
   return reduceMaterial
