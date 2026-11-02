@@ -5,6 +5,10 @@
   "compilerOptions": {
     "target": "es2024",
     "module": "esnext",
+    // The settings row is a .tsx component. "react-jsx" keeps the automatic
+    // runtime, so the bundle imports "react/jsx-runtime" — one of the keys the
+    // shell's frozen module table answers.
+    "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     // The build preset (build/) runs in Node; the plugin sources run in the

@@ -227,7 +227,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 
 | Slot 名 | 位置与语义 | 官方已有项 | 适用形态 |
 |---|---|---|---|
-| **`settings.general.item`**（推荐首选） | 「设置 → 通用（General）」面板内的**设置行** | 外观（浅/深/跟随系统）`order: 10`、字号 `order: 11` | `order: 12`，紧跟在官方「外观」与「字号」下方——用户在同一页即可同时切换「浅色/深色/跟随系统」与「6 套 DSH Go 配色 + 减少透明效果」 |
+| **`settings.general.item`**（推荐首选） | 「设置 → 通用（General）」面板内的**设置行** | 外观（浅/深/跟随系统）`order: 10`、字号 `order: 11` | `order: 11.5`，紧跟在官方「外观」与「字号」下方——用户在同一页即可同时切换「浅色/深色/跟随系统」与「6 套 DSH Go 配色 + 减少透明效果」 |
 | **`settings.section`**（备选） | 设置弹窗**左侧一级导航标签页** | 通用 `order: 0`、`skin-manager` `order: 115` | `order: 116`，作为左侧独立标签页紧跟在「皮肤管理」之后 |
 
 ```ts
@@ -240,7 +240,7 @@ export function apply(ctx) {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: 'dsh-go-theme',
-    order: 12,
+    order: 11.5,
     locale: NS,
     inject: () => ({ /* 配色列表、当前值、setAccent、reduceMaterial */ }),
   }, DshGoThemeGeneralRow))
@@ -252,6 +252,32 @@ export function apply(ctx) {
   // 求值 —— 传静态字符串时切语言不会重算。
 }
 ```
+
+**实测记录（T3.1，2026-11-02）**：
+
+T3.1 落地时逐行核对了在册项，发现**原计划的 `order: 12` 已被占用**——`transcript-view`（ui-chat）就是 12。渲染端按 `(a.order ?? 0) - (b.order ?? 0)` 排序，平局退回注册先后，所以撞号的落点是「看谁先激活」，不可依赖。
+
+0.2.1-alpha.1 与 0.2.2-alpha.2 的在册 order **完全一致**：
+
+| order | 条目 | 来源 |
+|---|---|---|
+| -20 | permission | permission-presets |
+| 0 | language | locale |
+| 10 | appearance | ui-theme |
+| 11 | font-size | ui-theme |
+| **11.5** | **本插件的配色行** | 本项目 |
+| 12 | transcript-view | ui-chat |
+| 15 | developer-tools | settings-general |
+| 16 | shortcuts | shortcuts |
+| 17 | link-opening | ui-chat |
+| 20 | composer-enter | conversation |
+| 30 | performance-usage | ui-chat |
+| 90 | session-log | settings-session-log |
+| 100 | current-version | settings-general |
+
+取小数 `11.5` 而不是给现有条目重新编号：语义恰好是「紧贴字号之下」，且不动任何官方条目。0.2.1 上实测渲染顺序为 `#3 Font size → #4 配色 → #5 Work details`。
+
+另两点实测：行容器带 `data-slot="settings.general.item"` 且 `display: contents`，**所有行都是它的子元素**（所以「第几行」要数它的 `children`，不是数 `[data-slot]` 节点）；末行底边由 `>:last-child{border-bottom:none}` 剥掉，因此行必须自画 `.5px solid var(--dsw-alias-border-l2)`。
 
 **控件自包含约束**（官方明文规定）：
 

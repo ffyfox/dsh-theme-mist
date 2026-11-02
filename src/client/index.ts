@@ -6,10 +6,13 @@
  * teardown that restores the document exactly. T1.5 adds palette persistence.
  * T2 adds the material layer: `material.module.css` paints the page gradient
  * and glow, fed by the `--dsh-go-*` variables that ride the same token layer.
+ * T3.1 adds the settings seat: the accent row lives in `settings.tsx` and its
+ * copy in `strings.ts`, wired up at the bottom of {@link apply}.
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { PALETTES, type AccentId } from './palettes.ts'
 import { loadPreferences, updatePreferences } from './preferences.ts'
+import { registerSettingsRow } from './settings.tsx'
 import {
   ACCENT_EVENT,
   REDUCE_EVENT,
@@ -20,6 +23,7 @@ import {
   subscribeAccent,
   subscribeReduceMaterial,
 } from './state.ts'
+import { SETTINGS_NS, en, zh } from './strings.ts'
 import { buildTokenLayer } from './tokens.ts'
 // Global-only stylesheet: the page gradient and the two guards around it.
 // Imported for its side effect — the build emits one <style data-plugin> per
@@ -134,4 +138,13 @@ export function apply(ctx: Context): void {
       if (rootClass !== '') body.classList.remove(rootClass)
     }
   }, 'ui-theme-go: token layer')
+
+  // Settings surface (stage 3). The dictionaries go in as an effect so a reload
+  // or unload drops them; the row itself is registered through slots.inject,
+  // which waits for the owner section and cleans up with the plugin fiber.
+  ctx.effect(
+    () => ctx.locale.register(SETTINGS_NS, { zh, en }),
+    'ui-theme-go: settings dictionaries',
+  )
+  registerSettingsRow(ctx)
 }

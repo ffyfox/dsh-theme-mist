@@ -8,7 +8,7 @@
 
 ## 现在的状态
 
-阶段 0–2 已完成：令牌层与材质层可用，装上即变色。**设置界面还在开发中** —— 在这之前，配色与「减少透明效果」用下文的临时方式切换。
+阶段 0–2 已完成，阶段 3 进行中：令牌层与材质层可用，装上即变色；「设置 → 通用」里已经有「配色」一行，六套强调色可在界面里切换。**「减少透明效果」的界面开关还没做**（T3.4），目前只有下文的事件入口。
 
 ## 安装
 
@@ -45,13 +45,16 @@ localStorage.removeItem('dsh.go-theme.preferences.v1')
 
 ## 用法
 
-明暗跟随系统。强调色默认为「雾蓝」，设置界面完成前可以用事件临时切换（选择会持久化）：
+明暗跟随系统。打开「设置 → 通用」，在「配色」一行里选六套之一：雾蓝 / 黛青 / 暮紫 / 松石 / 琥珀 / 石墨。切换即时生效、无需刷新，选择写进 `localStorage`。
+
+脚本或其他插件可以绕过界面直接驱动，与界面共用同一份状态，选择同样会持久化：
 
 ```js
-// 六套：mist 雾蓝 / daiqing 黛青 / dusk 暮紫 / turquoise 松石 / amber 琥珀 / graphite 石墨
 window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: 'amber' }))
 window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: true }))
 ```
+
+「减少透明效果」目前**只有**上面这个事件入口 —— 开关本身在 T3.4。
 
 ## 性能
 
@@ -79,7 +82,7 @@ cordis.patch.yml              bundle 补丁层（把本包 insert 进 profile �
 icon.svg                      插件管理器展示图标
 LICENSE                       MIT
 CHANGELOG.md                  变更日志
-locale/{en,zh}.json           插件管理器静态元数据
+locale/{en,zh}.json           插件管理器静态元数据（插件列表里的标题与描述）
 build/
   tsdown.client.ts            构建预设：node 半侧 ESM + 浏览器半侧 CJS 闭包工厂
   web-platform.ts             与宿主共享的模块表（客户端 bundle 的 externals）
@@ -90,9 +93,14 @@ src/
   client/preferences.ts       偏好持久化（localStorage，带降级）
   client/tokens.ts            官方令牌覆盖层 + 材质变量
   client/palettes.ts          六套配色（由脚本生成，勿手改）
+  client/settings.tsx         设置 → 通用里的「配色」行（槽位注册 + 组件）
+  client/settings.module.css  该行的样式（只读 --dsw-* 令牌）
+  client/strings.ts           该行的中英文案（ctx.locale 字典）
+  client/dsh-slots.d.ts       槽位服务的类型声明（坑位契约，实测得出）
+  client/dsh-locale.d.ts      翻译服务的类型声明
   client/theme.module.css     令牌之外的视觉层
   client/material.module.css  材质层：玻璃、卡片、圆角、发丝线、动效
-tests/                        单元测试（令牌契约、材质规则、偏好）
+tests/                        单元测试（令牌契约、材质规则、偏好、文案键）
 tools/                        推导脚本、契约校验、e2e 与性能测量
 docs/                         架构、视觉规范、ADR、参考资料
 ```
@@ -100,7 +108,7 @@ docs/                         架构、视觉规范、ADR、参考资料
 ## 开发
 
 ```bash
-pnpm install          # tsdown + lightningcss + typescript + @types/node + vitest
+pnpm install          # tsdown + lightningcss + typescript + @types/{node,react} + vitest
 pnpm build            # → lib/index.js（Node 半侧）+ lib/client.js（浏览器半侧）
 pnpm typecheck        # tsc --noEmit
 pnpm test             # vitest 单测

@@ -127,10 +127,10 @@ const snapshot = async () => JSON.parse(await evaluate(snapshotExpr(PROBE_TOKENS
 /**
  * One <style data-plugin> per *.module.css in src/client — the build injects
  * one tag file, not one tag per plugin. `material.module.css` (T2.2) made this
- * two; the invariant worth testing is that the number is exact and stable, not
- * that it is one.
+ * two and `settings.module.css` (T3.1) three; the invariant worth testing is
+ * that the number is exact and stable, not that it is one.
  */
-const EXPECTED_STYLE_TAGS = 2
+const EXPECTED_STYLE_TAGS = 3
 const setPatch = (content) => writeFileSync(PATCH_FILE, content)
 const ENABLED_PATCH = '# e2e-lifecycle: bundle enabled via dsh.profile.bundles.\n[]\n'
 const DISABLED_PATCH = '# e2e-lifecycle: temporarily disabled.\n- id: ui-theme-go\n  disabled: true\n'
