@@ -1,0 +1,9 @@
+/*
+ * T1.1 skeleton stylesheet. It exists to prove the build pipeline — a
+ * `*.module.css` import must compile through lightningcss, yield a hashed
+ * class map, and inject one `<style data-plugin>` tag at factory execution.
+ * The real material layer (surfaces, hairlines, glow) lands in T2.
+ */
+.root {
+  --dsh-go-active: 1;
+}

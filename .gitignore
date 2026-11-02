@@ -1,0 +1,21 @@
+# 依赖与构建产物
+node_modules/
+lib/
+*.tsbuildinfo
+.DS_Store
+
+# Python 副产物
+__pycache__/
+*.pyc
+
+# 仅本机保留：过程档案与设计底稿，不随仓库分发
+tasks/
+docs/licensing.md
+docs/compatibility.md
+docs/reference/token-audit.md
+docs/reference/phase0-findings.md
+docs/reference/token-inventory-runtime.json
+docs/reference/perf-baseline.md
+docs/reference/phase0-assets/
+docs/reference/*-preview/
+tools/cp3-preview.js

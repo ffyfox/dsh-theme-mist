@@ -1,0 +1,6 @@
+# Theme bundle patch: inserts the client entry into the profile's plugin roster.
+# Installed via `dsh plugin --profile <name> add <path-or-package>`; the bundle
+# declares dsh.bundle in package.json so reconcile() puts it into `bundles`.
+- insert:
+    - id: ui-theme-go
+      name: '@dsh-external/dsh-client-ui-theme-go'

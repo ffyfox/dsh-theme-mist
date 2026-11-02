@@ -1,0 +1,299 @@
+/*
+ * Material layer, part 1 — the page surface (T2.2) and the translucency that
+ * lets it through the app shell (T2.7).
+ *
+ * This file deliberately declares no classes. CSS Modules only rewrites class
+ * names, so every selector below stays global: the app shell is somebody
+ * else's DOM. Every hook is a semantic attribute (data-dsh-go-theme,
+ * role / aria-modal), never a hashed class name — class names change with the
+ * upstream build, attributes do not.
+ *
+ * All values arrive as --dsh-go-* variables written by tokens.ts through the
+ * theme service, so each accent gets its own gradient, light/dark resolves
+ * itself, and teardown happens with the tokens.
+ */
+
+/* The page canvas.
+ *
+ * background-color is the opaque palette colour: a safety net for the one frame
+ * before the variables land, and for anything that reads the body box directly.
+ * On top of it sit three viewport-anchored layers — the accent glow at the top
+ * right, the neighbouring haze at the bottom left, and the palette's own
+ * vertical ramp underneath. Fixed attachment keeps the gradient still while the
+ * panes scroll over it; without it the gradient would slide with the scrolling
+ * content and read as a moving backdrop rather than as the page. */
+body[data-dsh-go-theme] {
+  background-color: var(--dsh-go-page-base);
+  background-image:
+    radial-gradient(120% 80% at 100% 0%, var(--dsh-go-glow), transparent 70%),
+    radial-gradient(100% 70% at 0% 100%, var(--dsh-go-haze), transparent 70%),
+    linear-gradient(to bottom, var(--dsh-go-page-top), var(--dsh-go-page-bottom));
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Full-window takeovers stay opaque.
+ *
+ * --dsw-alias-bg-base is translucent so the gradient can reach the app shell.
+ * That same token is also the fill of surfaces that claim the entire window
+ * (the sign-in viewport, onboarding), where letting messages ghost through a
+ * dialog standing in front of the app would be a visual break.
+ *
+ * Only the variable is re-bound here, never a component's own background: a
+ * dialog that already painted itself from another token keeps that paint, and
+ * the true full-window cases simply get the opaque page colour back. aria-modal
+ * is the semantic (non-hashed) way to name exactly that set. */
+body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
+  --dsw-alias-bg-base: var(--dsh-go-page-base);
+}
+
+/* --- Glass, tier 1 of 2: chrome (T2.3) -----------------------------------
+ *
+ * Chrome is the tier that floats over things that move — DSH Go blurs it and
+ * skips the blur everywhere else. On this layout exactly one surface qualifies:
+ * the composer seat, sticky at the bottom of the conversation, with the message
+ * flow scrolling behind it.
+ *
+ * The blur sits on the seat, not on the card inside it. One blur then covers
+ * the whole bottom band, while the card — a translucent fill painted above the
+ * blurred backdrop — still reads as glass. A second blur on the card would
+ * sample an already-blurred backdrop and pay for it twice.
+ *
+ * The material variables are declared on the two surfaces themselves, never on
+ * body. Measured on Chromium 156: a gradient built from an *inherited* custom
+ * property does not re-resolve when the ancestor's value changes — toggling
+ * "reduce transparency" switched the card's fill but left the seat's fade
+ * painting the old colour. Declaring the variables where they are used keeps
+ * every value local, so both repaint on the same frame.
+ */
+/* The second attribute is there for specificity, not for meaning: the official
+   rule that paints this fade is .root[data-phase=active] .composerSeat (0,3,0),
+   which out-specifies a bare attribute selector. Matching on both attributes
+   we already know are on this node reaches (0,3,1) and wins without
+   !important. */
+body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
+  --dsh-go-glass-blur: blur(18px) saturate(1.25);
+  /* Mirrors the official fade — same 36px stop, same geometry — with the end
+     colour on a hook, so the degradation paths can make it opaque without
+     duplicating the gradient. */
+  --dsh-go-seat-end: var(--dsw-alias-bg-base);
+  background-image: linear-gradient(180deg, transparent 0, var(--dsh-go-seat-end) 36px);
+  backdrop-filter: var(--dsh-go-glass-blur);
+}
+
+/* The card itself: fill, hairline, top highlight, soft lift. Radius and
+   geometry stay official — only the material is ours. */
+body[data-dsh-go-theme] [data-composer-card] {
+  --dsh-go-glass-fill: var(--dsh-go-chrome-fill);
+  background-color: var(--dsh-go-glass-fill);
+  box-shadow:
+    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
+    inset 0 1px 0 var(--dsh-go-highlight),
+    0 8px 24px var(--dsh-go-shadow),
+    0 1px 3px var(--dsh-go-shadow);
+}
+
+/* --- Degradation ---------------------------------------------------------
+ *
+ * Three paths, one effect: no backdrop-filter support, an OS-level request for
+ * less transparency, or the in-app switch. Each swaps the fill to the near
+ * opaque chrome solid, drops the blur, and makes the seat's fade opaque.
+ * Half-transparent *without* blur is the worst of both worlds — scrolled text
+ * then runs straight into the input line, which reads worse than losing the
+ * material altogether.
+ *
+ * The @supports / @media blocks below carry the same specificity as the two
+ * rules above and rely on source order; the attribute rule is more specific so
+ * the in-app switch wins either way.
+ */
+@supports not (backdrop-filter: blur(1px)) {
+  body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
+    --dsh-go-glass-blur: none;
+    --dsh-go-seat-end: var(--dsh-go-chrome-solid);
+  }
+  body[data-dsh-go-theme] [data-composer-card] {
+    --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
+    --dsh-go-glass-blur: none;
+    --dsh-go-seat-end: var(--dsh-go-chrome-solid);
+  }
+  body[data-dsh-go-theme] [data-composer-card] {
+    --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
+  }
+}
+
+body[data-dsh-go-theme][data-dsh-go-reduce-material] [data-composer-seat][data-conversation-region='composer'] {
+  --dsh-go-glass-blur: none;
+  --dsh-go-seat-end: var(--dsh-go-chrome-solid);
+}
+
+body[data-dsh-go-theme][data-dsh-go-reduce-material] [data-composer-card] {
+  --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
+}
+
+/* --- Card & pill, tier 2 of 2 (T2.4) ------------------------------------
+ *
+ * Neither tier blurs: what sits behind them is the page gradient, not moving
+ * content, so a blur would cost a compositing layer and show nothing
+ * (surfaces.dart:17-19). They are built from three things instead — a
+ * translucent fill, a 0.5px rim, and a 1px highlight along the top edge.
+ *
+ * The fills are mostly free: every card painted with --dsw-alias-bg-base went
+ * translucent back in T2.7. These rules only add the rim and the highlight.
+ */
+body[data-dsh-go-theme] [data-message-bubble] {
+  box-shadow:
+    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
+    inset 0 1px 0 var(--dsh-go-highlight);
+}
+
+/* Markdown code blocks. The renderer keeps one stable, non-hashed class name
+   here, which is the intended hook — but this file is a CSS Module, so the
+   class has to be escaped with :global() or lightningcss would localise it and
+   the rule would silently match nothing. The fill stays the codeWell token: a
+   well is a recessed surface, not a translucent card. */
+body[data-dsh-go-theme] :global(.md-code-block) {
+  box-shadow:
+    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
+    inset 0 1px 0 var(--dsh-go-highlight);
+}
+
+/* Pill tier: the model capsule in the composer footer — the one pill on this
+   layout with a stable semantic hook. The shape belongs to the button inside
+   the slot (8px radius); the slot's own child wrapper is a square box, so
+   painting it would show corners behind the pill. Fill is derived from the
+   chrome glass, so the pill reads as part of the same material family. */
+body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
+  background-color: color-mix(in srgb, var(--dsh-go-chrome-fill) 80%, transparent);
+  box-shadow:
+    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
+    inset 0 1px 0 var(--dsh-go-highlight);
+}
+
+/* --- Shape: the DSH Go radius ladder (T2.1) ------------------------------
+ *
+ * DSH Go's ladder is 6 / 10 / 14 / 20 / 28 + pill (shapes.dart:9-28); the
+ * official one is 4 / 8 / 12 / 16 / 20 / 28. The two meet at the ends — the
+ * composer is already 28 and bubbles are already 20 — so this is not a global
+ * "make everything rounder": only the steps that sit between those anchors are
+ * re-pointed, and only on the containers that exist in DSH Go.
+ *
+ * The official --dsw-radius-* tokens are deliberately NOT overridden: they live
+ * on :root and feed every component, so changing them would move radii on
+ * surfaces DSH Go has no opinion about (sidebar rows, menus of third-party
+ * plugins, the terminal). See visual-spec §1.1.
+ */
+body[data-dsh-go-theme] {
+  --dsh-go-radius-xs: 6px;
+  --dsh-go-radius-sm: 10px;
+  --dsh-go-radius-md: 14px;
+  --dsh-go-radius-lg: 20px;
+  --dsh-go-radius-xl: 28px;
+  --dsh-go-radius-pill: 999px;
+}
+
+/* Card tier: markdown code blocks move 16 -> 14 (official md 12 / lg 16 sit on
+   either side of the DSH Go md step). */
+body[data-dsh-go-theme] :global(.md-code-block) {
+  border-radius: var(--dsh-go-radius-md);
+}
+
+/* Inline code: 8 -> 6. :not(pre) keeps the block's own <code> out of it. */
+body[data-dsh-go-theme] :not(pre) > code {
+  border-radius: var(--dsh-go-radius-xs);
+}
+
+/* Menu surfaces: 16 -> 14. Semantic hook, no class names. */
+body[data-dsh-go-theme] [role='menu'] {
+  border-radius: var(--dsh-go-radius-md);
+}
+
+
+/* Chip / model capsule: 8 -> stadium. corner-shape: round is required — the
+   official sheet applies superellipse(1.5) to every element, which would bend
+   the caps of a 999px radius away from a true semicircle. */
+body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
+  border-radius: var(--dsh-go-radius-pill);
+  corner-shape: round;
+}
+
+
+/* --- Elevation: one recipe for every surface we did not paint (T2.5) -----
+ *
+ * The --dsw-elevation-* variables are declared by the official theme on
+ * "body, body *", so overriding them on body alone is inert (visual-spec §8.1
+ * R1) — every element keeps its own computed value. Re-declaring them across
+ * our own scope reaches the 30 declarations in ~15 packages that read them.
+ *
+ * The change is deliberately small: keep the official stroke reference (each
+ * component picks its own stroke colour, and all of those are our border
+ * alphas), add the DSH Go top highlight, and swap the neutral-black ambient
+ * shadow for the palette's cold ink at a low alpha.
+ */
+body[data-dsh-go-theme],
+body[data-dsh-go-theme] * {
+  --dsw-elevation-panel:
+    var(--dsw-elevation-stroke),
+    inset 0 1px 0 var(--dsh-go-highlight),
+    0 2px 8px var(--dsh-go-shadow);
+  --dsw-elevation-prominent:
+    var(--dsw-elevation-stroke),
+    inset 0 1px 0 var(--dsh-go-highlight),
+    0 6px 20px var(--dsh-go-shadow);
+  --dsw-elevation-soft:
+    var(--dsw-elevation-stroke),
+    inset 0 1px 0 var(--dsh-go-highlight),
+    0 4px 16px var(--dsh-go-shadow);
+}
+
+/* --- Motion (T2.6) -------------------------------------------------------
+ *
+ * Only two things on this layout are ours to animate: the hover feedback on
+ * the model capsule (our fill replaced the official base colour, so the switch
+ * between them now needs a transition of its own) and the composer's material
+ * when "reduce transparency" flips it. Both are short and sit in the same
+ * register as the official motion.
+ *
+ * The durations are the DSH Go scale (motion.dart:13-37), shortened by ~20%
+ * for a pointer device (visual-spec §9): press 90 / quick 160 / standard 240.
+ * They are our own variables on purpose — the official --ds-transition-*
+ * tokens are shared with the sidebar and panel drag animations, and redefining
+ * them would move the layout, not the theme (visual-spec §4).
+ *
+ * Deliberately NOT animated: the page glow. It lives in body's background-image,
+ * so a "breathing" effect would repaint the whole viewport every frame — and
+ * DSH Go reserves its ambient 2.4s breath for the connection status dot, which
+ * is official DOM we do not own.
+ */
+body[data-dsh-go-theme] {
+  --dsh-go-duration-press: 90ms;
+  --dsh-go-duration-quick: 160ms;
+  --dsh-go-duration-standard: 240ms;
+  --dsh-go-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
+  transition: background-color var(--dsh-go-duration-quick) var(--dsh-go-ease-standard);
+}
+
+body[data-dsh-go-theme] [data-composer-card] {
+  transition:
+    background-color var(--dsh-go-duration-standard) var(--dsh-go-ease-standard),
+    box-shadow var(--dsh-go-duration-standard) var(--dsh-go-ease-standard);
+}
+
+/* Reduced motion: our transitions are decorative, so they go away entirely.
+ * Nothing in this stylesheet animates, and this guard is what keeps that true
+ * if something is added later. */
+@media (prefers-reduced-motion: reduce) {
+  body[data-dsh-go-theme] [data-slot='conversation.input.model'] button,
+  body[data-dsh-go-theme] [data-composer-card],
+  body[data-dsh-go-theme] [data-composer-seat] {
+    transition: none;
+    animation: none;
+  }
+}

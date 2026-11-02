@@ -1,0 +1,21 @@
+{
+  // Standalone compiler shape (no monorepo extends). Builds are transpile-only
+  // via tsdown (dts: false), so @deepseek-ai/dsh-* type-only imports resolve to
+  // nothing and are erased before the purity gate sees them.
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    // The build preset (build/) runs in Node; the plugin sources run in the
+    // browser. Both type worlds are needed in one project.
+    "types": ["node"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "noEmit": true
+  },
+  "include": ["src", "build", "tests", "tsdown.config.ts"]
+}
