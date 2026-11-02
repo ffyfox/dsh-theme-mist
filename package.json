@@ -44,6 +44,7 @@
     "e2e:lifecycle": "node tools/e2e-lifecycle.mjs",
     "e2e:degraded": "node tools/e2e-degraded.mjs",
     "e2e:dual": "node tools/e2e-dual-version.mjs",
+    "e2e:uninstall": "node tools/e2e-uninstall.mjs",
     "e2e:scenarios": "node tools/e2e-scenarios.mjs"
   },
   "license": "MIT",

@@ -10,7 +10,7 @@
 
 阶段 0–3 已完成：令牌层与材质层可用，装上即变色；「设置 → 通用」里有「配色」与「减少透明效果」两行，六套强调色与材质降级都能在界面里完成，不需要改配置或写脚本。
 
-阶段 4 进行中：客户端两版（`0.2.1-alpha.1` 与 `0.2.2-alpha.2`）的渲染一致性已实测通过，不需要版本分支；桌面端 Electron 窗口内的确认要等应用内安装 + 重启之后才能做。
+阶段 4 已完成：客户端两版（`0.2.1-alpha.1` 与 `0.2.2-alpha.2`）的渲染一致性、八个交叉场景、降级路径与**卸载清洁度**都有脚本可重跑；桌面端 Electron 窗口内的实际效果已确认，不需要版本分支。
 
 ## 安装
 
@@ -123,6 +123,7 @@ pnpm verify           # build + typecheck + test + 两个契约校验
 pnpm e2e:lifecycle --url 'http://127.0.0.1:PORT/?token=...' --profile ~/.dsh/profiles/<profile>
 pnpm e2e:degraded                                            # 降级路径，自带静态服务与 headless Chrome
 pnpm e2e:dual --desktop-runtime <桌面端 resources/app/dsh>    # 双版本逐字段 diff
+pnpm e2e:uninstall                                           # 卸载清洁度审计（自带临时 DSH_HOME）
 pnpm e2e:scenarios --desktop-runtime <桌面端 resources/app/dsh>  # 8 个交叉场景 + 截图
 ```
 

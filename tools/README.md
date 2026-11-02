@@ -92,7 +92,7 @@ node tools/e2e-lifecycle.mjs \
 
 | 组 | 查什么 |
 |---|---|
-| 基线/启用 | 禁用态无主题属性、无自带 style；启用后 6 个探针 token 全部改变，style 数恰好 2（`theme.module.css` + `material.module.css`，恰好等于 `src/client` 下的模块样式表数） |
+| 基线/启用 | 禁用态无主题属性、无自带 style；启用后 6 个探针 token 全部改变，style 数恰好 3（`theme` / `material` / `settings` 三个模块样式表，等于 `src/client` 下的模块样式表数） |
 | 六套切换 | 每套的 `data-dsh-go-accent` 正确、style 数不增长、六套 token 组合互不相同（防「切换没生效但属性变了」） |
 | 卸载与泄漏 | 禁用后 6 个 token 与基线 **逐字相同**、body 内联属性数复原；N 次启停后 style 数与属性集合不变 |
 
@@ -155,14 +155,54 @@ node tools/e2e-dual-version.mjs --desktop-runtime /path/to/resources/app/dsh
 ```bash
 pnpm build
 node tools/e2e-scenarios.mjs --desktop-runtime /path/to/resources/app/dsh
-# 可选 --profile t1verify --home `/.dsh --shots /tmp/shots --keep
+# 可选 --profile t1verify --workspace <工作区名片段> --home ~/.dsh --shots /tmp/shots --keep
 ```
 
 它**只读**现有 profile 的会话：不建会话、不发消息，唯一变化是「当前打开哪个会话」。原因写在脚本头部——手写的会话日志能被服务端投影（`session/projections` 返回 ok，`session/list` 也包含它），但客户端侧栏不列它，从 UI 打不开（2026-11-02 实测）。
 
-15 条断言：会话页上主题在、有 markdown 可看、设置弹窗能开且**插件自身不注入任何 DOM**（宿主最高 z-index 1000，插件 0）、模糊仍只有 1 处、侧栏折叠成 55px 后材质仍在、代码面取到调色板的 code well、语法高亮保留、800px 宽度无横向溢出、2x 下不破版、六套配色在内容多的页面上仍能切、全程无页面异常。
+16 条断言：侧栏列出了可打开的会话、会话页上主题在、有 markdown 可看、设置弹窗能开且**插件自身不注入任何 DOM**（宿主最高 z-index 1000，插件 0）、模糊仍只有 1 处、侧栏折叠成 55px 后材质仍在、代码面取到调色板的 code well、语法高亮保留、800px 宽度无横向溢出、2x 下不破版、六套配色在内容多的页面上仍能切、全程无页面异常。
+
+会话怎么挑：先展开一个工作区（默认是侧栏已经展开的那个，或用 `--workspace <片段>` 指定），再按顺序点开它的会话，直到找到一个带 `<table>` 的。**这里有三个纯时序问题**（冷启动时侧栏的会话行比工作区晚一步出现、大会话的正文晚一步绘制），所以脚本轮询会话行而不是固定 sleep——2026-11-02 曾因为 1.5s 不够而误报「没有带历史的会话」。
 
 **未覆盖**（脚本会打印）：右栏、含长表格 / diff 的会话、交互式终端面板——侧栏只列每个工作区的最新会话，扫不到这些内容，需要先在应用里把这些会话打开过一次。
+
+**跑之前值得知道的**：工作区里若只有刚建的空白会话，`the transcript has markdown to look at` 会红——那是内容不够，不是主题坏了。挑一个有真实对话的工作区（`--workspace dsh-desktop-linux` 这类）即可。
+
+## 9. `e2e-uninstall.mjs`
+
+卸载清洁度审计（T4.4）：把插件真的停掉，再从外面量文档，逐项确认**什么都没留下**。
+
+```bash
+pnpm build
+node tools/e2e-uninstall.mjs                    # 自带临时 DSH_HOME、临时 profile 与 headless Chrome
+node tools/e2e-uninstall.mjs --shots /tmp/shots --keep   # 留截图与临时目录
+```
+
+它**不碰任何真实 profile**：新建一个临时 `DSH_HOME`，在里面做一个只声明本插件的 profile，把仓库 `link:` 进去，然后用该 profile 的 `cordis.patch.yml` 启停插件（HMR 热生效，不刷新页面）。所以验的是真实的 unload 路径，而不是「重开页面看起来没事」。
+
+23 条断言，四组：
+
+| 组 | 查什么 |
+|---|---|
+| 基线 / 挂载 | 插件不在时无标记、无自有样式表；挂载后 3 张自有样式表、body 内联属性 1 → 44、作用域类名与属性各就位且**只标记 1 个节点**；探测的 62 个名字里 58 个计算值变化（43 个由本层写入，其余是引用它们派生的色） |
+| **令牌快照 diff** | 卸载后 62 个名字的计算值与基线**逐字相同**；body 内联声明（名字 + 值 + 优先级）逐条复原——连带宿主自己写的那 1 条内联属性 |
+| **属性 / 样式标签 / 自有节点** | 三个 `data-dsh-go-*` 属性全无、`style[data-plugin*=…]` 与 `style[data-plugin-css*=…]` 都是 0、全站 `<style>` 数回到 149、没有节点带插件标记、没有任何类名来自我们的样式表 |
+| 监听器与残留 | 卸载后再派发两个外部事件完全无反应（监听器已摘）；**唯一保留项**是配色偏好（有意为之）；第二轮挂载 → 卸载同样回到基线 |
+
+实测（2026-11-02）：
+
+| 宿主 | 基线 body 内联 | 挂载后 | 卸载后 | 全站 `<style>` |
+|---|---|---|---|---|
+| `0.2.1-alpha.1`（CLI） | 1 条 | 44 条 | 1 条，逐字相同 | 149 → 152 → 149 |
+| `0.2.2-alpha.2`（桌面端运行时） | 3 条 | 46 条 | 3 条，逐字相同 | 156 → 159 → 156 |
+
+两个版本、各两轮「挂载 → 换配色 → 卸载」全部零差异。跑 0.2.2 只要把 `--dsh` 指到桌面端自带的 `bin.js`：
+
+```bash
+node tools/e2e-uninstall.mjs --dsh /path/to/resources/app/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js
+```
+
+这条结论也写进了 `docs/architecture.md` §3.2（清理契约）与 §8.1。
 
 ## 参考源码
 
