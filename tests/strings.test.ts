@@ -27,8 +27,13 @@ describe('settings dictionaries', () => {
     }
   })
 
-  it('has a title and one name per accent', () => {
-    const expected: StringKey[] = ['accent.title', ...ACCENT_IDS.map((id): StringKey => `accent.${id}`)]
+  it('has a title and one name per accent, plus the switch copy', () => {
+    const expected: StringKey[] = [
+      'accent.title',
+      ...ACCENT_IDS.map((id): StringKey => `accent.${id}`),
+      'material.title',
+      'material.description',
+    ]
     expect(Object.keys(zh).sort()).toEqual([...expected].sort())
   })
 

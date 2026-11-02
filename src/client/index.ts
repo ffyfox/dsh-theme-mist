@@ -12,7 +12,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { PALETTES, type AccentId } from './palettes.ts'
 import { loadPreferences, updatePreferences } from './preferences.ts'
-import { registerSettingsRow } from './settings.tsx'
+import { registerSettingsRows } from './settings.tsx'
 import {
   ACCENT_EVENT,
   REDUCE_EVENT,
@@ -146,5 +146,5 @@ export function apply(ctx: Context): void {
     () => ctx.locale.register(SETTINGS_NS, { zh, en }),
     'ui-theme-go: settings dictionaries',
   )
-  registerSettingsRow(ctx)
+  registerSettingsRows(ctx)
 }

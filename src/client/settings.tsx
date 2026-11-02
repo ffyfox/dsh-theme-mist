@@ -22,7 +22,15 @@ import type { Context } from '@deepseek-ai/cordis'
 import { useSyncExternalStore } from 'react'
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { ACCENT_IDS, PALETTES, type AccentId } from './palettes.ts'
-import { getAccent, setAccent, stepAccent, subscribeAccent } from './state.ts'
+import {
+  getAccent,
+  getReduceMaterial,
+  setAccent,
+  setReduceMaterial,
+  stepAccent,
+  subscribeAccent,
+  subscribeReduceMaterial,
+} from './state.ts'
 import { SETTINGS_NS } from './strings.ts'
 import styles from './settings.module.css'
 
@@ -46,6 +54,22 @@ const ROW_ID = 'dsh-go-theme'
  */
 const ROW_ORDER = 11.5
 
+/**
+ * Entry key for the transparency switch, which gets its own row (T3.4): one
+ * setting per row is what every shipped entry does, and the accent strip is
+ * already 111px tall.
+ */
+const MATERIAL_ROW_ID = 'dsh-go-reduce-material'
+
+/**
+ * Sits one tenth below the accent row and still above `transcript-view` (12),
+ * so the two rows this plugin contributes stay adjacent whatever else loads.
+ */
+const MATERIAL_ROW_ORDER = 11.6
+
+/** Element id the switch points `aria-labelledby` at. */
+const MATERIAL_TITLE_ID = 'dsh-go-material-title'
+
 /** Translator handed to the component by the host because the row declares `locale`. */
 type Translate = (key: string) => string
 
@@ -64,6 +88,9 @@ type SwatchStyle = CSSProperties & {
  * keeps the reference stable, so the subscription is not rebuilt per render.
  */
 const subscribe = (onChange: () => void): (() => void) => subscribeAccent(() => { onChange() })
+
+/** Same adapter for the transparency switch. */
+const subscribeMaterial = (onChange: () => void): (() => void) => subscribeReduceMaterial(() => { onChange() })
 
 /**
  * Draw the checkmark. Ours, not a copied icon: a 12-unit viewBox stroked in
@@ -158,6 +185,37 @@ function AccentRow({ t }: { readonly t: Translate }) {
 }
 
 /**
+ * Render the transparency switch.
+ *
+ * A native button with `role="switch"`, so Space and Enter work without key
+ * handling; `aria-checked` is the state, and the visible title is the name via
+ * `aria-labelledby` rather than a second copy of the same string.
+ * @param props - `t`, bound to {@link SETTINGS_NS} by the slot registry.
+ * @returns the row element tree.
+ */
+function MaterialRow({ t }: { readonly t: Translate }) {
+  const reduce = useSyncExternalStore(subscribeMaterial, getReduceMaterial)
+  return (
+    <div className={styles.switchRow}>
+      <div className={styles.rowText}>
+        <div className={styles.title} id={MATERIAL_TITLE_ID}>{t('material.title')}</div>
+        <div className={styles.description}>{t('material.description')}</div>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={reduce}
+        aria-labelledby={MATERIAL_TITLE_ID}
+        className={styles.switch}
+        onClick={() => { setReduceMaterial(!reduce) }}
+      >
+        <span className={styles.knob} aria-hidden="true" />
+      </button>
+    </div>
+  )
+}
+
+/**
  * Stable element id for one swatch, used only to move focus from the keyboard.
  * @param id - accent id.
  */
@@ -166,18 +224,24 @@ function buttonId(id: AccentId): string {
 }
 
 /**
- * Contribute the row to the General section.
+ * Contribute this plugin's rows to the General section.
  *
  * No `ctx.effect` wrapper: `slots.inject` already defers the registration until
  * the owner section exists, and `slots.register` hangs its own cleanup on the
- * calling fiber, so unloading the plugin removes the row and its styles.
+ * calling fiber, so unloading the plugin removes the rows and their styles.
  * @param ctx - client root context.
  */
-export function registerSettingsRow(ctx: Context): void {
+export function registerSettingsRows(ctx: Context): void {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: ROW_ID,
     order: ROW_ORDER,
     locale: SETTINGS_NS,
   }, AccentRow))
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: MATERIAL_ROW_ID,
+    order: MATERIAL_ROW_ORDER,
+    locale: SETTINGS_NS,
+  }, MaterialRow))
 }

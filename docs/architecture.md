@@ -265,7 +265,8 @@ T3.1 落地时逐行核对了在册项，发现**原计划的 `order: 12` 已被
 | 0 | language | locale |
 | 10 | appearance | ui-theme |
 | 11 | font-size | ui-theme |
-| **11.5** | **本插件的配色行** | 本项目 |
+| **11.5** | **本插件的配色行** | 本项目（T3.1/T3.2） |
+| **11.6** | **本插件的「减少透明效果」开关** | 本项目（T3.4） |
 | 12 | transcript-view | ui-chat |
 | 15 | developer-tools | settings-general |
 | 16 | shortcuts | shortcuts |
