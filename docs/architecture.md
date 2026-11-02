@@ -429,11 +429,15 @@ if (!canOverride) {
 
 **不要**读 `ctx.theme` 的版本号做分支——官方没有暴露版本。用**能力探测 + try/catch**，这是唯一稳定的做法。
 
+落地形态（T4.2）：探测与写入都在 `src/client/writer.ts`。宿主有 `overrideTokens` 时原样转发；没有时只写自有的九个 `--dsh-go-*`（以 `light-dark(light, dark)` 对写入——`light-dark()` 按 `<html>` 上的 `color-scheme` 解析，所以不需要自己监听 `theme/change`），官方令牌一个都不碰，作用域属性、设置行与偏好照旧，并记一条 `ctx.logger.warn`。`ctx.theme` 的读取本身也包在 try/catch 里：未注入的服务一读就抛，能力探测不该把插件带下去。
+
 **token 存在性**：`overrideTokens` 允许注册**任意** token 名（源码 `:1950-1951` 的 `exportInspectTokens` 会为未内建的 token 生成 `dynamicToken`），所以覆盖一个 0.2.1 不存在的 token **不会报错**——但也**不会生效**（没有消费方读它）。这意味着：**多覆盖无害，少覆盖会掉效果**。策略是覆盖一个跨版本超集，接受旧版冗余。
 
 ### 5.3 双版本渲染实测（T4.1）
 
 2026-11-02 用同一套探针在两版客户端外壳上各跑一遍，逐字段比对。两侧都是**隔离实例**：0.2.1 用全局 CLI 起临时 profile；0.2.2 直接调用桌面端自带运行时（`resources/app/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js`）配独立 `DSH_HOME`，全程不碰真实 profile、不重启桌面应用。
+
+> 已脚本化：`node tools/e2e-dual-version.mjs --desktop-runtime <桌面端 resources/app/dsh>`。脚本自己起两侧服务、比对前强制两侧切到同一外观、15 条断言，跑完恢复原状。
 
 | | 0.2.1-alpha.1（CLI） | 0.2.2-alpha.2（桌面端运行时） |
 |---|---|---|

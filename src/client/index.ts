@@ -8,6 +8,8 @@
  * and glow, fed by the `--dsh-go-*` variables that ride the same token layer.
  * T3.1 adds the settings seat: the accent row lives in `settings.tsx` and its
  * copy in `strings.ts`, wired up at the bottom of {@link apply}.
+ * T4.2 moves the write itself into `writer.ts`: a host without
+ * `overrideTokens` gets the material layer plus one warning instead of a crash.
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { PALETTES, type AccentId } from './palettes.ts'
@@ -25,6 +27,7 @@ import {
 } from './state.ts'
 import { SETTINGS_NS, en, zh } from './strings.ts'
 import { buildTokenLayer } from './tokens.ts'
+import { createLayerWriter, warnDegraded } from './writer.ts'
 // Global-only stylesheet: the page gradient and the two guards around it.
 // Imported for its side effect — the build emits one <style data-plugin> per
 // module file, injected when the factory runs and reclaimed by the host on
@@ -54,12 +57,6 @@ const ACCENT_ATTRIBUTE = 'data-dsh-go-accent'
 const REDUCE_ATTRIBUTE = 'data-dsh-go-reduce-material'
 
 /**
- * Layer identity for `overrideTokens`. One layer per source, so re-issuing with
- * the same source replaces the previous layer instead of stacking on top.
- */
-const LAYER_SOURCE = '@dsh-external/dsh-client-ui-theme-go'
-
-/**
  * Mount the theme.
  * @param ctx - client root context, provided by the module loader.
  */
@@ -74,7 +71,12 @@ export function apply(ctx: Context): void {
     if (initial.accent !== getAccent()) setAccent(initial.accent)
     if (initial.reduceMaterial !== getReduceMaterial()) setReduceMaterial(initial.reduceMaterial)
 
-    let revert = ctx.theme.overrideTokens(LAYER_SOURCE, buildTokenLayer(PALETTES[getAccent()]))
+    // Capability probe (T4.2): the host theme owns `overrideTokens`; without it
+    // the writer degrades to our own material variables and says so once.
+    const writer = createLayerWriter(ctx, body)
+    if (writer.degraded) warnDegraded(ctx)
+
+    let revert = writer.write(buildTokenLayer(PALETTES[getAccent()]))
 
     /**
      * Swap the token layer.
@@ -86,7 +88,7 @@ export function apply(ctx: Context): void {
      */
     const applyAccent = (accent: AccentId): void => {
       revert()
-      revert = ctx.theme.overrideTokens(LAYER_SOURCE, buildTokenLayer(PALETTES[accent]))
+      revert = writer.write(buildTokenLayer(PALETTES[accent]))
       body.setAttribute(ACCENT_ATTRIBUTE, accent)
     }
 

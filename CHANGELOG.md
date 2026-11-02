@@ -32,8 +32,12 @@
 - **「减少透明效果」开关**：独立一行（`order: 11.6`），原生 `role="switch"` + `aria-checked`，
   尺寸与官方开关一致（36×20）。开启后所有 `backdrop-filter` 消失、玻璃面换近不透明填充、
   输入区渐隐底改为实色；偏好持久化，卸载后可清理。
+- **能力探测与降级**：宿主没有 `ctx.theme.overrideTokens` 时不再抛错——只写自有的九个 `--dsh-go-*`
+  （`light-dark()` 对形式），官方令牌保持出厂值，作用域属性、设置行与偏好照旧，并记一条 warn。
+  「官方令牌一个都不手写」这条由 e2e 断言守住。
 - **工程与验证**：`pnpm verify` 串起构建、类型检查、单元测试、配色一致性检查与令牌契约检查；
-  `tools/e2e-lifecycle.mjs` 覆盖安装 → 切换配色 → 卸载的完整生命周期。
+  `tools/e2e-lifecycle.mjs` 覆盖安装 → 切换配色 → 卸载的完整生命周期；`tools/e2e-degraded.mjs`
+  在真浏览器里验降级路径，`tools/e2e-dual-version.mjs` 把两个客户端版本拉起来逐字段 diff。
 
 ### Notes
 

@@ -120,6 +120,34 @@ node tools/perf-scroll.mjs --url 'http://127.0.0.1:3190/?token=<TOKEN>' --cdp-po
 
 实测结论：在当前机器上单层模糊**无可测代价**（两个条件都顶到 120 Hz）。边界是 Chrome 而非 Electron、脚本滚动而非真实滚轮、单机数据。
 
+## 6. `e2e-degraded.mjs`
+
+降级路径（T4.2）：把 `lib/client.js` 装进一个只有 `window.__ModuleLoader__` 桩的静态页，喂一个**没有 `overrideTokens`** 的假 context，用真浏览器验「不崩、有日志、样式部分生效」。
+
+```bash
+pnpm build
+node tools/e2e-degraded.mjs            # 自带静态服务与 headless Chrome
+node tools/e2e-degraded.mjs --chrome chromium --keep
+```
+
+14 条断言：装载、`apply()` 不抛、恰好一条含 `overrideTokens` 的 warn（走 `ctx.logger` 而非 console）、作用域属性与 accent 仍写入、两行设置仍注册、九个 `--dsh-go-*` 全是 `light-dark()` 对、**没有任何 `--dsw-*` 被手写**、页面渐变仍绘制、样式表已注入、无未捕获异常，以及卸载后属性 / 变量 / 渐变全部消失。
+
+## 7. `e2e-dual-version.mjs`
+
+双版本一致性（T4.1）：同一套探针在 0.2.1-alpha.1（CLI）与 0.2.2-alpha.2（桌面端运行时）上各跑一遍，再逐字段 diff。
+
+```bash
+pnpm build
+node tools/e2e-dual-version.mjs --desktop-runtime /path/to/resources/app/dsh
+# 可选 --web-profile t1verify --shots /tmp/shots --keep --chrome chromium
+```
+
+它会自己起两侧的服务：Web 侧用 `dsh` 打指定 profile；桌面侧用桌面端自带运行时（`--desktop-runtime`）配**临时 `DSH_HOME`** 和一个只声明本插件的临时 profile——**不碰真实 `desktop` profile、不重启应用**。
+
+15 条断言：两侧都挂载、各 3 张自有样式表、设置面板可打开且六色块 + 开关齐全、两侧都能进深色、无页面异常，以及**逐字段一致**——39 个令牌 × 浅色 / 面板 / 深色三态、布局矩形、模糊清单、页面渐变、`data-dsh-go-*` 属性、六套配色的 `brand-primary` 与 `page-base`。
+
+比对前会**强制两侧切到同一外观**（profile 里记住的深色不是版本差异），跑完恢复原样；宿主的行数与样式表总数只打印、不参与 diff。
+
 ## 参考源码
 
 两个脚本都不联网。需要参考源码时：
