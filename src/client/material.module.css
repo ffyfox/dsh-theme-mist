@@ -79,6 +79,39 @@ html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([d
   background: transparent;
 }
 
+/* --- The sidebar is a pane of glass, not a plate (T5.7-A) ----------------
+ *
+ * Upstream's sidebar is the drawer's own glass: GlassSurface(tier: sheet)
+ * (sessions_drawer.dart), with the sheet's fill, its hairline, its white rim,
+ * and a radius on the *right* corners only — the left edge is the window edge
+ * (sessions_drawer.dart:198-203). The sheet tier is five things
+ * (surfaces.dart:216-224): fill, hairline, rim, blur, shadow. The theme had
+ * copied only the fill, so the column read as a white rectangle pasted onto
+ * the page rather than a pane in front of it: measured at 1524x903@2x the
+ * 245,249,254 plate met the 236,236,248 page in a single pixel, with no
+ * hairline, no highlight and no corner.
+ *
+ * DSH paints the same token on two boxes — the column and the sidebar's own
+ * root — and the column clips its contents, so the shape has to live on the
+ * root. The column keeps nothing: its fill would square off the corners the
+ * root rounds.
+ *
+ * Radius 28 is the sheet tier's own (shapes.dart xl, GlassSurface's default for
+ * chrome and sheet). Hooks are structural: the column is the frame child that
+ * contains the sidebar slot, the root is that slot's first child. */
+body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']) > :has(> [data-slot='sidebar']) {
+  background: transparent;
+  border-right: 0;
+}
+
+body[data-dsh-go-theme] [data-slot='sidebar'] > :first-child {
+  background-color: var(--dsh-go-sheet-fill);
+  border-radius: 0 28px 28px 0;
+  box-shadow:
+    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
+    inset 0 1px 0 var(--dsh-go-highlight);
+}
+
 /* --- Glass tiers, re-bound (T5.5) ---------------------------------------
  *
  * bg-base is transparent now (tokens.ts TRANSPARENT), so every surface that was
