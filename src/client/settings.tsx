@@ -23,13 +23,18 @@ import { useSyncExternalStore } from 'react'
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { ACCENT_IDS, PALETTES, type AccentId } from './palettes.ts'
 import {
+  SIDEBAR_MATERIALS,
   getAccent,
   getReduceMaterial,
+  getSidebarMaterial,
   setAccent,
   setReduceMaterial,
+  setSidebarMaterial,
   stepAccent,
   subscribeAccent,
   subscribeReduceMaterial,
+  subscribeSidebarMaterial,
+  type SidebarMaterial,
 } from './state.ts'
 import { SETTINGS_NS } from './strings.ts'
 import styles from './settings.module.css'
@@ -70,6 +75,22 @@ const MATERIAL_ROW_ORDER = 11.6
 /** Element id the switch points `aria-labelledby` at. */
 const MATERIAL_TITLE_ID = 'dsh-go-material-title'
 
+/**
+ * Entry key for the sidebar material choice (T5.8). Its own row, like every
+ * shipped entry: the accent strip and the switch row already fill the two other
+ * slots this plugin contributes.
+ */
+const SIDEBAR_ROW_ID = 'dsh-go-sidebar-material'
+
+/**
+ * Sits one tenth below the switch row and still above `transcript-view` (12), so
+ * the three rows this plugin contributes stay adjacent whatever else loads.
+ */
+const SIDEBAR_ROW_ORDER = 11.7
+
+/** Element id the choice's group points `aria-labelledby` at. */
+const SIDEBAR_TITLE_ID = 'dsh-go-sidebar-title'
+
 /** Translator handed to the component by the host because the row declares `locale`. */
 type Translate = (key: string) => string
 
@@ -91,6 +112,9 @@ const subscribe = (onChange: () => void): (() => void) => subscribeAccent(() => 
 
 /** Same adapter for the transparency switch. */
 const subscribeMaterial = (onChange: () => void): (() => void) => subscribeReduceMaterial(() => { onChange() })
+
+/** Same adapter for the sidebar material choice. */
+const subscribeSidebar = (onChange: () => void): (() => void) => subscribeSidebarMaterial(() => { onChange() })
 
 /**
  * Draw the checkmark. Ours, not a copied icon: a 12-unit viewBox stroked in
@@ -216,6 +240,72 @@ function MaterialRow({ t }: { readonly t: Translate }) {
 }
 
 /**
+ * Render the sidebar material choice.
+ *
+ * Two options, radio semantics, and the same shape as the accent row — one Tab
+ * stop, arrows move within the group — but text-only: there is nothing to
+ * preview as a swatch, and the effect is visible behind the settings panel the
+ * moment it changes.
+ * @param props - `t`, bound to {@link SETTINGS_NS} by the slot registry.
+ * @returns the row element tree.
+ */
+function SidebarRow({ t }: { readonly t: Translate }) {
+  const material = useSyncExternalStore(subscribeSidebar, getSidebarMaterial)
+
+  const focusOn = (id: SidebarMaterial): void => {
+    const node = document.getElementById(sidebarButtonId(id))
+    if (node !== null) node.focus()
+  }
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>): void => {
+    const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1
+      : 0
+    if (step === 0) return
+    event.preventDefault()
+    const index = SIDEBAR_MATERIALS.indexOf(material)
+    const size = SIDEBAR_MATERIALS.length
+    const next = SIDEBAR_MATERIALS[((index + step) % size + size) % size]
+    setSidebarMaterial(next)
+    focusOn(next)
+  }
+
+  return (
+    <div className={styles.row}>
+      <div className={styles.title} id={SIDEBAR_TITLE_ID}>{t('sidebar.title')}</div>
+      <div className={styles.options} role="radiogroup" aria-labelledby={SIDEBAR_TITLE_ID}>
+        {SIDEBAR_MATERIALS.map((id) => {
+          const selected = id === material
+          return (
+            <button
+              key={id}
+              id={sidebarButtonId(id)}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              tabIndex={selected ? 0 : -1}
+              className={styles.option}
+              onClick={() => { setSidebarMaterial(id) }}
+              onKeyDown={onKeyDown}
+            >
+              <span className={styles.name}>{t('sidebar.' + id)}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Stable element id for one sidebar option, used only to move focus.
+ * @param id - material id.
+ */
+function sidebarButtonId(id: SidebarMaterial): string {
+  return 'dsh-go-sidebar-' + id
+}
+
+/**
  * Stable element id for one swatch, used only to move focus from the keyboard.
  * @param id - accent id.
  */
@@ -244,4 +334,10 @@ export function registerSettingsRows(ctx: Context): void {
     order: MATERIAL_ROW_ORDER,
     locale: SETTINGS_NS,
   }, MaterialRow))
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: SIDEBAR_ROW_ID,
+    order: SIDEBAR_ROW_ORDER,
+    locale: SETTINGS_NS,
+  }, SidebarRow))
 }

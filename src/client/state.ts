@@ -110,3 +110,64 @@ export function subscribeReduceMaterial(listener: (reduce: boolean) => void): ()
     reduceListeners.delete(listener)
   }
 }
+
+/**
+ * Sidebar material (T5.8).
+ *
+ * `sheet` is DSH Go's drawer glass: the sheet tier's fill, hairline, rim and the
+ * radius on its right-hand corners (T5.7-A). `flat` paints the page through the
+ * column and keeps only a hairline — the way upstream draws its detail panel on
+ * the other side (T5.7-B). The two differ in exactly one thing, whether the
+ * column paints the sheet token, which is why this is a preference rather than a
+ * second theme.
+ */
+export type SidebarMaterial = 'sheet' | 'flat'
+
+/** Every accepted value, in the order the settings row renders them. */
+export const SIDEBAR_MATERIALS: readonly SidebarMaterial[] = ['sheet', 'flat']
+
+/**
+ * Custom event on `window` for the sidebar material. Detail is a material id;
+ * unknown values are ignored rather than throwing.
+ */
+export const SIDEBAR_EVENT = 'dsh-go-theme:sidebar-material'
+
+let sidebarMaterial: SidebarMaterial = 'sheet'
+const sidebarListeners = new Set<(material: SidebarMaterial) => void>()
+
+/**
+ * Narrow an unknown value to a sidebar material id.
+ * @param value - anything, typically `event.detail` or a stored string.
+ */
+export function isSidebarMaterial(value: unknown): value is SidebarMaterial {
+  return typeof value === 'string' && (SIDEBAR_MATERIALS as readonly string[]).includes(value)
+}
+
+/** The sidebar material currently applied. */
+export function getSidebarMaterial(): SidebarMaterial {
+  return sidebarMaterial
+}
+
+/**
+ * Select a sidebar material and notify listeners.
+ * @param next - candidate id; invalid values and no-ops are ignored.
+ * @returns true when the value actually changed.
+ */
+export function setSidebarMaterial(next: unknown): boolean {
+  if (!isSidebarMaterial(next) || next === sidebarMaterial) return false
+  sidebarMaterial = next
+  for (const listener of [...sidebarListeners]) listener(sidebarMaterial)
+  return true
+}
+
+/**
+ * Observe sidebar material changes.
+ * @param listener - called after `sidebarMaterial` has already been updated.
+ * @returns unsubscribe function.
+ */
+export function subscribeSidebarMaterial(listener: (material: SidebarMaterial) => void): () => void {
+  sidebarListeners.add(listener)
+  return () => {
+    sidebarListeners.delete(listener)
+  }
+}

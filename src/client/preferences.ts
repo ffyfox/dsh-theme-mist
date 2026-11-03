@@ -10,7 +10,7 @@
  *  - malformed JSON     → fall back to the default, never throw
  *  - storage blocked    → keep an in-memory copy so the session still works
  */
-import { isAccentId } from './state.ts'
+import { isAccentId, isSidebarMaterial, type SidebarMaterial } from './state.ts'
 import type { AccentId } from './palettes.ts'
 
 /** Everything this plugin persists today. */
@@ -18,6 +18,13 @@ export interface GoThemePreferences {
   readonly accent: AccentId
   /** Reserved for the material layer (T2): "reduce transparency" switch. */
   readonly reduceMaterial: boolean
+  /**
+   * Which material the left column is painted with (T5.8): the drawer's glass,
+   * or the page itself plus a hairline. Cosmetic only — the layout does not
+   * change — so it starts at the upstream-faithful value and the other one is
+   * opt-in.
+   */
+  readonly sidebarMaterial: SidebarMaterial
 }
 
 /** Versioned key: a future schema change bumps the suffix instead of migrating in place. */
@@ -27,6 +34,7 @@ export const PREFERENCES_KEY = 'dsh.go-theme.preferences.v1'
 export const DEFAULT_PREFERENCES: GoThemePreferences = Object.freeze({
   accent: 'mist',
   reduceMaterial: false,
+  sidebarMaterial: 'sheet',
 })
 
 /** The slice of the Web Storage API this module needs. */
@@ -85,6 +93,8 @@ export function parsePreferences(raw: unknown): GoThemePreferences {
     accent: isAccentId(record.accent) ? record.accent : DEFAULT_PREFERENCES.accent,
     reduceMaterial:
       typeof record.reduceMaterial === 'boolean' ? record.reduceMaterial : DEFAULT_PREFERENCES.reduceMaterial,
+    sidebarMaterial:
+      isSidebarMaterial(record.sidebarMaterial) ? record.sidebarMaterial : DEFAULT_PREFERENCES.sidebarMaterial,
   }
 }
 

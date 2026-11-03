@@ -95,6 +95,55 @@ describe('page surfaces (T2.7 -> T5.5)', () => {
   })
 })
 
+describe('sidebar material (T5.7 / T5.8)', () => {
+  /** Rules whose selector mentions one marker, comments already stripped. */
+  const rulesFor = (marker: string): string[] =>
+    (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []).filter((text) => text.slice(0, text.indexOf('{')).includes(marker))
+
+  it('paints the sheet on the sidebar root, not on the column', () => {
+    // The column clips its contents, so a radius there would be squared off; the
+    // shape has to live on the root and the column has to stop painting.
+    const column = rulesFor("[data-slot='root'] > :has([data-slot='sidebar'])")
+    expect(column.some((text) => text.includes('background: transparent'))).toBe(true)
+
+    const root = rulesFor("[data-slot='sidebar'] > :first-child")
+    expect(root.length).toBeGreaterThan(0)
+    const sheet = root[0]
+    // The tier token, so "reduce transparency" swaps in the opaque fallback
+    // without a second rule for this surface.
+    expect(sheet).toContain('background-color: var(--dsh-go-sheet-token)')
+    // sessions_drawer.dart:198-203 rounds the right-hand corners only.
+    expect(sheet).toContain('border-radius: 0 28px 28px 0')
+    // The two edge treatments the sheet tier always had (surfaces.dart:216-224).
+    expect(sheet).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
+    expect(sheet).toContain('inset 0 1px 0 var(--dsh-go-highlight)')
+  })
+
+  it('keeps the flat variant behind its attribute and neutralises the sheet', () => {
+    const flat = rulesFor("[data-dsh-go-sidebar='flat']")
+    expect(flat.length).toBe(3)
+    const joined = flat.join('\n')
+    // Re-pointed inside the subtree so the session list's 24px fade fades to
+    // nothing instead of painting a band of sheet colour over the page.
+    expect(joined).toContain('--dsw-specific-sidebar-fill: transparent')
+    expect(joined).toContain('background-color: transparent')
+    expect(joined).toContain('border-radius: 0')
+    expect(joined).toContain('box-shadow: none')
+    // The hairline that replaces the sheet edge.
+    expect(joined).toContain('inset -0.5px 0 0 var(--dsw-alias-border-l1)')
+  })
+
+  it('never borrows the host divider weight for the sidebar edge', () => {
+    // border-l3 is ink 0.25; upstream draws the sheet's edge at ink 0.07 and the
+    // panel's hairline at ink 0.08. A theme rule that reached for l3 would draw
+    // a column divider, not a glass edge.
+    const sidebar = (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? [])
+      .filter((text) => /data-slot='sidebar'|data-dsh-go-sidebar='flat'/u.test(text.slice(0, text.indexOf('{'))))
+    expect(sidebar.length).toBeGreaterThan(0)
+    for (const text of sidebar) expect(text).not.toContain('border-l3')
+  })
+})
+
 describe('glass tiers (T5.5)', () => {
   it.each(ACCENT_IDS)('%s: card and pill are white glass, sheet follows the palette', (id) => {
     const p = PALETTES[id]

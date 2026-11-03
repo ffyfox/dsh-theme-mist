@@ -33,6 +33,9 @@ describe('settings dictionaries', () => {
       ...ACCENT_IDS.map((id): StringKey => `accent.${id}`),
       'material.title',
       'material.description',
+      'sidebar.title',
+      'sidebar.sheet',
+      'sidebar.flat',
     ]
     expect(Object.keys(zh).sort()).toEqual([...expected].sort())
   })

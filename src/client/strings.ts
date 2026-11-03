@@ -25,6 +25,9 @@ export type StringKey =
   | 'accent.graphite'
   | 'material.title'
   | 'material.description'
+  | 'sidebar.title'
+  | 'sidebar.sheet'
+  | 'sidebar.flat'
 
 /** Simplified Chinese dictionary. */
 export const zh: Readonly<Record<StringKey, string>> = Object.freeze({
@@ -37,6 +40,9 @@ export const zh: Readonly<Record<StringKey, string>> = Object.freeze({
   'accent.graphite': '石墨',
   'material.title': '减少透明效果',
   'material.description': '关闭玻璃模糊与半透明底色，改用不透明填充',
+  'sidebar.title': '侧栏材质',
+  'sidebar.sheet': '玻璃',
+  'sidebar.flat': '平铺',
 })
 
 /** English dictionary. Both base locales are mandatory; a missing one fails registration. */
@@ -50,4 +56,7 @@ export const en: Readonly<Record<StringKey, string>> = Object.freeze({
   'accent.graphite': 'Graphite',
   'material.title': 'Reduce transparency',
   'material.description': 'Turn off glass blur and translucent fills',
+  'sidebar.title': 'Sidebar material',
+  'sidebar.sheet': 'Glass',
+  'sidebar.flat': 'Flat',
 })

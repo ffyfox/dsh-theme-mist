@@ -105,11 +105,56 @@ body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']) > :has(
 }
 
 body[data-dsh-go-theme] [data-slot='sidebar'] > :first-child {
-  background-color: var(--dsh-go-sheet-fill);
+  /* The tier token, not the raw fill: "reduce transparency" swaps every tier to
+     its near-opaque fallback in one place (see the degradation block). */
+  background-color: var(--dsh-go-sheet-token);
   border-radius: 0 28px 28px 0;
   box-shadow:
     inset 0 0 0 0.5px var(--dsw-alias-border-l1),
     inset 0 1px 0 var(--dsh-go-highlight);
+}
+
+/* --- ...and the same column, flat (T5.8, `sidebarMaterial: 'flat'`) ------
+ *
+ * Upstream draws its two columns differently on purpose (adaptive_scaffold
+ * .dart): "The panel is a flat column on the page (not a card), set off from
+ * the chat by a hairline. The sidebar keeps the drawer's own glass." This
+ * branch of the preference applies the panel's language to the sidebar — no
+ * fill, the page gradient running straight through, one hairline where the
+ * column ends — and accepts the deviation: the sheet tier's fill is gone, so
+ * the sidebar stops matching the upstream golden (244,247,254 → 235,235,248).
+ *
+ * That is why it is opt-in and not the default. The setting exists because the
+ * desktop window has no titlebar seam to anchor the sheet: on a 1524-wide window
+ * the column reaches the top of the window on web and starts under a 40px
+ * gradient bar in the app (T5.6), and the sheet edge has to carry the whole
+ * separation by itself.
+ *
+ * Three painters have to be turned off, not one: the layout paints the token on
+ * the column, the sidebar paints it again on its own root, and the session list
+ * fades its last 24px into it (`linear-gradient(transparent, var(--dsw-specific
+ * -sidebar-fill))`). The list has no semantic attribute, so the token itself is
+ * re-pointed to transparent *inside* the sidebar subtree: the fade then fades to
+ * nothing instead of leaving a 24px band of sheet colour over the page. The row
+ * drag preview is rendered in a portal outside this subtree and keeps its fill.
+ *
+ * The hairline is border-l1 (ink 0.08) — the value upstream uses for the panel
+ * (chrome.hairline, ink 0.08) and for the sheet's edge (ink 0.07). The host's own
+ * column divider is border-l3 (ink 0.25), three times heavier. */
+body[data-dsh-go-theme][data-dsh-go-sidebar='flat'] [data-slot='sidebar'] {
+  --dsw-specific-sidebar-fill: transparent;
+}
+
+body[data-dsh-go-theme][data-dsh-go-sidebar='flat'] [data-slot='root'] > :has([data-slot='sidebar']) > :has(> [data-slot='sidebar']) {
+  background: transparent;
+  border-right: 0;
+  box-shadow: inset -0.5px 0 0 var(--dsw-alias-border-l1);
+}
+
+body[data-dsh-go-theme][data-dsh-go-sidebar='flat'] [data-slot='sidebar'] > :first-child {
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* --- Glass tiers, re-bound (T5.5) ---------------------------------------

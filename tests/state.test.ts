@@ -6,7 +6,13 @@
  */
 import { describe, expect, it } from 'vitest'
 import { ACCENT_IDS } from '../src/client/palettes.ts'
-import { stepAccent } from '../src/client/state.ts'
+import {
+  getSidebarMaterial,
+  isSidebarMaterial,
+  setSidebarMaterial,
+  stepAccent,
+  subscribeSidebarMaterial,
+} from '../src/client/state.ts'
 
 describe('stepAccent', () => {
   it('walks forward through the declared order', () => {
@@ -34,5 +40,27 @@ describe('stepAccent', () => {
         expect(ACCENT_IDS).toContain(stepAccent(id, delta))
       }
     }
+  })
+})
+
+describe('sidebar material', () => {
+  it('starts at the upstream-faithful value and only accepts the two ids', () => {
+    expect(getSidebarMaterial()).toBe('sheet')
+    for (const bad of ['', 'Sheet', 'glass', null, undefined, 0, {}, []]) {
+      expect(isSidebarMaterial(bad), String(bad)).toBe(false)
+      expect(setSidebarMaterial(bad)).toBe(false)
+    }
+    expect(getSidebarMaterial()).toBe('sheet')
+  })
+
+  it('notifies listeners once per real change and stops after unsubscribe', () => {
+    const seen: string[] = []
+    const unsubscribe = subscribeSidebarMaterial((material) => { seen.push(material) })
+    expect(setSidebarMaterial('flat')).toBe(true)
+    expect(setSidebarMaterial('flat')).toBe(false)
+    unsubscribe()
+    expect(setSidebarMaterial('sheet')).toBe(true)
+    expect(seen).toEqual(['flat'])
+    expect(getSidebarMaterial()).toBe('sheet')
   })
 })

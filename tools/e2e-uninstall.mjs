@@ -11,7 +11,7 @@
  *
  *   1. token snapshot diff — every token the layer writes, as computed values,
  *      plus the whole body inline declaration (name, value *and* priority);
- *   2. body attributes — scope, accent and reduce-material;
+ *   2. body attributes — scope, accent, reduce-material and sidebar material;
  *   3. style tags — ours must be gone from <head>;
  *   4. own nodes — nothing may still carry the scope attribute.
  *
@@ -196,13 +196,14 @@ function snapshotInPage(payload) {
     marked: body.hasAttribute('data-dsh-go-theme'),
     accent: body.getAttribute('data-dsh-go-accent'),
     reduce: body.hasAttribute('data-dsh-go-reduce-material'),
+    sidebar: body.getAttribute('data-dsh-go-sidebar'),
     bodyClasses: [...body.classList],
     ourStyleTags: count('style[data-plugin*="' + pkg + '"]'),
     ourStyleTagsCss: count('style[data-plugin-css*="' + pkg + '"]'),
     allStyleTags: count('style'),
     adopted: document.adoptedStyleSheets.length,
     markedNodes: count('[data-dsh-go-theme]'),
-    accentNodes: count('[data-dsh-go-accent], [data-dsh-go-reduce-material]'),
+    accentNodes: count('[data-dsh-go-accent], [data-dsh-go-reduce-material], [data-dsh-go-sidebar]'),
     goInline: Array.from(body.style).filter((name) => name.startsWith('--dsh-go-')).length,
     bodyInlineCount: body.style.length,
   }
@@ -354,7 +355,7 @@ try {
   check('1/4 token snapshot diff is empty', tokenDiff.count === 0, tokenDiff.count + ' differ' + (tokenDiff.count === 0 ? '' : ' — ' + tokenDiff.sample))
   const inlineDiff = diffMaps(baseline.inline, uninstalled.inline)
   check('body inline declaration back to the official set', inlineDiff.count === 0, inlineDiff.count + ' differ' + (inlineDiff.count === 0 ? '' : ' — ' + inlineDiff.sample))
-  check('2/4 no scope attribute on body', uninstalled.marked === false && uninstalled.accent === null && uninstalled.reduce === false, JSON.stringify({ marked: uninstalled.marked, accent: uninstalled.accent, reduce: uninstalled.reduce }))
+  check('2/4 no scope attribute on body', uninstalled.marked === false && uninstalled.accent === null && uninstalled.reduce === false && uninstalled.sidebar === null, JSON.stringify({ marked: uninstalled.marked, accent: uninstalled.accent, reduce: uninstalled.reduce, sidebar: uninstalled.sidebar }))
   check('3/4 no style tag of ours remains', uninstalled.ourStyleTags === 0 && uninstalled.ourStyleTagsCss === 0, uninstalled.ourStyleTags + ' / ' + uninstalled.ourStyleTagsCss)
   check('the host stylesheet count is back to baseline', uninstalled.allStyleTags === baseline.allStyleTags && uninstalled.adopted === baseline.adopted, baseline.allStyleTags + ' -> ' + uninstalled.allStyleTags + ', adopted ' + baseline.adopted + ' -> ' + uninstalled.adopted)
   check('4/4 no node keeps a plugin marker', uninstalled.markedNodes === 0 && uninstalled.accentNodes === 0, JSON.stringify({ marked: uninstalled.markedNodes, accent: uninstalled.accentNodes }))

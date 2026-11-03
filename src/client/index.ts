@@ -18,12 +18,16 @@ import { registerSettingsRows } from './settings.tsx'
 import {
   ACCENT_EVENT,
   REDUCE_EVENT,
+  SIDEBAR_EVENT,
   getAccent,
   getReduceMaterial,
+  getSidebarMaterial,
   setAccent,
   setReduceMaterial,
+  setSidebarMaterial,
   subscribeAccent,
   subscribeReduceMaterial,
+  subscribeSidebarMaterial,
 } from './state.ts'
 import { SETTINGS_NS, en, zh } from './strings.ts'
 import { buildTokenLayer } from './tokens.ts'
@@ -57,6 +61,13 @@ const ACCENT_ATTRIBUTE = 'data-dsh-go-accent'
 const REDUCE_ATTRIBUTE = 'data-dsh-go-reduce-material'
 
 /**
+ * Which material the left column is painted with (T5.8), readable from CSS as
+ * `body[data-dsh-go-sidebar="flat"]`. The attribute is always present, so the
+ * stylesheet can name both states instead of treating "absent" as a third one.
+ */
+const SIDEBAR_ATTRIBUTE = 'data-dsh-go-sidebar'
+
+/**
  * Mount the theme.
  * @param ctx - client root context, provided by the module loader.
  */
@@ -70,6 +81,7 @@ export function apply(ctx: Context): void {
     const initial = loadPreferences()
     if (initial.accent !== getAccent()) setAccent(initial.accent)
     if (initial.reduceMaterial !== getReduceMaterial()) setReduceMaterial(initial.reduceMaterial)
+    if (initial.sidebarMaterial !== getSidebarMaterial()) setSidebarMaterial(initial.sidebarMaterial)
 
     // Capability probe (T4.2): the host theme owns `overrideTokens`; without it
     // the writer degrades to our own material variables and says so once.
@@ -113,6 +125,15 @@ export function apply(ctx: Context): void {
       updatePreferences({ reduceMaterial: reduce })
     })
 
+    const applySidebar = (material: string): void => {
+      body.setAttribute(SIDEBAR_ATTRIBUTE, material)
+    }
+    applySidebar(getSidebarMaterial())
+    const unsubscribeSidebar = subscribeSidebarMaterial((material) => {
+      applySidebar(material)
+      updatePreferences({ sidebarMaterial: material })
+    })
+
     // External entry point: lets a user script or another plugin drive the
     // theme without importing this bundle. Unknown values are ignored.
     const onExternal = (event: Event): void => {
@@ -125,18 +146,26 @@ export function apply(ctx: Context): void {
     }
     window.addEventListener(REDUCE_EVENT, onReduceExternal)
 
+    const onSidebarExternal = (event: Event): void => {
+      setSidebarMaterial((event as CustomEvent<unknown>).detail)
+    }
+    window.addEventListener(SIDEBAR_EVENT, onSidebarExternal)
+
     // Teardown must run through ctx.effect: returning a function from apply()
     // is NOT registered as a disposer (measured in phase 0, see
     // docs/reference/phase0-findings.md §2.3).
     return () => {
       window.removeEventListener(ACCENT_EVENT, onExternal)
       window.removeEventListener(REDUCE_EVENT, onReduceExternal)
+      window.removeEventListener(SIDEBAR_EVENT, onSidebarExternal)
       unsubscribe()
       unsubscribeReduce()
+      unsubscribeSidebar()
       revert()
       body.removeAttribute(BODY_ATTRIBUTE)
       body.removeAttribute(ACCENT_ATTRIBUTE)
       body.removeAttribute(REDUCE_ATTRIBUTE)
+      body.removeAttribute(SIDEBAR_ATTRIBUTE)
       if (rootClass !== '') body.classList.remove(rootClass)
     }
   }, 'ui-theme-go: token layer')
