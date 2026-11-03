@@ -402,19 +402,27 @@ describe('material stylesheet', () => {
     expect(CSS).toContain('background-attachment: fixed')
   })
 
-  it('sizes the composer veil to the viewport instead of fixing it (T5.12)', () => {
-    // A fixed background stops tracking the viewport the moment its element
-    // becomes a containing block for fixed backgrounds, and 0.2.2-alpha.3
-    // turns the seat into one with `will-change: transform` (alpha.2 does not).
-    // Sizing the image and anchoring its bottom-right corner keeps the band on
-    // the page's own colour on both builds; measured 1/255 against 28/255.
-    const veil = (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []).find(
-      (text) => text.includes('--dsh-theme-mist-veil-mask') && text.includes('background-size'),
+  it('anchors the composer veil to the viewport, and to the docked corner when promoted (T5.12, T5.13)', () => {
+    // Two geometries, two failures. A floating seat (the welcome screen) is only
+    // covered by fixed attachment, which is how the page canvas paints itself;
+    // a seat-sized image is 6 to 8/255 off there. A docked seat is a containing
+    // block for fixed backgrounds — 0.2.2-alpha.3 adds `will-change: transform`
+    // on `.root[data-phase=active]` — so fixed attachment then resolves against
+    // the seat box: 16 to 18/255 off. Docked, the seat's bottom-right corner is
+    // the viewport's, so the viewport-sized image pins to it instead (1/255).
+    const rules = CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []
+    const veil = rules.find(
+      (text) => text.includes('--dsh-theme-mist-veil-mask') && text.includes('background-attachment'),
     )
     expect(veil).toBeDefined()
-    expect(veil).toContain('background-size: 100vw 100vh')
-    expect(veil).toContain('background-position: 100% 100%')
-    expect(veil).not.toContain('background-attachment')
+    expect(veil).toContain('background-attachment: fixed')
+
+    const docked = rules.find(
+      (text) => text.includes("[data-phase='active']") && text.includes('background-attachment: scroll'),
+    )
+    expect(docked).toBeDefined()
+    expect(docked).toContain('background-size: 100vw 100vh')
+    expect(docked).toContain('background-position: 100% 100%')
   })
 
   it('paints three layers: glow, haze, ramp', () => {

@@ -697,11 +697,14 @@ body[data-dsh-theme-mist] [role='dialog'][aria-modal='true'] {
 
 #### 输入条那条带子：重画背景，而不是填一个色（T5.5）
 
-wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-base) 36px)` 变成 transparent→transparent，什么也不画。上游的解法是 `BackdropVeil`（`backdrop.dart:111-230`）：**在带子里重画同一张背景**，再把顶边羽化。我们用 `[data-composer-seat]::before` 复刻：同样的三层、按视口尺寸绘制并右下对齐（`background-size: 100vw 100vh` + `background-position: 100% 100%`）、`mask-image` 0→1 走 36px。
+wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-base) 36px)` 变成 transparent→transparent，什么也不画。上游的解法是 `BackdropVeil`（`backdrop.dart:111-230`）：**在带子里重画同一张背景**，再把顶边羽化。我们用 `[data-composer-seat]::before` 复刻：同样的三层、按视口锚定（`background-attachment: fixed`，与页面画布同一条声明）、`mask-image` 0→1 走 36px。
 
 必须是伪元素：直接给 seat 加 mask 会把里面的输入条卡片一起羽化。伪元素 `z-index: -1`，seat 本身已是层叠上下文（`position: sticky` + `z-index: 7`），所以它落在 seat 背景之上、卡片之下。实测 y 逐行扫描（列 x=300，跨过 mask 边界 y=672→708）：最大相邻差 **3/255**，没有硬边。
 
 > 订正（2026-11-04 00:05，按 0.2.2-alpha.3 实测）：上面这段原本写的是「同样 `background-attachment: fixed`」，并断言「seat 上的 `backdrop-filter` 没有把 fixed 背景改成相对 seat 解析」——前半句只对 0.2.2-alpha.2 及更早成立。alpha.3 给 `.root[data-phase=active] .composerSeat` 加了 `will-change: transform`，seat 因此成为 fixed 背景的包含块，三层渐变按 seat 盒（1237×128）展开而不是视口（1524×903），输入框四周出现一条明显更深的带子：同一行四列，页面自身 237,235,248 / 238,237,248 / 252,252,254 / 241,243,252，修前 230,229,246 / 230,230,247 / 245,248,254 / **213,225,252**（最右端 28/255）。alpha.2 上同一份 CSS 正常，在 alpha.3 上把 `will-change` 覆盖掉也立刻恢复正常，所以错的是参考系，不是配色。改成按视口尺寸绘制 + 右下对齐后，两版四个采样列都与页面同色（≤1/255）。`tools/e2e-dual-version.mjs` 现在用像素断言守住这条：把 seat 钉成真实会话的几何后，比对「有底带」与「隐藏底带」同一点，阈值 4/255（旧写法实测 23/255，新写法 2/255）。
+
+> 订正（2026-11-04 03:45，补 T5.13）：上面 00:05 那条的修法只在 seat **贴底**时成立。`100vw 100vh` + 右下对齐是把视口几何搬到 seat 盒上，前提是 seat 的右下角就是视口的右下角——会话页成立（sticky 贴底），**新会话页不成立**：那里 seat 浮在页面中部（1512×982 实测 seat 280,392 1225×238，底边 630，视口 982），三层渐变整体上移 352px，取到的是页面更高处的颜色。同一列（x=1489，y=615/639/656）与页面自身相差 **12/255、15/255、14/255**；底边 y=630 上下是 246,247,252 → 234,240,253，就是「输入框四周一圈硬边、不是自然渐变」那条现象。
+> 修法：按宿主自己的 phase 分档。`[data-phase='active']`（同一个 `will-change` 来源）继续用视口尺寸 + 右下对齐；其余状态回到 `background-attachment: fixed`。两档都落在页面自己的渐变上：新会话页 ≤1/255（1512×982）、≤2/255（1280×800、2463×725），会话几何 ≤2/255（贴底那一列的 0–16/255 落在侧栏上，是探针把 seat 拉满整宽的假象）。`tools/e2e-dual-version.mjs` 相应采样两次：未钉几何的新会话页（阈值 3/255，旧写法 6–15/255）+ 钉成会话几何并置 `data-phase=active` 的底座（阈值 4/255）。
 
 #### 接不住的四类
 

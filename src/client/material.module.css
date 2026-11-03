@@ -230,14 +230,19 @@ body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='compose
  * background and below that card: the seat is already a stacking context
  * (position: sticky, z-index 7).
  *
- * The layers are sized to the *viewport* and anchored to its bottom-right
- * corner instead of using `background-attachment: fixed`. Fixed attachment
- * stops tracking the viewport as soon as the seat becomes a containing block
- * for fixed backgrounds, and 0.2.2-alpha.3 made it one: `.root[data-phase=active]
- * .composerSeat` now carries `will-change: transform` (alpha.2 has no such
- * declaration). The gradients then expanded across the seat box — 1237x128 —
- * instead of the viewport, 1524x903, so every layer landed on the wrong colour
- * (T5.12). Measured inside the band, at the four columns 292/382/898/1505:
+ * The layers are anchored to the viewport, and the one CSS-native way to say that
+ * is `background-attachment: fixed` — the same declaration the page canvas above
+ * makes. A seat-sized image is simply the wrong box whenever the composer floats:
+ * on the hero page at 2463x725 the seat is 2176x238 with its bottom 223px above
+ * the viewport's, so every layer lands on a colour from higher up the ramp.
+ *
+ * Fixed attachment stops tracking the viewport as soon as the element becomes a
+ * containing block for fixed backgrounds, and 0.2.2-alpha.3 made the seat one:
+ * `.root[data-phase=active] .composerSeat` now carries `will-change: transform`
+ * (alpha.2 has no such declaration). The gradients then expanded across the seat
+ * box — 1237x128 — instead of the viewport, 1524x903, so every layer landed on
+ * the wrong colour (T5.12). Measured inside the band, at the four columns
+ * 292/382/898/1505:
  *
  *   page itself (veil hidden)   237,235,248  238,237,248  252,252,254  241,243,252
  *   alpha.2, fixed attachment   237,235,247  238,237,248  252,252,254  241,243,252
@@ -246,15 +251,19 @@ body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='compose
  *
  * That is the dark strip around the input: a 28-step drop in the pale mist
  * palette, visible as a band because the seat is 128px tall while the image is
- * 903px. Sizing the image and anchoring its corner reproduces the viewport
- * geometry without depending on the containing block at all — it lands on the
- * page's own colour on both 0.2.2 alphas.
+ * 903px.
  *
- * The anchor is bottom-right, not bottom-left: the seat's right edge and bottom
- * edge do sit on the viewport's (the only inset is the 7px scrollbar gutter,
- * which none of the samples above resolved). `100vw` includes a classic
- * scrollbar, so on a layout that shows one the image would slide ~15px
- * sideways; at a 62vmax radius that is a fraction of a colour step. */
+ * The anchored variant, though, is only exact where the seat is *docked*: sizing
+ * the image to the viewport and pinning its bottom-right corner reproduces the
+ * page's geometry only when those two corners are the same point. On a session
+ * page they are (the seat is sticky to the bottom) and it measures 1/255 against
+ * the page where fixed attachment measures 16 to 18. On the hero page they are
+ * not: the anchored variant is 6 to 8/255 off at 2463x725 and 12 to 15/255 at
+ * 1512x982, the rectangle the eye picks up around the composer (T5.13).
+ *
+ * So the attachment follows the host's phase, which is also the rule that decides
+ * the containing block: `active` anchors the corner, everything else keeps fixed
+ * attachment. Both land on the page's own gradient, so neither draws a band. */
 body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='composer']::before {
   content: '';
   position: absolute;
@@ -267,10 +276,22 @@ body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='compose
     radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze) 0%, transparent 100%),
     linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
   background-repeat: no-repeat;
-  background-size: 100vw 100vh;
-  background-position: 100% 100%;
+  background-attachment: fixed;
   -webkit-mask-image: var(--dsh-theme-mist-veil-mask);
   mask-image: var(--dsh-theme-mist-veil-mask);
+}
+
+/* Docked, the seat is a fixed-background containing block — the host's own
+ * `[data-phase=active]` rule is what adds `will-change: transform` — so fixed
+ * attachment would measure the layers against a 2183x128 box. But docked is also
+ * the one state where the seat's bottom-right corner *is* the viewport's, so the
+ * viewport-sized image pinned to that corner lands on the page's own colour
+ * again. Scroll attachment keeps the band out of the fixed-background path while
+ * the transcript scrolls behind it. */
+body[data-dsh-theme-mist] [data-phase='active'] [data-composer-seat][data-conversation-region='composer']::before {
+  background-attachment: scroll;
+  background-size: 100vw 100vh;
+  background-position: 100% 100%;
 }
 
 /* --- A menu opened from the composer keeps the page behind it (T5.9) -----

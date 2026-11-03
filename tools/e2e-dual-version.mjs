@@ -341,30 +341,46 @@ const pickAccent = (session, name) =>
   )
 
 /**
- * The band under the composer has to paint the page's own colour (T5.12).
+ * The band under the composer has to paint the page's own colour, in both of the
+ * geometries the host renders it in (T5.12, T5.13).
  *
- * Pixels, not computed style: the broken build declared exactly the same
- * background-image, background-size and background-position as the fixed one,
- * and only the frame showed that the layers had resolved against the wrong box.
+ * Pixels, not computed style: a broken build can declare exactly the same
+ * background-image, background-size and background-position as a good one and
+ * still resolve the layers against the wrong box; only the frame shows it.
  *
- * The seat is pinned to the geometry a real session renders — full width,
- * bottom-right of the viewport, 128px tall, layer-promoted. The hero page the
- * rest of this probe runs on puts the seat mid-page with no `will-change`, and
- * the band cannot fail there; measured on the hero geometry the fixed build
- * passes, which is how this check was first written and why it is pinned now.
+ * Two samples, because the two states fail in opposite directions:
+ *
+ *   - The welcome screen leaves the seat floating mid-window with no
+ *     `will-change`, so `background-attachment: fixed` is the only anchoring that
+ *     reproduces the page's coordinates. A seat-sized image is 6 to 8/255 off
+ *     there — the rectangle the eye picks up around the composer (T5.13).
+ *   - A session docks the seat to the bottom and the host promotes it
+ *     (`will-change: transform`), which makes fixed attachment resolve against
+ *     the seat box instead of the viewport. Docked, the viewport-sized image
+ *     pinned to the seat's bottom-right corner is exact (T5.12). Emulated by
+ *     pinning the seat to the bottom band and setting the host's own
+ *     `data-phase=active` — the same attribute the theme keys the two branches on,
+ *     and the one that triggers the host's `will-change` rule.
  *
  * The reference is the same point with the veil hidden and the seat's blur off:
- * that is the page gradient itself, which the band reproduces. The sample sits
- * in the right gutter near the bottom edge — the accent glow makes the error
- * largest there (26 steps on the fixed build against 1 to 2 here).
+ * that is the page gradient itself, which the band reproduces. The sample sits in
+ * the right gutter near the bottom edge — the accent glow makes the error largest
+ * there (26 steps on a fixed build docked, 8 to 15 on a corner-anchored build
+ * floating, 1 to 2 when right).
  */
-async function sampleVeil(session, shotsPrefix) {
-  const PIN = '[data-composer-seat]{position:fixed!important;inset:auto 0 0 0!important;height:128px!important;margin:0!important;z-index:9!important;will-change:transform!important}'
-  await session.evaluate(
-    '(() => { const tag = document.createElement("style"); tag.id = "dsh-theme-mist-e2e-seat";' +
-      ' tag.textContent = ' + JSON.stringify(PIN) + '; document.head.appendChild(tag); return true })()',
-  )
-  await sleep(900)
+async function sampleVeil(session, shotsPrefix, options = {}) {
+  const pinned = options.pinned === true
+  const PIN = '[data-composer-seat]{position:fixed!important;inset:auto 0 0 0!important;height:128px!important;margin:0!important;z-index:9!important}'
+  if (pinned) {
+    await session.evaluate(
+      '(() => { const tag = document.createElement("style"); tag.id = "dsh-theme-mist-e2e-seat";' +
+        ' tag.textContent = ' + JSON.stringify(PIN) + '; document.head.appendChild(tag);' +
+        ' const root = document.querySelector("[data-composer-seat]")?.closest("[data-phase]");' +
+        ' if (root) { window.__dshThemeMistPhase = root.getAttribute("data-phase"); root.setAttribute("data-phase", "active") }' +
+        ' return true })()',
+    )
+    await sleep(900)
+  }
 
   try {
     const box = await session.evaluate(
@@ -396,6 +412,13 @@ async function sampleVeil(session, shotsPrefix) {
     return { found: true, at: [x, Math.round(y)], seat: box.seat.map(Math.round), painted, page, delta: channelDelta(painted, page) }
   } finally {
     await session.evaluate('document.getElementById("dsh-theme-mist-e2e-seat")?.remove()')
+    if (pinned) {
+      await session.evaluate(
+        '(() => { const root = document.querySelector("[data-composer-seat]")?.closest("[data-phase]");' +
+          ' if (root && window.__dshThemeMistPhase !== undefined) root.setAttribute("data-phase", window.__dshThemeMistPhase);' +
+          ' delete window.__dshThemeMistPhase; return true })()',
+      )
+    }
     await sleep(300)
   }
 }
@@ -433,6 +456,7 @@ async function snapshotSide(session, url, label, shotsPrefix) {
   const light = await session.evaluate(PROBE)
   await session.shot(shotsPrefix + '-light.png')
   const veil = await sampleVeil(session, shotsPrefix)
+  const dockedVeil = await sampleVeil(session, shotsPrefix, { pinned: true })
 
   await openPanel(session)
   await sleep(500)
@@ -468,7 +492,7 @@ async function snapshotSide(session, url, label, shotsPrefix) {
     await closePanel(session)
   }
 
-  return { label, themed, panelOpened, darkSwitched, light, panel, darkState, veil, accentSweep, exceptions: [...session.exceptions] }
+  return { label, themed, panelOpened, darkSwitched, light, panel, darkState, veil, dockedVeil, accentSweep, exceptions: [...session.exceptions] }
 }
 
 /* --- run --------------------------------------------------------------- */
@@ -545,9 +569,14 @@ try {
     check(side.label + ': the sidebar row offers two choices', side.panel.host.sidebarRadios === 2, String(side.panel.host.sidebarRadios))
     check(side.label + ': the removed transparency switch is gone', side.panel.host.ourSwitches === false)
     check(
-      side.label + ': the composer veil paints the page colour',
-      side.veil.found === true && side.veil.delta <= 4,
+      side.label + ': the composer band matches the page on the welcome screen',
+      side.veil.found === true && side.veil.delta <= 3,
       JSON.stringify(side.veil),
+    )
+    check(
+      side.label + ': the composer band matches the page behind a docked composer',
+      side.dockedVeil.found === true && side.dockedVeil.delta <= 4,
+      JSON.stringify(side.dockedVeil),
     )
     check(side.label + ': dark mode reached', side.darkSwitched === true && side.darkState.safeMode.colorScheme === 'dark', side.darkState.safeMode.colorScheme)
     check(side.label + ': no page exception', side.exceptions.length === 0, JSON.stringify(side.exceptions))
