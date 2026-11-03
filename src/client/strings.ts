@@ -23,8 +23,6 @@ export type StringKey =
   | 'accent.turquoise'
   | 'accent.amber'
   | 'accent.graphite'
-  | 'material.title'
-  | 'material.description'
   | 'sidebar.title'
   | 'sidebar.sheet'
   | 'sidebar.flat'
@@ -38,8 +36,6 @@ export const zh: Readonly<Record<StringKey, string>> = Object.freeze({
   'accent.turquoise': '松石',
   'accent.amber': '琥珀',
   'accent.graphite': '石墨',
-  'material.title': '减少透明效果',
-  'material.description': '关闭玻璃模糊与半透明底色，改用不透明填充',
   'sidebar.title': '侧栏材质',
   'sidebar.sheet': '玻璃',
   'sidebar.flat': '平铺',
@@ -54,8 +50,6 @@ export const en: Readonly<Record<StringKey, string>> = Object.freeze({
   'accent.turquoise': 'Turquoise',
   'accent.amber': 'Amber',
   'accent.graphite': 'Graphite',
-  'material.title': 'Reduce transparency',
-  'material.description': 'Turn off glass blur and translucent fills',
   'sidebar.title': 'Sidebar material',
   'sidebar.sheet': 'Glass',
   'sidebar.flat': 'Flat',

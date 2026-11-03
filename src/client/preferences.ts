@@ -16,8 +16,6 @@ import type { AccentId } from './palettes.ts'
 /** Everything this plugin persists today. */
 export interface GoThemePreferences {
   readonly accent: AccentId
-  /** Reserved for the material layer (T2): "reduce transparency" switch. */
-  readonly reduceMaterial: boolean
   /**
    * Which material the left column is painted with (T5.8): the drawer's glass,
    * or the page itself plus a hairline. Cosmetic only — the layout does not
@@ -33,7 +31,6 @@ export const PREFERENCES_KEY = 'dsh.go-theme.preferences.v1'
 /** Values used when nothing is stored, or when the stored value is unusable. */
 export const DEFAULT_PREFERENCES: GoThemePreferences = Object.freeze({
   accent: 'mist',
-  reduceMaterial: false,
   sidebarMaterial: 'sheet',
 })
 
@@ -91,8 +88,6 @@ export function parsePreferences(raw: unknown): GoThemePreferences {
   const record = parsed as Record<string, unknown>
   return {
     accent: isAccentId(record.accent) ? record.accent : DEFAULT_PREFERENCES.accent,
-    reduceMaterial:
-      typeof record.reduceMaterial === 'boolean' ? record.reduceMaterial : DEFAULT_PREFERENCES.reduceMaterial,
     sidebarMaterial:
       isSidebarMaterial(record.sidebarMaterial) ? record.sidebarMaterial : DEFAULT_PREFERENCES.sidebarMaterial,
   }

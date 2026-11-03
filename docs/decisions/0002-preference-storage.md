@@ -41,6 +41,11 @@ interface GoThemePreferences {
 }
 ```
 
+> **修订（2026-11-03，T5.10）**：应用内的「减少透明效果」开关已删除——开关前后最大像素差 3/255，
+> 屏幕上分辨不出来（测量与理由见 `docs/architecture.md` §13）。偏好结构因此变为
+> `{ accent, sidebarMaterial }`；本 ADR 的存储决策（键名、`localStorage`、v2 迁移到 Host settings）
+> 不变，旧数据里残留的 `reduceMaterial` 字段读取时忽略，不做迁移。
+
 读取时逐字段白名单校验：未知 accent 回落 `mist`，非布尔值回落默认；JSON 解析失败整体回落默认值，不抛异常；`localStorage` 不可用（隐私模式/被禁用）时降级为内存态并 warn。
 
 **v2 迁移计划**：等 v1 视觉稳定后，在 Node 半侧声明 settings entry，用 `ctx.configForms.get()` 接管，并在读取时做一次 `localStorage` → Host settings 的一次性迁移。

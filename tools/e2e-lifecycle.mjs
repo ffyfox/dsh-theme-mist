@@ -116,7 +116,7 @@ const snapshotExpr = (tokens) => [
   '  const out = { tokens: {}, styles: 0 }',
   "  out.theme = document.body.getAttribute('data-dsh-go-theme')",
   "  out.accent = document.body.getAttribute('data-dsh-go-accent')",
-  "  out.reduce = document.body.hasAttribute('data-dsh-go-reduce-material')",
+  "  out.sidebar = document.body.getAttribute('data-dsh-go-sidebar')",
   '  out.classes = [...document.body.classList].filter((c) => /_root$/.test(c)).sort()',
   '  for (const name of ' + JSON.stringify(tokens) + ') out.tokens[name] = cs.getPropertyValue(name).trim()',
   "  out.styles = [...document.querySelectorAll('style[data-plugin]')].filter((s) => s.dataset.plugin && s.dataset.plugin.includes(" + JSON.stringify(PKG) + ")).length",
@@ -213,13 +213,13 @@ try {
   check('style tag count stable across all accents',
     (await snapshot()).styles === EXPECTED_STYLE_TAGS, String((await snapshot()).styles))
 
-  // ------------------------------------------------- reduce material (T2.3)
-  await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: true }))")
+  // -------------------------------------------------- sidebar material (T5.8)
+  await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'flat' }))")
   await sleep(200)
-  check('reduce-material attribute applied', (await snapshot()).reduce === true)
-  await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: false }))")
+  check('sidebar-material attribute applied', (await snapshot()).sidebar === 'flat')
+  await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'sheet' }))")
   await sleep(200)
-  check('reduce-material attribute removed', (await snapshot()).reduce === false)
+  check('sidebar-material attribute restored', (await snapshot()).sidebar === 'sheet')
 
   // ------------------------------------------------------- persistence (T1.5)
   await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: 'dusk' }))")
@@ -272,12 +272,12 @@ try {
   check('style tags stable after ' + CYCLES + ' cycles', afterCycles.styles === 0, String(afterCycles.styles))
   check('attributes stable after ' + CYCLES + ' cycles',
     afterCycles.theme === null && afterCycles.accent === null && afterCycles.classes.length === 0
-      && afterCycles.reduce === false,
+      && afterCycles.sidebar === null,
     JSON.stringify({
       theme: afterCycles.theme,
       accent: afterCycles.accent,
       classes: afterCycles.classes,
-      reduce: afterCycles.reduce,
+      sidebar: afterCycles.sidebar,
     }))
   check('inline properties stable after ' + CYCLES + ' cycles',
     afterCycles.inlineProps === baseline.inlineProps, afterCycles.inlineProps + ' vs ' + baseline.inlineProps)

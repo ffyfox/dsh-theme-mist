@@ -34,12 +34,12 @@ afterEach(() => {
 
 describe('parsePreferences', () => {
   it('round-trips a valid payload', () => {
-    expect(parsePreferences(JSON.stringify({ accent: 'dusk', reduceMaterial: true, sidebarMaterial: 'flat' })))
-      .toEqual({ accent: 'dusk', reduceMaterial: true, sidebarMaterial: 'flat' })
+    expect(parsePreferences(JSON.stringify({ accent: 'dusk', sidebarMaterial: 'flat' })))
+      .toEqual({ accent: 'dusk', sidebarMaterial: 'flat' })
   })
 
   it('falls back to the default accent for an unknown id', () => {
-    expect(parsePreferences(JSON.stringify({ accent: 'neon', reduceMaterial: false })).accent)
+    expect(parsePreferences(JSON.stringify({ accent: 'neon' })).accent)
       .toBe(DEFAULT_PREFERENCES.accent)
   })
 
@@ -48,9 +48,13 @@ describe('parsePreferences', () => {
     expect(parsePreferences(JSON.stringify({ accent: null })).accent).toBe(DEFAULT_PREFERENCES.accent)
   })
 
-  it('falls back to the default for reduceMaterial that is not a boolean', () => {
-    expect(parsePreferences(JSON.stringify({ reduceMaterial: 'yes' })).reduceMaterial)
-      .toBe(DEFAULT_PREFERENCES.reduceMaterial)
+  it('ignores a reduceMaterial field left behind by an older build', () => {
+    // The in-app switch was removed; a stored payload that still carries it must
+    // load as if it were never there, in either state and whatever its type.
+    for (const stale of [true, false, 'yes', null, 1]) {
+      expect(parsePreferences(JSON.stringify({ accent: 'amber', reduceMaterial: stale })), String(stale))
+        .toEqual({ accent: 'amber', sidebarMaterial: DEFAULT_PREFERENCES.sidebarMaterial })
+    }
   })
 
   it('does not throw on malformed JSON', () => {
@@ -74,13 +78,12 @@ describe('parsePreferences', () => {
     expect(parsePreferences(JSON.stringify({ accent: 'amber' })))
       .toEqual({
         accent: 'amber',
-        reduceMaterial: DEFAULT_PREFERENCES.reduceMaterial,
         sidebarMaterial: DEFAULT_PREFERENCES.sidebarMaterial,
       })
   })
 
   it('ignores unknown extra fields', () => {
-    expect(parsePreferences(JSON.stringify({ accent: 'mist', reduceMaterial: false, extra: 1 })))
+    expect(parsePreferences(JSON.stringify({ accent: 'mist', sidebarMaterial: 'sheet', extra: 1 })))
       .toEqual(DEFAULT_PREFERENCES)
   })
 
@@ -98,7 +101,7 @@ describe('load/save with working storage', () => {
 
   it('round-trips through the versioned key', () => {
     const storage = makeStorage()
-    const prefs = { accent: 'turquoise', reduceMaterial: true, sidebarMaterial: 'flat' } as const
+    const prefs = { accent: 'turquoise', sidebarMaterial: 'flat' } as const
     expect(savePreferences(prefs, storage)).toBe(true)
     expect(storage.dump()[PREFERENCES_KEY]).toBe(JSON.stringify(prefs))
     expect(loadPreferences(storage)).toEqual(prefs)
@@ -111,18 +114,18 @@ describe('load/save with working storage', () => {
   })
 
   it('merges one field without losing the others', () => {
-    const storage = makeStorage({ [PREFERENCES_KEY]: JSON.stringify({ accent: 'amber', reduceMaterial: true }) })
+    const storage = makeStorage({ [PREFERENCES_KEY]: JSON.stringify({ accent: 'amber', sidebarMaterial: 'flat' }) })
     expect(updatePreferences({ accent: 'graphite' }, storage))
-      .toEqual({ accent: 'graphite', reduceMaterial: true, sidebarMaterial: 'sheet' })
+      .toEqual({ accent: 'graphite', sidebarMaterial: 'flat' })
     expect(loadPreferences(storage))
-      .toEqual({ accent: 'graphite', reduceMaterial: true, sidebarMaterial: 'sheet' })
+      .toEqual({ accent: 'graphite', sidebarMaterial: 'flat' })
   })
 })
 
 describe('degradation without usable storage', () => {
   it('keeps an in-memory copy when localStorage is missing', () => {
     vi.stubGlobal('localStorage', undefined)
-    const prefs = { accent: 'dusk', reduceMaterial: true, sidebarMaterial: 'sheet' } as const
+    const prefs = { accent: 'dusk', sidebarMaterial: 'sheet' } as const
     expect(savePreferences(prefs)).toBe(false)
     expect(loadPreferences()).toEqual(prefs)
   })
@@ -134,7 +137,7 @@ describe('degradation without usable storage', () => {
         throw new Error('QuotaExceededError')
       },
     })
-    const prefs = { accent: 'amber', reduceMaterial: false, sidebarMaterial: 'sheet' } as const
+    const prefs = { accent: 'amber', sidebarMaterial: 'sheet' } as const
     expect(savePreferences(prefs)).toBe(false)
     expect(loadPreferences()).toEqual(prefs)
   })

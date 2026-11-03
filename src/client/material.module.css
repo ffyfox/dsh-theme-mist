@@ -105,8 +105,8 @@ body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']) > :has(
 }
 
 body[data-dsh-go-theme] [data-slot='sidebar'] > :first-child {
-  /* The tier token, not the raw fill: "reduce transparency" swaps every tier to
-     its near-opaque fallback in one place (see the degradation block). */
+  /* The tier token, not the raw fill: the two OS-level degradation paths swap
+     every tier to its near-opaque fallback in one place (see above). */
   background-color: var(--dsh-go-sheet-token);
   border-radius: 0 28px 28px 0;
   box-shadow:
@@ -198,9 +198,9 @@ body[data-dsh-go-theme] [role='listbox'] {
  *
  * The material variables are declared on the two surfaces themselves, never on
  * body. Measured on Chromium 156: a gradient built from an *inherited* custom
- * property does not re-resolve when the ancestor's value changes — toggling
- * "reduce transparency" switched the card's fill but left the seat's fade
- * painting the old colour. Declaring the variables where they are used keeps
+ * property does not re-resolve when the ancestor's value changes — swapping the
+ * token layer changed the card's fill but left the seat's fade painting the
+ * old colour. Declaring the variables where they are used keeps
  * every value local, so both repaint on the same frame.
  */
 /* The second attribute is there for specificity, not for meaning: the official
@@ -329,21 +329,6 @@ body[data-dsh-go-theme] [data-composer-card] {
   }
 }
 
-body[data-dsh-go-theme][data-dsh-go-reduce-material] {
-    --dsh-go-card-token: var(--dsh-go-card-solid);
-    --dsh-go-sheet-token: var(--dsh-go-sheet-solid);
-    --dsh-go-pill-token: var(--dsh-go-pill-solid);
-}
-
-body[data-dsh-go-theme][data-dsh-go-reduce-material] [data-composer-seat][data-conversation-region='composer'] {
-  --dsh-go-glass-blur: none;
-  --dsh-go-veil-mask: none;
-}
-
-body[data-dsh-go-theme][data-dsh-go-reduce-material] [data-composer-card] {
-  --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
-}
-
 /* --- Card & pill, tier 2 of 2 (T2.4) ------------------------------------
  *
  * Neither tier blurs: what sits behind them is the page gradient, not moving
@@ -463,9 +448,9 @@ body[data-dsh-go-theme] * {
  *
  * Only two things on this layout are ours to animate: the hover feedback on
  * the model capsule (our fill replaced the official base colour, so the switch
- * between them now needs a transition of its own) and the composer's material
- * when "reduce transparency" flips it. Both are short and sit in the same
- * register as the official motion.
+ * between them now needs a transition of its own) and the composer's material,
+ * whose fill the OS "reduce transparency" setting can swap live. Both are short
+ * and sit in the same register as the official motion.
  *
  * The durations are the DSH Go scale (motion.dart:13-37), shortened by ~20%
  * for a pointer device (visual-spec §9): press 90 / quick 160 / standard 240.

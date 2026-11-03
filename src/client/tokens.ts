@@ -171,9 +171,9 @@ const HAZE_ALPHA = { light: 0.38, dark: 0.24 } as const
  * a compositing layer and show nothing.
  *
  * Each tier has a "solid" twin — upstream's fallbackFill — used where the blur
- * is unavailable: no backdrop-filter support, "reduce transparency", or the
- * in-app switch. Those stay near opaque, or text scrolling behind the band
- * runs into the input line.
+ * is unavailable: no backdrop-filter support, or the OS "reduce transparency"
+ * setting. Those stay near opaque, or text scrolling behind the band runs into
+ * the input line.
  */
 const CHROME_ALPHA = { light: 0.7, dark: 0.72 } as const
 const CHROME_SOLID_ALPHA = { light: 0.96, dark: 0.97 } as const

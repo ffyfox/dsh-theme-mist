@@ -184,7 +184,7 @@ body[data-dsh-go-theme] {
 | 表面 | 过渡 | 为什么 |
 |---|---|---|
 | 模型胶囊 `[data-slot='conversation.input.model'] button` | `background-color 160ms` | T2.4 给了它基础填充，官方 hover 是另一条规则；两者之间需要过渡才不"闪" |
-| composer 卡片 `[data-composer-card]` | `background-color` + `box-shadow 240ms` | 切"减少透明效果"时填充从 0.70 变 0.97，缓一下比硬切自然 |
+| composer 卡片 `[data-composer-card]` | `background-color` + `box-shadow 240ms` | 系统级「减少透明」生效时填充从 0.70 变 0.96，缓一下比硬切自然 |
 
 **明确不做**：页面光晕呼吸。它住在 `body` 的 `background-image` 里，动画意味着每帧重绘整个视口；而 DSH Go 的 2.4s「呼吸」本来就是给连接状态点的，不是给页面的。整份样式表**没有任何 `@keyframes`**（单测断言）。
 
@@ -555,7 +555,11 @@ body[data-dsh-go-theme] [data-dsh-chrome] {
 **必须实现的降级**（`glass.dart:29-32`、`surfaces.dart:39-41`）：
 - `@supports not (backdrop-filter: blur(1px))` → 用 `fallbackFill`（近乎不透明）
 - `prefers-reduced-transparency: reduce` → 同上
-- 设置里提供「减少透明效果」开关 → 同上
+
+上游源码里还有第三条：「设置里也可以关掉」。本项目**不提供**应用内开关——实测它换掉的四样东西
+（card / sheet / pill 三档填充与输入条底座模糊）都压在近白页面上，开与关的像素差最大 3/255，
+看不见；而真正有透明感的浮层用的是宿主的 `--dsw-menu-surface-fill`，本就与这个开关无关。
+细节见 `docs/architecture.md` §13。
 
 `fallbackFill` 必须是**接近不透明**的值，否则没有模糊时背后的文字会透出来干扰阅读（源码原文：「必须接近不透明，否则没有模糊时背后的字会透出来干扰阅读」）。
 
@@ -649,7 +653,7 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
 1. 底座自己的 `backdrop-filter: blur(18px)`。`backdrop-filter` 会建立 backdrop root，子孙的模糊只能采样到这个根内部——浮层自带的 `blur(40px)` 因此采样不到页面，等于没有；
 2. 底座那条渐隐底带（`::before`，36px 以下完全不透明的页面色），把浮层下半部分背后的内容整片盖平。
 
-两者叠加，浮层只剩「半透明 + 无模糊」，读起来就是透字。这也解释了为什么「减少透明效果」开关对它几乎无效：**浮层自己的填充不归这个开关管**（它用宿主 `--dsw-menu-surface-fill`，本主题不碰），开关只改它背后那层底带的遮罩与底座模糊。
+两者叠加，浮层只剩「半透明 + 无模糊」，读起来就是透字。**浮层自己的填充用的是宿主的 `--dsw-menu-surface-fill`，本主题不碰**；能被我们改的只有它背后那层底带的遮罩与底座模糊。
 
 **修法**：只在底座里存在打开的浮层时让开——去掉底座模糊、隐藏底带，浮层一关立刻恢复磨砂。选择器 `[data-composer-seat]:has([data-menu-material])` 命中同一个底座，特异性与基础规则相同、靠源顺序胜出，不引入 `!important`。
 
@@ -689,7 +693,7 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
 
 **卡片填充换了之后才看得见**：旧实现卡片读 bg-base（mist 0.36），压在同样偏 mist 的页面上，与页面的 ΔE00 只有 **0.71** —— 等于没有卡片。上游 card 档（白 0.62）对页面是 **5.04**，差 7 倍。这是「界面发平」的第二个来源，与光晕无关。
 
-**降级路径**：三条（`@supports not (backdrop-filter)` / `prefers-reduced-transparency` / `[data-dsh-go-reduce-material]`），每条同时改四个东西——`--dsh-go-glass-fill`、`--dsh-go-glass-blur`、`--dsh-go-veil-mask`，以及 card / sheet / pill 三档的 token 指针。侧栏的 sheet 填充走 `--dsh-go-sheet-token` 这一个指针，所以同一条降级会自动把它换成近不透明的 solid，不需要为它单写规则。实测同屏真模糊 1 → 0，输入条填充 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1（不降反升）。
+**降级路径**：两条（`@supports not (backdrop-filter)` / `prefers-reduced-transparency`），每条同时改四个东西——`--dsh-go-glass-fill`、`--dsh-go-glass-blur`、`--dsh-go-veil-mask`，以及 card / sheet / pill 三档的 token 指针。侧栏的 sheet 填充走 `--dsh-go-sheet-token` 这一个指针，所以同一条降级会自动把它换成近不透明的 solid，不需要为它单写规则。实测同屏真模糊 1 → 0，输入条填充 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1（不降反升）。
 
 #### 输入条那条带子：重画背景，而不是填一个色（T5.5）
 

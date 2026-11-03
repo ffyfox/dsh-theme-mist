@@ -8,7 +8,7 @@
  *
  *   1. token snapshot diff — every name the layer writes is back to the value it
  *      had before the plugin loaded, in the same priority;
- *   2. body attributes — the scope, accent and reduce-material markers are gone;
+ *   2. body attributes — the scope, accent and sidebar-material markers are gone;
  *   3. style tags — the plugin injects none at runtime (its stylesheets ship in
  *      the bundle and are the host's to reclaim), so nothing may be left behind;
  *   4. own nodes — the plugin never appends an element, not even a wrapper.
@@ -45,7 +45,7 @@ vi.mock('../src/client/settings.module.css', () => ({ default: {} }))
 
 import { PREFERENCES_KEY } from '../src/client/preferences.ts'
 import { apply } from '../src/client/index.ts'
-import { setAccent, setReduceMaterial } from '../src/client/state.ts'
+import { setAccent } from '../src/client/state.ts'
 import { MATERIAL_VARS, TOKEN_NAMES, type TokenLayer } from '../src/client/tokens.ts'
 
 /** Every name one layer writes: 34 official tokens + 9 material variables. */
@@ -239,7 +239,6 @@ function snapshot(): Record<string, string> {
 beforeEach(() => {
   env = fakeEnvironment()
   setAccent('mist')
-  setReduceMaterial(false)
   vi.stubGlobal('document', env.document)
   vi.stubGlobal('window', env.window)
   vi.stubGlobal('localStorage', env.localStorage)
@@ -294,16 +293,14 @@ describe('uninstall leaves no marker behind', () => {
     const run = mount()
     expect(env.body.hasAttribute('data-dsh-go-theme')).toBe(true)
     expect(env.body.hasAttribute('data-dsh-go-accent')).toBe(true)
-
-    setReduceMaterial(true)
-    expect(env.body.hasAttribute('data-dsh-go-reduce-material')).toBe(true)
+    expect(env.body.getAttribute('data-dsh-go-sidebar')).toBe('sheet')
 
     run.dispose()
 
     expect(env.body.probe.attributes.size).toBe(0)
     expect(env.body.hasAttribute('data-dsh-go-theme')).toBe(false)
     expect(env.body.hasAttribute('data-dsh-go-accent')).toBe(false)
-    expect(env.body.hasAttribute('data-dsh-go-reduce-material')).toBe(false)
+    expect(env.body.hasAttribute('data-dsh-go-sidebar')).toBe(false)
   })
 })
 
@@ -334,12 +331,12 @@ describe('uninstall leaves no listener behind', () => {
   it('removes both window listeners', () => {
     const run = mount()
     expect(env.listeners.get('dsh-go-theme:accent')?.size).toBe(1)
-    expect(env.listeners.get('dsh-go-theme:reduce-material')?.size).toBe(1)
+    expect(env.listeners.get('dsh-go-theme:sidebar-material')?.size).toBe(1)
 
     run.dispose()
 
     expect(env.listeners.get('dsh-go-theme:accent')?.size ?? 0).toBe(0)
-    expect(env.listeners.get('dsh-go-theme:reduce-material')?.size ?? 0).toBe(0)
+    expect(env.listeners.get('dsh-go-theme:sidebar-material')?.size ?? 0).toBe(0)
   })
 
   it('ignores the external accent event once unmounted', () => {

@@ -17,17 +17,8 @@ export const DEFAULT_ACCENT: AccentId = 'mist'
  */
 export const ACCENT_EVENT = 'dsh-go-theme:accent'
 
-/**
- * Custom event on `window` for the "reduce transparency" switch. Detail is a
- * boolean; anything else is ignored. Until the settings UI (T3.4) exists this
- * is the only way to drive the switch, which is also what the e2e uses.
- */
-export const REDUCE_EVENT = 'dsh-go-theme:reduce-material'
-
 let current: AccentId = DEFAULT_ACCENT
 const listeners = new Set<(accent: AccentId) => void>()
-let reduceMaterial = false
-const reduceListeners = new Set<(reduce: boolean) => void>()
 
 /**
  * Narrow an unknown value to an accent id.
@@ -80,35 +71,6 @@ export function stepAccent(from: AccentId, delta: number): AccentId {
   const start = ACCENT_IDS.indexOf(from)
   const base = start < 0 ? 0 : start
   return ACCENT_IDS[((base + delta) % size + size) % size]
-}
-
-/** Whether the material layer is degraded to opaque surfaces. */
-export function getReduceMaterial(): boolean {
-  return reduceMaterial
-}
-
-/**
- * Turn the material layer's transparency down or back on.
- * @param next - candidate value; non-booleans and no-ops are ignored.
- * @returns true when the value actually changed.
- */
-export function setReduceMaterial(next: unknown): boolean {
-  if (typeof next !== 'boolean' || next === reduceMaterial) return false
-  reduceMaterial = next
-  for (const listener of [...reduceListeners]) listener(reduceMaterial)
-  return true
-}
-
-/**
- * Observe "reduce transparency" changes.
- * @param listener - called after `reduceMaterial` has already been updated.
- * @returns unsubscribe function.
- */
-export function subscribeReduceMaterial(listener: (reduce: boolean) => void): () => void {
-  reduceListeners.add(listener)
-  return () => {
-    reduceListeners.delete(listener)
-  }
 }
 
 /**

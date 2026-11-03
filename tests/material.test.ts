@@ -109,8 +109,8 @@ describe('sidebar material (T5.7 / T5.8)', () => {
     const root = rulesFor("[data-slot='sidebar'] > :first-child")
     expect(root.length).toBeGreaterThan(0)
     const sheet = root[0]
-    // The tier token, so "reduce transparency" swaps in the opaque fallback
-    // without a second rule for this surface.
+    // The tier token, so the OS "reduce transparency" path swaps in the opaque
+    // fallback without a second rule for this surface.
     expect(sheet).toContain('background-color: var(--dsh-go-sheet-token)')
     // sessions_drawer.dart:198-203 rounds the right-hand corners only.
     expect(sheet).toContain('border-radius: 0 28px 28px 0')
@@ -262,22 +262,24 @@ describe('chrome glass (T2.3)', () => {
     expect(CSS_RULES).not.toContain('!important')
   })
 
-  it('keeps three degradation paths, all re-declared on the surfaces', () => {
+  it('keeps two OS-level degradation paths, all re-declared on the surfaces', () => {
     expect(CSS).toContain('@supports not (backdrop-filter: blur(1px))')
     expect(CSS).toContain('prefers-reduced-transparency: reduce')
-    expect(CSS).toContain('[data-dsh-go-reduce-material]')
+    // The in-app switch that used to be the third path was removed: it changed
+    // tokens whose values the page underneath made invisible (max 3/255).
+    expect(CSS).not.toContain('data-dsh-go-reduce-material')
     // Regression guard for two measured traps:
     //  1. declaring the variables on body only is not enough — Chromium will
     //     not re-resolve an inherited custom property inside a gradient;
     //  2. a bare attribute selector loses to the official
     //     .root[data-phase=active] .composerSeat rule.
-    expect(CSS.split('--dsh-go-veil-mask: none').length - 1).toBe(3)
-    expect(CSS.split('--dsh-go-glass-fill: var(--dsh-go-chrome-solid)').length - 1).toBe(3)
-    // The tiers follow the same three paths, or a reduced-transparency card
-    // would keep its translucent fill over an unblurred backdrop.
-    expect(CSS.split('--dsh-go-card-token: var(--dsh-go-card-solid)').length - 1).toBe(3)
-    expect(CSS.split('--dsh-go-sheet-token: var(--dsh-go-sheet-solid)').length - 1).toBe(3)
-    expect(CSS.split('--dsh-go-pill-token: var(--dsh-go-pill-solid)').length - 1).toBe(3)
+    expect(CSS.split('--dsh-go-veil-mask: none').length - 1).toBe(2)
+    expect(CSS.split('--dsh-go-glass-fill: var(--dsh-go-chrome-solid)').length - 1).toBe(2)
+    // The tiers follow the same paths, or a reduced-transparency card would keep
+    // its translucent fill over an unblurred backdrop.
+    expect(CSS.split('--dsh-go-card-token: var(--dsh-go-card-solid)').length - 1).toBe(2)
+    expect(CSS.split('--dsh-go-sheet-token: var(--dsh-go-sheet-solid)').length - 1).toBe(2)
+    expect(CSS.split('--dsh-go-pill-token: var(--dsh-go-pill-solid)').length - 1).toBe(2)
   })
 })
 

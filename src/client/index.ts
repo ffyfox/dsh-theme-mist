@@ -17,16 +17,12 @@ import { loadPreferences, updatePreferences } from './preferences.ts'
 import { registerSettingsRows } from './settings.tsx'
 import {
   ACCENT_EVENT,
-  REDUCE_EVENT,
   SIDEBAR_EVENT,
   getAccent,
-  getReduceMaterial,
   getSidebarMaterial,
   setAccent,
-  setReduceMaterial,
   setSidebarMaterial,
   subscribeAccent,
-  subscribeReduceMaterial,
   subscribeSidebarMaterial,
 } from './state.ts'
 import { SETTINGS_NS, en, zh } from './strings.ts'
@@ -54,13 +50,6 @@ const BODY_ATTRIBUTE = 'data-dsh-go-theme'
 const ACCENT_ATTRIBUTE = 'data-dsh-go-accent'
 
 /**
- * Present when the material layer must give up its blur (T2.3). The CSS also
- * honours `prefers-reduced-transparency` and a missing `backdrop-filter`; this
- * attribute is the in-app switch, owned by preferences until T3.4 adds the UI.
- */
-const REDUCE_ATTRIBUTE = 'data-dsh-go-reduce-material'
-
-/**
  * Which material the left column is painted with (T5.8), readable from CSS as
  * `body[data-dsh-go-sidebar="flat"]`. The attribute is always present, so the
  * stylesheet can name both states instead of treating "absent" as a third one.
@@ -80,7 +69,6 @@ export function apply(ctx: Context): void {
     // fires listeners, but none are attached yet, so this only seeds the store.
     const initial = loadPreferences()
     if (initial.accent !== getAccent()) setAccent(initial.accent)
-    if (initial.reduceMaterial !== getReduceMaterial()) setReduceMaterial(initial.reduceMaterial)
     if (initial.sidebarMaterial !== getSidebarMaterial()) setSidebarMaterial(initial.sidebarMaterial)
 
     // Capability probe (T4.2): the host theme owns `overrideTokens`; without it
@@ -115,16 +103,6 @@ export function apply(ctx: Context): void {
       updatePreferences({ accent })
     })
 
-    const applyReduce = (reduce: boolean): void => {
-      if (reduce) body.setAttribute(REDUCE_ATTRIBUTE, '')
-      else body.removeAttribute(REDUCE_ATTRIBUTE)
-    }
-    applyReduce(getReduceMaterial())
-    const unsubscribeReduce = subscribeReduceMaterial((reduce) => {
-      applyReduce(reduce)
-      updatePreferences({ reduceMaterial: reduce })
-    })
-
     const applySidebar = (material: string): void => {
       body.setAttribute(SIDEBAR_ATTRIBUTE, material)
     }
@@ -141,11 +119,6 @@ export function apply(ctx: Context): void {
     }
     window.addEventListener(ACCENT_EVENT, onExternal)
 
-    const onReduceExternal = (event: Event): void => {
-      setReduceMaterial((event as CustomEvent<unknown>).detail)
-    }
-    window.addEventListener(REDUCE_EVENT, onReduceExternal)
-
     const onSidebarExternal = (event: Event): void => {
       setSidebarMaterial((event as CustomEvent<unknown>).detail)
     }
@@ -156,15 +129,12 @@ export function apply(ctx: Context): void {
     // docs/reference/phase0-findings.md §2.3).
     return () => {
       window.removeEventListener(ACCENT_EVENT, onExternal)
-      window.removeEventListener(REDUCE_EVENT, onReduceExternal)
       window.removeEventListener(SIDEBAR_EVENT, onSidebarExternal)
       unsubscribe()
-      unsubscribeReduce()
       unsubscribeSidebar()
       revert()
       body.removeAttribute(BODY_ATTRIBUTE)
       body.removeAttribute(ACCENT_ATTRIBUTE)
-      body.removeAttribute(REDUCE_ATTRIBUTE)
       body.removeAttribute(SIDEBAR_ATTRIBUTE)
       if (rootClass !== '') body.classList.remove(rootClass)
     }

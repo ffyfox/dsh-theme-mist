@@ -464,7 +464,7 @@ try {
     check(side.label + ': three plugin stylesheets', side.light.host.ourStyles === 3, side.light.host.ourStyles + ' of ' + side.light.host.styleTags)
     check(side.label + ': settings panel opened', side.panelOpened === true)
     check(side.label + ': settings row rendered', side.panel.host.hasAccentRow && side.panel.host.radios === 6, 'rows=' + side.panel.host.rows + ' radios=' + side.panel.host.radios)
-    check(side.label + ': reduce-transparency switch rendered', side.panel.host.hasSwitchRow === true)
+    check(side.label + ': the removed transparency switch is gone', side.panel.host.hasSwitchRow === false)
     check(side.label + ': dark mode reached', side.darkSwitched === true && side.darkState.safeMode.colorScheme === 'dark', side.darkState.safeMode.colorScheme)
     check(side.label + ': no page exception', side.exceptions.length === 0, JSON.stringify(side.exceptions))
   }

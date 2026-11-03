@@ -217,7 +217,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 两个必须写下来的边界：
 
 1. **自有 `<style>` 是宿主回收的，不是我们删的。** 三个模块样式表由构建产物在 factory 里注入，插件自己没有删除逻辑；实测卸载后从 152 回到 149，靠的是宿主的 `removeOwnedStyles`。这意味着**如果宿主某天不再回收，它会泄漏**——脚本里那条断言就是为了让这一天立刻显形。
-2. **`localStorage['dsh.go-theme.preferences.v1']` 有意保留。** 配色与「减少透明效果」是用户的选择，不是插件的状态；装回来时应当还在。除此之外没有任何残留（监听器、属性、类名、变量全部清空）。
+2. **`localStorage['dsh.go-theme.preferences.v1']` 有意保留。** 配色与侧栏材质是用户的选择，不是插件的状态；装回来时应当还在。除此之外没有任何残留（监听器、属性、类名、变量全部清空）。
 
 ### 3.3 生命周期边界
 
@@ -243,7 +243,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 
 | Slot 名 | 位置与语义 | 官方已有项 | 适用形态 |
 |---|---|---|---|
-| **`settings.general.item`**（推荐首选） | 「设置 → 通用（General）」面板内的**设置行** | 外观（浅/深/跟随系统）`order: 10`、字号 `order: 11` | `order: 11.5`，紧跟在官方「外观」与「字号」下方——用户在同一页即可同时切换「浅色/深色/跟随系统」与「6 套 DSH Go 配色 + 减少透明效果」 |
+| **`settings.general.item`**（推荐首选） | 「设置 → 通用（General）」面板内的**设置行** | 外观（浅/深/跟随系统）`order: 10`、字号 `order: 11` | `order: 11.5`，紧跟在官方「外观」与「字号」下方——用户在同一页即可同时切换「浅色/深色/跟随系统」与「6 套 DSH Go 配色」 |
 | **`settings.section`**（备选） | 设置弹窗**左侧一级导航标签页** | 通用 `order: 0`、`skin-manager` `order: 115` | `order: 116`，作为左侧独立标签页紧跟在「皮肤管理」之后 |
 
 ```ts
@@ -258,7 +258,7 @@ export function apply(ctx) {
     id: 'dsh-go-theme',
     order: 11.5,
     locale: NS,
-    inject: () => ({ /* 配色列表、当前值、setAccent、reduceMaterial */ }),
+    inject: () => ({ /* 配色列表、当前值、setAccent、setSidebarMaterial */ }),
   }, DshGoThemeGeneralRow))
 
   // 方案 B（备选，若做成左侧独立导航页）：
@@ -282,7 +282,7 @@ T3.1 落地时逐行核对了在册项，发现**原计划的 `order: 12` 已被
 | 10 | appearance | ui-theme |
 | 11 | font-size | ui-theme |
 | **11.5** | **本插件的配色行** | 本项目（T3.1/T3.2） |
-| **11.6** | **本插件的「减少透明效果」开关** | 本项目（T3.4） |
+| **11.7** | **本插件的「侧栏材质」选择行** | 本项目（T5.8） |
 | 12 | transcript-view | ui-chat |
 | 15 | developer-tools | settings-general |
 | 16 | shortcuts | shortcuts |
@@ -348,7 +348,7 @@ T3.1 落地时逐行核对了在册项，发现**原计划的 `order: 12` 已被
 | `localStorage` | 浏览器本地 | 简单，无 Node 半侧依赖 | 不跨浏览器/不跨设备 | **v1 采用** |
 | 插件自有 JSON | `~/.dsh/dsh-go-theme/config.json` | 可控 | 要自己写路由与原子写 | 备选 |
 
-**v1 决策**：`localStorage`，键 `dsh.go-theme.preferences.v1`，结构 `{ accent: 'mist', reduceMaterial: false }`。读取时逐字段做类型与取值白名单校验（未知 accent 回落 `mist`），对齐 `skin-manager/src/client/preferences.ts:45-70` 的规范化做法。
+**v1 决策**：`localStorage`，键 `dsh.go-theme.preferences.v1`，结构 `{ accent: 'mist', sidebarMaterial: 'sheet' }`。读取时逐字段做类型与取值白名单校验（未知 accent 回落 `mist`），对齐 `skin-manager/src/client/preferences.ts:45-70` 的规范化做法。
 
 > ⚠️ 已知代价：`localStorage` 不跨设备。这与官方主题偏好（写 Host settings、跨已认证浏览器共享）不一致。记录在 [`docs/decisions/0002-preference-storage.md`](decisions/0002-preference-storage.md)，v2 再迁移到 `configForms`。
 
@@ -722,7 +722,7 @@ T5.6 把窗口框交还页面之后，用户的下一句是「左侧边栏和周
 
 - 侧栏列（层 2）不再画填充：它的盒子 `overflow: hidden`，圆角会被切方。形状交给根节点（层 3）。
 - 根节点：`background-color: var(--dsh-go-sheet-token)` + `border-radius: 0 28px 28px 0` + `inset 0 0 0 .5px var(--dsw-alias-border-l1)`（对应上游 ink@0.07）+ `inset 0 1px 0 var(--dsh-go-highlight)`。
-- 走 `--dsh-go-sheet-token` 而不是 `--dsh-go-sheet-fill`：这样「减少透明效果」用同一个指针把它换成近不透明的 solid，不需要为侧栏单写第四条规则。
+- 走 `--dsh-go-sheet-token` 而不是 `--dsh-go-sheet-fill`：这样系统级的「减少透明」降级用同一个指针把它换成近不透明的 solid，不需要为侧栏单写第四条规则。
 
 副作用是好的：只画一次之后底板从 (245,249,254) 变成 (244,246,253)，比原来更贴金标准的 (244,247,254)。发丝像素落在 (226,229,236)，右侧两角实测 28px 圆弧。
 
@@ -753,11 +753,11 @@ T5.6 把窗口框交还页面之后，用户的下一句是「左侧边栏和周
 
 ### 12.1 现象
 
-在输入框里打 `/`、`@` 弹出的浮层是 58% 白的半透明面板，背后的正文却清晰可读、不透不糊；把本插件关掉，同一个浮层表现正常。用户的原话是「/ 菜单在减少透明效果关闭时是半透明的，背后的字会透出来，影响阅读，但其他菜单或弹窗卡片都没有这种情况」。
+在输入框里打 `/`、`@` 弹出的浮层是 58% 白的半透明面板，背后的正文却清晰可读、不透不糊；把本插件关掉，同一个浮层表现正常。用户的原话是「/ 菜单是半透明的，背后的字会透出来，影响阅读，但其他菜单或弹窗卡片都没有这种情况」。
 
 ### 12.2 定位
 
-先排除了两件事：浮层自己的填充（宿主 `--dsw-menu-surface-fill` = `#f8f9fa94`，本主题从未触碰，开关也不改它）与桌面端的差异（web 与桌面端完全一致）。真正的原因在祖先上——浮层渲染在**输入条底座里面**：
+先排除了两件事：浮层自己的填充（宿主 `--dsw-menu-surface-fill` = `#f8f9fa94`，本主题从未触碰）与桌面端的差异（web 与桌面端完全一致）。真正的原因在祖先上——浮层渲染在**输入条底座里面**：
 
 - 底座被本主题加上了 `backdrop-filter: blur(18px)`。`backdrop-filter` 会建立 backdrop root，子孙的模糊只能采样到这个根内部，浮层自带的 `blur(40px)` 因此采样不到页面，等于没有；
 - 底座还有一条 `::before` 渐隐底带（`--dsh-go-veil-mask: linear-gradient(180deg, transparent 0, #000 36px)`），36px 以下以页面色**完全不透明**，把浮层下半背后整片盖平。
@@ -786,3 +786,47 @@ body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material])::before {
 ### 12.4 教训
 
 **我们给某一层加的材质，会改变这一层里所有子孙的合成环境。** 加 `backdrop-filter` 不只是「我把背后的东西糊一下」，它同时给整棵子树划了一个 backdrop 边界；加一条不透明的 `::before` 也不只是「我把这一块涂成页面色」，它会把落在这一块上的任何浮层变成「贴着色块」。这一轮两个坑都是这么来的，而且都不体现在被改的那一层上——是三层之外的浮层坏了。
+
+## 13. 「减少透明效果」开关被删掉（T5.10）
+
+### 13.1 它本来做什么
+
+`body[data-dsh-go-reduce-material]` 一条属性带三处改动：把 card / sheet / pill 三档的 token 从
+`-fill` 换成 `-solid`（白 0.62 → 0.72、`mistLow` 0.82 → 不透明、白 0.55 → 0.66）、关掉输入条底座的
+`blur(18px)`、去掉那条 36px 的渐隐遮罩；输入条卡片的填充从白 0.70 换到 `mistLowest` 0.96。
+
+### 13.2 为什么删：它没有可感知的效果
+
+同一页面、同一滚动位置，只翻转那个属性（不重新加载，排除滚动与草稿带来的位移），1524×903@2x、
+雾蓝浅色，逐像素比对：
+
+| 区域 | 平均差 | 最大差 |
+|---|---|---|
+| 侧栏 | 1.7 | 3 |
+| 消息 / 工具卡片区 | 0 | 0 |
+| 输入条带子（含 36px 淡出边） | 0.2 | 13 |
+| `/`、`@`、模型浮层 | 0.09 | 1 |
+
+原因两条：**被换的表面全压在近白页面上**（页面色 235–254），62% / 70% / 82% / 96% 的白叠出来落在
+同几个灰阶；**输入条底部那层遮罩本身是不透明页面色**，卡片的 alpha 与底座的模糊都被它盖住了。
+唯一真有透明感的表面是宿主自己的浮层（`--dsw-menu-surface-fill` = `#f8f9fa94` + `blur(40px)`），
+它不归这个开关管。
+
+### 13.3 删了什么，留下什么
+
+删掉：属性、`REDUCE_EVENT` / 状态 / 订阅、`reduceMaterial` 偏好字段、设置行（含 `.switch*` 样式与
+两条文案）、`material.module.css` 里的那三条规则、对应单测与 e2e 断言。`localStorage` 里的旧字段
+读取时忽略，不做迁移（`tests/preferences.test.ts` 有一条契约守住这一点）。
+
+留下：两条**系统级**降级路径（`@supports not (backdrop-filter)`、`prefers-reduced-transparency`），
+它们由操作系统决定、不由界面决定，`-solid` 三档 token 因此仍然有用。
+
+### 13.4 教训
+
+**一个开关的价值等于它在屏幕上改变的东西。** token 层改动很容易做得很漂亮，但如果被改的表面在
+结构与底色上本来就没有透明可减，改动就只存在于计算值里。验收要落在像素与区域上，而不是「属性已
+写入、令牌已切换」——后者只能证明线接通了。
+
+顺带一条测量纪律：无头 Chromium 默认不渲染 `backdrop-filter`（条纹测试：不模糊时 stdev 5.3，
+加 `--enable-gpu --use-angle=swiftshader` 后 0.9）。判断模糊相关的行为之前，先确认截图链路真的
+能画出模糊。
