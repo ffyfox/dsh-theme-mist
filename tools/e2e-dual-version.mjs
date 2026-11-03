@@ -209,6 +209,13 @@ function probeInPage(tokens, pkg) {
     if (filter && filter !== 'none') blur.push((node.getAttribute('data-slot') ?? node.tagName.toLowerCase()) + ' :: ' + filter)
   }
   const rows = __rows__
+  // Our two rows are addressed by the id their title carries: the panel follows
+  // the interface language, the ids do not.
+  const ourGroups = [...document.querySelectorAll('[aria-labelledby^="dsh-go-"]')]
+  const radiosIn = (id) => {
+    const group = document.querySelector('[aria-labelledby="' + id + '"]')
+    return group === null ? 0 : group.querySelectorAll('[role=radio]').length
+  }
   return {
     safeMode: {
       tokens: tokensOut,
@@ -231,9 +238,13 @@ function probeInPage(tokens, pkg) {
       ourStyles: [...document.querySelectorAll('style[data-plugin]')].filter((tag) => (tag.getAttribute('data-plugin') ?? '').includes(pkg)).length,
       styleTags: document.querySelectorAll('style[data-plugin]').length,
       rows: rows.length,
-      hasAccentRow: rows.some((row) => (row.textContent ?? '').includes('Graphite')),
-      hasSwitchRow: rows.some((row) => row.querySelector('[role=switch]') !== null),
-      radios: rows.reduce((total, row) => total + row.querySelectorAll('[role=radio]').length, 0),
+      ourGroups: ourGroups.length,
+      accentRadios: radiosIn('dsh-go-accent-title'),
+      sidebarRadios: radiosIn('dsh-go-sidebar-title'),
+      // Two shipped rows carry switches ("code work view", "Session Log upload"),
+      // so the question is never "does this panel have a switch" — it is "is
+      // there one inside the two rows this plugin draws".
+      ourSwitches: ourGroups.some((group) => group.querySelector('[role=switch]') !== null),
     },
   }
 }
@@ -463,8 +474,9 @@ try {
     check(side.label + ': the theme mounted', side.themed === true)
     check(side.label + ': three plugin stylesheets', side.light.host.ourStyles === 3, side.light.host.ourStyles + ' of ' + side.light.host.styleTags)
     check(side.label + ': settings panel opened', side.panelOpened === true)
-    check(side.label + ': settings row rendered', side.panel.host.hasAccentRow && side.panel.host.radios === 6, 'rows=' + side.panel.host.rows + ' radios=' + side.panel.host.radios)
-    check(side.label + ': the removed transparency switch is gone', side.panel.host.hasSwitchRow === false)
+    check(side.label + ': both settings rows rendered', side.panel.host.ourGroups === 2 && side.panel.host.accentRadios === 6, 'rows=' + side.panel.host.rows + ' groups=' + side.panel.host.ourGroups + ' accent=' + side.panel.host.accentRadios)
+    check(side.label + ': the sidebar row offers two choices', side.panel.host.sidebarRadios === 2, String(side.panel.host.sidebarRadios))
+    check(side.label + ': the removed transparency switch is gone', side.panel.host.ourSwitches === false)
     check(side.label + ': dark mode reached', side.darkSwitched === true && side.darkState.safeMode.colorScheme === 'dark', side.darkState.safeMode.colorScheme)
     check(side.label + ': no page exception', side.exceptions.length === 0, JSON.stringify(side.exceptions))
   }

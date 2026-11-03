@@ -43,6 +43,17 @@ import styles from './settings.module.css'
 const ROW_ID = 'dsh-go-theme'
 
 /**
+ * Element id the accent group points `aria-labelledby` at.
+ *
+ * Both groups are labelled by their visible title rather than by an
+ * `aria-label`, so the accessible name and the painted text can never drift
+ * apart — and the id doubles as the hook the dual-version e2e counts our rows
+ * with (`[aria-labelledby^="dsh-go-"]`), which keeps that assertion independent
+ * of the interface language.
+ */
+const ACCENT_TITLE_ID = 'dsh-go-accent-title'
+
+/**
  * Position inside the General column.
  *
  * Measured against 0.2.2-alpha.2 (0.2.1-alpha.1 ships the identical list), which
@@ -151,8 +162,8 @@ function AccentRow({ t }: { readonly t: Translate }) {
 
   return (
     <div className={styles.row}>
-      <div className={styles.title}>{t('accent.title')}</div>
-      <div className={styles.options} role="radiogroup" aria-label={t('accent.title')}>
+      <div className={styles.title} id={ACCENT_TITLE_ID}>{t('accent.title')}</div>
+      <div className={styles.options} role="radiogroup" aria-labelledby={ACCENT_TITLE_ID}>
         {ACCENT_IDS.map((id) => {
           const selected = id === accent
           const palette = PALETTES[id]
