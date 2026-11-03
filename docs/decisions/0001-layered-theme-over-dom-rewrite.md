@@ -36,7 +36,7 @@ L3 材质层  插件自有 CSS Modules（渐变、玻璃、发丝线、圆角）
 
 配套约束：
 - 全部副作用挂在 `ctx.effect()` 清理器上
-- 作用域限定在 `body[data-dsh-go-theme]`
+- 作用域限定在 `body[data-dsh-theme-mist]`
 - 选择器优先使用官方 `data-slot` 语义属性，不依赖哈希类名
 
 ## Alternatives Considered

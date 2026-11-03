@@ -15,7 +15,7 @@ export const DEFAULT_ACCENT: AccentId = 'mist'
  * user scripts, other plugins, and the e2e harness. Detail is an accent id;
  * unknown values are ignored rather than throwing.
  */
-export const ACCENT_EVENT = 'dsh-go-theme:accent'
+export const ACCENT_EVENT = 'dsh-theme-mist:accent'
 
 let current: AccentId = DEFAULT_ACCENT
 const listeners = new Set<(accent: AccentId) => void>()
@@ -92,7 +92,7 @@ export const SIDEBAR_MATERIALS: readonly SidebarMaterial[] = ['sheet', 'flat']
  * Custom event on `window` for the sidebar material. Detail is a material id;
  * unknown values are ignored rather than throwing.
  */
-export const SIDEBAR_EVENT = 'dsh-go-theme:sidebar-material'
+export const SIDEBAR_EVENT = 'dsh-theme-mist:sidebar-material'
 
 let sidebarMaterial: SidebarMaterial = 'sheet'
 const sidebarListeners = new Set<(material: SidebarMaterial) => void>()

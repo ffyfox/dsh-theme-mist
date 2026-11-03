@@ -14,7 +14,7 @@ import { isAccentId, isSidebarMaterial, type SidebarMaterial } from './state.ts'
 import type { AccentId } from './palettes.ts'
 
 /** Everything this plugin persists today. */
-export interface GoThemePreferences {
+export interface MistPreferences {
   readonly accent: AccentId
   /**
    * Which material the left column is painted with (T5.8): the drawer's glass,
@@ -26,10 +26,10 @@ export interface GoThemePreferences {
 }
 
 /** Versioned key: a future schema change bumps the suffix instead of migrating in place. */
-export const PREFERENCES_KEY = 'dsh.go-theme.preferences.v1'
+export const PREFERENCES_KEY = 'dsh.theme-mist.preferences.v1'
 
 /** Values used when nothing is stored, or when the stored value is unusable. */
-export const DEFAULT_PREFERENCES: GoThemePreferences = Object.freeze({
+export const DEFAULT_PREFERENCES: MistPreferences = Object.freeze({
   accent: 'mist',
   sidebarMaterial: 'sheet',
 })
@@ -41,7 +41,7 @@ export interface PreferenceStorage {
 }
 
 /** Last written value; only consulted when real storage is unavailable. */
-let memory: GoThemePreferences | null = null
+let memory: MistPreferences | null = null
 
 let warned = false
 
@@ -49,7 +49,7 @@ let warned = false
 function warnOnce(reason: string): void {
   if (warned) return
   warned = true
-  console.warn('[ui-theme-go] preference storage unavailable; using in-memory state:', reason)
+  console.warn('[dsh-theme-mist] preference storage unavailable; using in-memory state:', reason)
 }
 
 /**
@@ -62,7 +62,7 @@ function defaultStorage(): PreferenceStorage | undefined {
   try {
     const candidate = (globalThis as { localStorage?: PreferenceStorage }).localStorage
     if (candidate === undefined || candidate === null) return undefined
-    const probe = '__dsh_go_theme_probe__'
+    const probe = '__dsh_theme_mist_probe__'
     candidate.setItem(probe, '1')
     candidate.setItem(probe, '0')
     return candidate
@@ -76,7 +76,7 @@ function defaultStorage(): PreferenceStorage | undefined {
  * @param raw - whatever `getItem` returned, or any untrusted value.
  * @returns a complete preference object; never throws.
  */
-export function parsePreferences(raw: unknown): GoThemePreferences {
+export function parsePreferences(raw: unknown): MistPreferences {
   if (typeof raw !== 'string' || raw === '') return DEFAULT_PREFERENCES
   let parsed: unknown
   try {
@@ -98,7 +98,7 @@ export function parsePreferences(raw: unknown): GoThemePreferences {
  * @param storage - injectable for tests; defaults to `localStorage`.
  * @returns stored or default preferences; never throws.
  */
-export function loadPreferences(storage?: PreferenceStorage): GoThemePreferences {
+export function loadPreferences(storage?: PreferenceStorage): MistPreferences {
   const store = storage ?? defaultStorage()
   if (store === undefined) {
     warnOnce('localStorage is not available')
@@ -122,7 +122,7 @@ export function loadPreferences(storage?: PreferenceStorage): GoThemePreferences
  * @param storage - injectable for tests; defaults to `localStorage`.
  * @returns true when the value reached real storage.
  */
-export function savePreferences(preferences: GoThemePreferences, storage?: PreferenceStorage): boolean {
+export function savePreferences(preferences: MistPreferences, storage?: PreferenceStorage): boolean {
   memory = preferences
   const store = storage ?? defaultStorage()
   if (store === undefined) {
@@ -145,10 +145,10 @@ export function savePreferences(preferences: GoThemePreferences, storage?: Prefe
  * @returns the merged preferences.
  */
 export function updatePreferences(
-  patch: Partial<GoThemePreferences>,
+  patch: Partial<MistPreferences>,
   storage?: PreferenceStorage,
-): GoThemePreferences {
-  const next: GoThemePreferences = { ...loadPreferences(storage), ...patch }
+): MistPreferences {
+  const next: MistPreferences = { ...loadPreferences(storage), ...patch }
   savePreferences(next, storage)
   return next
 }

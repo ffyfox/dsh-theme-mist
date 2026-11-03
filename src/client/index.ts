@@ -5,7 +5,7 @@
  * `overrideTokens` source so a switch replaces rather than stacks, plus a
  * teardown that restores the document exactly. T1.5 adds palette persistence.
  * T2 adds the material layer: `material.module.css` paints the page gradient
- * and glow, fed by the `--dsh-go-*` variables that ride the same token layer.
+ * and glow, fed by the `--dsh-theme-mist-*` variables that ride the same token layer.
  * T3.1 adds the settings seat: the accent row lives in `settings.tsx` and its
  * copy in `strings.ts`, wired up at the bottom of {@link apply}.
  * T4.2 moves the write itself into `writer.ts`: a host without
@@ -44,17 +44,17 @@ import styles from './theme.module.css'
 export const inject = ['theme', 'slots', 'locale']
 
 /** Marker attribute on `<body>`; the material layer hangs its selectors off it. */
-const BODY_ATTRIBUTE = 'data-dsh-go-theme'
+const BODY_ATTRIBUTE = 'data-dsh-theme-mist'
 
-/** Current accent id, readable from CSS as `body[data-dsh-go-accent="dusk"]`. */
-const ACCENT_ATTRIBUTE = 'data-dsh-go-accent'
+/** Current accent id, readable from CSS as `body[data-dsh-theme-mist-accent="dusk"]`. */
+const ACCENT_ATTRIBUTE = 'data-dsh-theme-mist-accent'
 
 /**
  * Which material the left column is painted with (T5.8), readable from CSS as
- * `body[data-dsh-go-sidebar="flat"]`. The attribute is always present, so the
+ * `body[data-dsh-theme-mist-sidebar="flat"]`. The attribute is always present, so the
  * stylesheet can name both states instead of treating "absent" as a third one.
  */
-const SIDEBAR_ATTRIBUTE = 'data-dsh-go-sidebar'
+const SIDEBAR_ATTRIBUTE = 'data-dsh-theme-mist-sidebar'
 
 /**
  * Mount the theme.
@@ -138,14 +138,14 @@ export function apply(ctx: Context): void {
       body.removeAttribute(SIDEBAR_ATTRIBUTE)
       if (rootClass !== '') body.classList.remove(rootClass)
     }
-  }, 'ui-theme-go: token layer')
+  }, 'dsh-theme-mist: token layer')
 
   // Settings surface (stage 3). The dictionaries go in as an effect so a reload
   // or unload drops them; the row itself is registered through slots.inject,
   // which waits for the owner section and cleans up with the plugin fiber.
   ctx.effect(
     () => ctx.locale.register(SETTINGS_NS, { zh, en }),
-    'ui-theme-go: settings dictionaries',
+    'dsh-theme-mist: settings dictionaries',
   )
   registerSettingsRows(ctx)
 }

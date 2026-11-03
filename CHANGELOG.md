@@ -23,7 +23,7 @@
 - **「侧栏材质」偏好（`sheet` / `flat`）**：默认 `sheet` 是上游抽屉的玻璃（半透明白底、0.5px 发丝、
   顶边高光、右侧两角 28px 圆角）；`flat` 不画底板、页面渐变直接穿过去，只留一根发丝——那是上游
   右侧详情列的画法。设置入口在「设置 → 通用 → 侧栏材质」，也可用事件
-  `dsh-go-theme:sidebar-material` 驱动；`body` 上始终带 `data-dsh-go-sidebar` 属性，卸载时一并清掉。
+  `dsh-theme-mist:sidebar-material` 驱动；`body` 上始终带 `data-dsh-theme-mist-sidebar` 属性，卸载时一并清掉。
 - **设置入口**：「设置 → 通用」内新增「配色」行（`order: 11.5`，紧跟官方「外观」与「字号」），
   六套配色可在界面内切换，即时生效并持久化；中英文案经 `ctx.locale` 命名空间注册，
   切换界面语言时该行文案实时跟着变（无需刷新）。
@@ -31,7 +31,7 @@
   （经 `light-dark()`，跟随宿主在 `<html>` 上声明的 `color-scheme`）。选中态用「对勾 + 品牌色内描边
   + 品牌色浅底」三重表达，不单靠颜色。语义为 `role="radiogroup"` + `role="radio"` + `aria-checked`，
   整组只占一个 Tab 位，方向键在组内移动并跟随选中，Home / End 到两端。
-- **能力探测与降级**：宿主没有 `ctx.theme.overrideTokens` 时不再抛错——只写自有的十五个 `--dsh-go-*`
+- **能力探测与降级**：宿主没有 `ctx.theme.overrideTokens` 时不再抛错——只写自有的十五个 `--dsh-theme-mist-*`
   （`light-dark()` 对形式），官方令牌保持出厂值，作用域属性、设置行与偏好照旧，并记一条 warn。
   「官方令牌一个都不手写」这条由 e2e 断言守住。
 - **卸载清洁度**：卸载后逐项复原——49 个令牌（34 官方 + 15 自有材质变量）的**计算值**、body 上整条
@@ -74,10 +74,17 @@
 - **名字定为 `dsh-Go-theme` / npm `dsh-go-theme`**。此前的 `@dsh-external/dsh-client-ui-theme-go` 是
   计划里随手起的占位名：DSH 文档没有这个约定，npm 上也没有这个 scope（同机上另一个 `@dsh-external/` 包同样是
   本地 `private: true` 的链接，同样 404）。发布到不属于自己的 scope 会在 `npm publish` 最后一步被拒。
-  现在仓库名用 `dsh-Go-theme`，包名是全小写 `dsh-go-theme`——npm 从 2017 年起不接受新包名里的
+  当时仓库名用 `dsh-Go-theme`，包名是全小写 `dsh-go-theme`——npm 从 2017 年起不接受新包名里的
   大写字母（`validate-npm-package-name` 对 `dsh-Go-theme` 报 “name can no longer contain capital letters”，
   对 `dsh-go-theme` 通过）。无 scope 也就顺带不需要 `publishConfig.access`。三个 e2e 脚本里的包名
   改从 `package.json` 读，以后改名只动两处。
+- **改名为 `dsh-theme-mist`（2026-11-04）**。包名、仓库名与内部命名空间一起换掉：`dsh-go-theme` →
+  `dsh-theme-mist`、`--dsh-go-*` → `--dsh-theme-mist-*`、`data-dsh-go-*` → `data-dsh-theme-mist-*`、
+  事件 `dsh-go-theme:*` → `dsh-theme-mist:*`、存储键 `dsh.go-theme.preferences.v1` →
+  `dsh.theme-mist.preferences.v1`、cordis 插件 id `ui-theme-go` → `dsh-theme-mist`。仓库里不再留旧名，
+  唯一的例外是上游 Flutter 应用 `dsh-Go` 的引用——那是被移植的对象，不是本插件。
+  未发布，所以不提供兼容层：没有旧包名、旧属性或旧存储键的迁移路径。装过旧版的 profile 要重新
+  `dsh plugin add`（本机 `desktop` 与 `t1verify` 两个 profile 已同步重装，旧 `node_modules` 链接已清）。
 
 ### Fixed
 
@@ -127,7 +134,7 @@
   的白叠出来落在同几个灰阶里——1524×903@2x、雾蓝浅色下侧栏最大像素差 3/255，消息与工具卡片区
   0/255，输入条最大 13/255 且只出现在 36px 淡出带内。真正有透明感的是宿主自己的浮层
   （58% 白 + `blur(40px)`），它用 `--dsw-menu-surface-fill` 绘制，本主题从不触碰，因此开关对它
-  没有作用。开关连同 `data-dsh-go-reduce-material` 属性、`dsh-go-theme:reduce-material` 事件、
+  没有作用。开关连同 `data-dsh-theme-mist-reduce-material` 属性、`dsh-theme-mist:reduce-material` 事件、
   `reduceMaterial` 偏好字段、设置行与相关单测一并删除；`localStorage` 里残留的旧字段读取时忽略，
   不需要迁移。系统级的两条降级路径（`@supports not (backdrop-filter)`、
   `prefers-reduced-transparency`）保持不变。

@@ -64,8 +64,8 @@ describe('createLayerWriter', () => {
     expect(writer.degraded).toBe(true)
     const revert = writer.write(LAYER)
 
-    const pair = LAYER['--dsh-go-page-base']
-    expect(body.style.getPropertyValue('--dsh-go-page-base')).toBe(
+    const pair = LAYER['--dsh-theme-mist-page-base']
+    expect(body.style.getPropertyValue('--dsh-theme-mist-page-base')).toBe(
       `light-dark(${pair.light}, ${pair.dark})`,
     )
     for (const name of MATERIAL_VARS) {
@@ -82,18 +82,18 @@ describe('createLayerWriter', () => {
 
   it('restores an inline value that was already there', () => {
     const body = fakeBody()
-    body.style.setProperty('--dsh-go-glow', 'rgba(1, 2, 3, 0.5)', 'important')
+    body.style.setProperty('--dsh-theme-mist-glow', 'rgba(1, 2, 3, 0.5)', 'important')
     const writer = createLayerWriter({ theme: {} } as unknown as Context, body)
 
     const revert = writer.write(LAYER)
 
-    expect(body.style.getPropertyValue('--dsh-go-glow')).toMatch(/^light-dark\(/)
-    expect(body.style.getPropertyPriority('--dsh-go-glow')).toBe('')
+    expect(body.style.getPropertyValue('--dsh-theme-mist-glow')).toMatch(/^light-dark\(/)
+    expect(body.style.getPropertyPriority('--dsh-theme-mist-glow')).toBe('')
 
     revert()
 
-    expect(body.style.getPropertyValue('--dsh-go-glow')).toBe('rgba(1, 2, 3, 0.5)')
-    expect(body.style.getPropertyPriority('--dsh-go-glow')).toBe('important')
+    expect(body.style.getPropertyValue('--dsh-theme-mist-glow')).toBe('rgba(1, 2, 3, 0.5)')
+    expect(body.style.getPropertyPriority('--dsh-theme-mist-glow')).toBe('important')
   })
 
   it('treats an unreadable theme service as absent', () => {
@@ -120,7 +120,7 @@ describe('warnDegraded', () => {
 
     expect(warn).toHaveBeenCalledTimes(1)
     const message = String(warn.mock.calls[0][0])
-    expect(message).toContain('dsh-go-theme: ')
+    expect(message).toContain('dsh-theme-mist: ')
     expect(message).toContain('overrideTokens')
   })
 

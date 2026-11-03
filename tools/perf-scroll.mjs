@@ -8,7 +8,7 @@
  * exactly why T0.4 stayed open). Two conditions, interleaved, same page:
  *
  *   glass   — the shipped build
- *   no-blur — the same build with --dsh-go-glass-blur forced to none, so the
+ *   no-blur — the same build with --dsh-theme-mist-glass-blur forced to none, so the
  *             only difference is the backdrop-filter on the composer seat
  *
  * Reported per run: frame count, median/p95/max frame interval, share of
@@ -108,7 +108,7 @@ const stats = (frames) => {
   }
 }
 
-const NO_BLUR_CSS = "body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer']{--dsh-go-glass-blur:none !important}"
+const NO_BLUR_CSS = "body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='composer']{--dsh-theme-mist-glass-blur:none !important}"
 const setCondition = async (condition) => {
   const existing = await evaluate("document.getElementById('perf-noblur') !== null")
   if (condition === 'no-blur' && !existing) {
@@ -159,7 +159,7 @@ for (let i = 0; i < 40 && !(await hasScroller()); i += 1) {
   await sleep(500)
 }
 if (!(await hasScroller())) throw new Error('no long conversation scroller — open a session with a few turns first')
-const ready = await evaluate("document.body.hasAttribute('data-dsh-go-theme')")
+const ready = await evaluate("document.body.hasAttribute('data-dsh-theme-mist')")
 if (!ready) throw new Error('theme is not mounted on this page — is the bundle installed in this profile?')
 const blur = await evaluate("(() => { const s = document.querySelector('[data-composer-seat]'); return s === null ? 'no seat' : getComputedStyle(s).backdropFilter })()")
 console.log('composer seat backdrop-filter:', blur)

@@ -12,7 +12,7 @@
  */
 
 /** Namespace for every string this plugin contributes. */
-export const SETTINGS_NS = 'dsh-go-theme'
+export const SETTINGS_NS = 'dsh-theme-mist'
 
 /** Keys must stay in sync between every dictionary below. */
 export type StringKey =

@@ -111,16 +111,16 @@ describe('sidebar material (T5.7 / T5.8)', () => {
     const sheet = root[0]
     // The tier token, so the OS "reduce transparency" path swaps in the opaque
     // fallback without a second rule for this surface.
-    expect(sheet).toContain('background-color: var(--dsh-go-sheet-token)')
+    expect(sheet).toContain('background-color: var(--dsh-theme-mist-sheet-token)')
     // sessions_drawer.dart:198-203 rounds the right-hand corners only.
     expect(sheet).toContain('border-radius: 0 28px 28px 0')
     // The two edge treatments the sheet tier always had (surfaces.dart:216-224).
     expect(sheet).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
-    expect(sheet).toContain('inset 0 1px 0 var(--dsh-go-highlight)')
+    expect(sheet).toContain('inset 0 1px 0 var(--dsh-theme-mist-highlight)')
   })
 
   it('keeps the flat variant behind its attribute and neutralises the sheet', () => {
-    const flat = rulesFor("[data-dsh-go-sidebar='flat']")
+    const flat = rulesFor("[data-dsh-theme-mist-sidebar='flat']")
     expect(flat.length).toBe(3)
     const joined = flat.join('\n')
     // Re-pointed inside the subtree so the session list's 24px fade fades to
@@ -138,7 +138,7 @@ describe('sidebar material (T5.7 / T5.8)', () => {
     // panel's hairline at ink 0.08. A theme rule that reached for l3 would draw
     // a column divider, not a glass edge.
     const sidebar = (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? [])
-      .filter((text) => /data-slot='sidebar'|data-dsh-go-sidebar='flat'/u.test(text.slice(0, text.indexOf('{'))))
+      .filter((text) => /data-slot='sidebar'|data-dsh-theme-mist-sidebar='flat'/u.test(text.slice(0, text.indexOf('{'))))
     expect(sidebar.length).toBeGreaterThan(0)
     for (const text of sidebar) expect(text).not.toContain('border-l3')
   })
@@ -167,7 +167,7 @@ describe('composer seat and popovers (T5.9)', () => {
     // The rule that turns the frost on must not be carrying the popover
     // condition itself, or the seat would lose its blur permanently.
     const base = rulesFor("[data-composer-seat][data-conversation-region='composer']")
-    const blurOn = base.filter((text) => text.includes('backdrop-filter: var(--dsh-go-glass-blur)'))
+    const blurOn = base.filter((text) => text.includes('backdrop-filter: var(--dsh-theme-mist-glass-blur)'))
     expect(blurOn.length).toBe(1)
     expect(blurOn[0]).not.toContain(':has(')
   })
@@ -179,33 +179,33 @@ describe('glass tiers (T5.5)', () => {
     const layer = buildTokenLayer(p)
     // surfaces.dart:157-158: the glass stays white whatever the accent — only
     // the page underneath changes hue.
-    expect(layer['--dsh-go-card-fill'].light).toBe('rgba(255, 255, 255, 0.62)')
-    expect(layer['--dsh-go-card-fill'].dark).toBe('rgba(255, 255, 255, 0.05)')
-    expect(layer['--dsh-go-pill-fill'].light).toBe('rgba(255, 255, 255, 0.55)')
-    expect(layer['--dsh-go-pill-fill'].dark).toBe('rgba(255, 255, 255, 0.06)')
-    expect(layer['--dsh-go-sheet-fill'].light).toBe(rgba(p.light.mistLow, 0.82))
-    expect(layer['--dsh-go-sheet-fill'].dark).toBe(rgba(p.dark.sheetDark, 0.86))
+    expect(layer['--dsh-theme-mist-card-fill'].light).toBe('rgba(255, 255, 255, 0.62)')
+    expect(layer['--dsh-theme-mist-card-fill'].dark).toBe('rgba(255, 255, 255, 0.05)')
+    expect(layer['--dsh-theme-mist-pill-fill'].light).toBe('rgba(255, 255, 255, 0.55)')
+    expect(layer['--dsh-theme-mist-pill-fill'].dark).toBe('rgba(255, 255, 255, 0.06)')
+    expect(layer['--dsh-theme-mist-sheet-fill'].light).toBe(rgba(p.light.mistLow, 0.82))
+    expect(layer['--dsh-theme-mist-sheet-fill'].dark).toBe(rgba(p.dark.sheetDark, 0.86))
   })
 
   it.each(ACCENT_IDS)('%s: the blurred tiers keep a near-opaque fallback', (id) => {
     const layer = buildTokenLayer(PALETTES[id])
     // Only the tiers that blur need one: without it, scrolling text would run
     // into the input line and the menus (surfaces.dart:38-41).
-    expect(alphaOf(layer['--dsh-go-chrome-solid'].light)).toBeGreaterThanOrEqual(0.95)
-    expect(alphaOf(layer['--dsh-go-chrome-solid'].dark)).toBeGreaterThanOrEqual(0.95)
-    expect(RGBA.test(layer['--dsh-go-sheet-solid'].light)).toBe(false)
-    expect(RGBA.test(layer['--dsh-go-sheet-solid'].dark)).toBe(false)
+    expect(alphaOf(layer['--dsh-theme-mist-chrome-solid'].light)).toBeGreaterThanOrEqual(0.95)
+    expect(alphaOf(layer['--dsh-theme-mist-chrome-solid'].dark)).toBeGreaterThanOrEqual(0.95)
+    expect(RGBA.test(layer['--dsh-theme-mist-sheet-solid'].light)).toBe(false)
+    expect(RGBA.test(layer['--dsh-theme-mist-sheet-solid'].dark)).toBe(false)
     // card and pill use upstream's fallbackFill verbatim: still translucent.
-    expect(layer['--dsh-go-card-solid'].light).toBe('rgba(255, 255, 255, 0.72)')
-    expect(layer['--dsh-go-card-solid'].dark).toBe('rgba(255, 255, 255, 0.06)')
-    expect(layer['--dsh-go-pill-solid'].light).toBe('rgba(255, 255, 255, 0.66)')
-    expect(layer['--dsh-go-pill-solid'].dark).toBe('rgba(255, 255, 255, 0.07)')
+    expect(layer['--dsh-theme-mist-card-solid'].light).toBe('rgba(255, 255, 255, 0.72)')
+    expect(layer['--dsh-theme-mist-card-solid'].dark).toBe('rgba(255, 255, 255, 0.06)')
+    expect(layer['--dsh-theme-mist-pill-solid'].light).toBe('rgba(255, 255, 255, 0.66)')
+    expect(layer['--dsh-theme-mist-pill-solid'].dark).toBe('rgba(255, 255, 255, 0.07)')
   })
 })
 
 describe('material variables (T2.2)', () => {
   it('are namespaced and never collide with an official token', () => {
-    for (const name of MATERIAL_VARS) expect(name.startsWith('--dsh-go-')).toBe(true)
+    for (const name of MATERIAL_VARS) expect(name.startsWith('--dsh-theme-mist-')).toBe(true)
     expect(MATERIAL_VARS.filter((name) => (TOKEN_NAMES as readonly string[]).includes(name))).toEqual([])
   })
 
@@ -218,12 +218,12 @@ describe('material variables (T2.2)', () => {
   it.each(ACCENT_IDS)('%s: gradient stops are opaque and come from the palette', (id) => {
     const p = PALETTES[id]
     const layer = buildTokenLayer(p)
-    expect(layer['--dsh-go-page-base'].light).toBe(p.light.mist)
-    expect(layer['--dsh-go-page-base'].dark).toBe(p.dark.night)
-    expect(layer['--dsh-go-page-top'].light).toBe(p.light.mistTop)
-    expect(layer['--dsh-go-page-top'].dark).toBe(p.dark.nightTop)
-    expect(layer['--dsh-go-page-bottom'].light).toBe(p.light.mistBottom)
-    expect(layer['--dsh-go-page-bottom'].dark).toBe(p.dark.nightBottom)
+    expect(layer['--dsh-theme-mist-page-base'].light).toBe(p.light.mist)
+    expect(layer['--dsh-theme-mist-page-base'].dark).toBe(p.dark.night)
+    expect(layer['--dsh-theme-mist-page-top'].light).toBe(p.light.mistTop)
+    expect(layer['--dsh-theme-mist-page-top'].dark).toBe(p.dark.nightTop)
+    expect(layer['--dsh-theme-mist-page-bottom'].light).toBe(p.light.mistBottom)
+    expect(layer['--dsh-theme-mist-page-bottom'].dark).toBe(p.dark.nightBottom)
   })
 
   it.each(ACCENT_IDS)('%s: glow and haze carry their source colour and scheme alpha', (id) => {
@@ -232,10 +232,10 @@ describe('material variables (T2.2)', () => {
     // Colour and alpha are checked together: the rgb triple proves the value
     // came from the palette, the alpha proves the per-scheme intensity. That
     // pair is what lets six palettes share one stylesheet.
-    expect(layer['--dsh-go-glow'].light).toBe(rgba(p.accent.glow, 0.42))
-    expect(layer['--dsh-go-glow'].dark).toBe(rgba(p.accent.glowDark, 0.28))
-    expect(layer['--dsh-go-haze'].light).toBe(rgba(p.accent.haze, 0.38))
-    expect(layer['--dsh-go-haze'].dark).toBe(rgba(p.accent.hazeDark, 0.24))
+    expect(layer['--dsh-theme-mist-glow'].light).toBe(rgba(p.accent.glow, 0.42))
+    expect(layer['--dsh-theme-mist-glow'].dark).toBe(rgba(p.accent.glowDark, 0.28))
+    expect(layer['--dsh-theme-mist-haze'].light).toBe(rgba(p.accent.haze, 0.38))
+    expect(layer['--dsh-theme-mist-haze'].dark).toBe(rgba(p.accent.hazeDark, 0.24))
   })
 })
 
@@ -243,8 +243,8 @@ describe('chrome glass (T2.3)', () => {
   it.each(ACCENT_IDS)('%s: the glass fill is translucent, its fallback is not', (id) => {
     const layer = buildTokenLayer(PALETTES[id])
     for (const scheme of ['light', 'dark'] as const) {
-      const fill = alphaOf(layer['--dsh-go-chrome-fill'][scheme])
-      const solid = alphaOf(layer['--dsh-go-chrome-solid'][scheme])
+      const fill = alphaOf(layer['--dsh-theme-mist-chrome-fill'][scheme])
+      const solid = alphaOf(layer['--dsh-theme-mist-chrome-solid'][scheme])
       // Below ~0.55 the input text fights with the blurred backdrop, above
       // ~0.85 the blur stops being visible at all (visual-spec §7).
       expect(fill, 'fill[' + scheme + ']').toBeGreaterThanOrEqual(0.55)
@@ -255,7 +255,7 @@ describe('chrome glass (T2.3)', () => {
   })
 
   it('paints the glass with a variable-driven blur, so degradation is one flip', () => {
-    expect(CSS_RULES).toContain('backdrop-filter: var(--dsh-go-glass-blur)')
+    expect(CSS_RULES).toContain('backdrop-filter: var(--dsh-theme-mist-glass-blur)')
     // One blur declaration only: the seat carries it, the card inside it must
     // not blur an already-blurred backdrop (that would be two costs, one look).
     expect(CSS_RULES.match(/backdrop-filter: var\(/g)).toHaveLength(1)
@@ -267,19 +267,19 @@ describe('chrome glass (T2.3)', () => {
     expect(CSS).toContain('prefers-reduced-transparency: reduce')
     // The in-app switch that used to be the third path was removed: it changed
     // tokens whose values the page underneath made invisible (max 3/255).
-    expect(CSS).not.toContain('data-dsh-go-reduce-material')
+    expect(CSS).not.toContain('data-dsh-theme-mist-reduce-material')
     // Regression guard for two measured traps:
     //  1. declaring the variables on body only is not enough — Chromium will
     //     not re-resolve an inherited custom property inside a gradient;
     //  2. a bare attribute selector loses to the official
     //     .root[data-phase=active] .composerSeat rule.
-    expect(CSS.split('--dsh-go-veil-mask: none').length - 1).toBe(2)
-    expect(CSS.split('--dsh-go-glass-fill: var(--dsh-go-chrome-solid)').length - 1).toBe(2)
+    expect(CSS.split('--dsh-theme-mist-veil-mask: none').length - 1).toBe(2)
+    expect(CSS.split('--dsh-theme-mist-glass-fill: var(--dsh-theme-mist-chrome-solid)').length - 1).toBe(2)
     // The tiers follow the same paths, or a reduced-transparency card would keep
     // its translucent fill over an unblurred backdrop.
-    expect(CSS.split('--dsh-go-card-token: var(--dsh-go-card-solid)').length - 1).toBe(2)
-    expect(CSS.split('--dsh-go-sheet-token: var(--dsh-go-sheet-solid)').length - 1).toBe(2)
-    expect(CSS.split('--dsh-go-pill-token: var(--dsh-go-pill-solid)').length - 1).toBe(2)
+    expect(CSS.split('--dsh-theme-mist-card-token: var(--dsh-theme-mist-card-solid)').length - 1).toBe(2)
+    expect(CSS.split('--dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-solid)').length - 1).toBe(2)
+    expect(CSS.split('--dsh-theme-mist-pill-token: var(--dsh-theme-mist-pill-solid)').length - 1).toBe(2)
   })
 })
 
@@ -296,14 +296,14 @@ describe('card, pill and elevation (T2.4 / T2.5)', () => {
     const layer = buildTokenLayer(PALETTES[id])
     // A bright line on a dark card reads as a seam, so the dark highlight is
     // only a trace (visual-spec §7).
-    expect(alphaOf(layer['--dsh-go-highlight'].light), 'light highlight').toBeGreaterThan(0.3)
-    expect(alphaOf(layer['--dsh-go-highlight'].dark), 'dark highlight').toBeLessThan(0.2)
+    expect(alphaOf(layer['--dsh-theme-mist-highlight'].light), 'light highlight').toBeGreaterThan(0.3)
+    expect(alphaOf(layer['--dsh-theme-mist-highlight'].dark), 'dark highlight').toBeLessThan(0.2)
     // Shadows are a hint at the edge, never the thing that builds hierarchy.
-    expect(alphaOf(layer['--dsh-go-shadow'].light), 'light shadow').toBeLessThanOrEqual(0.1)
+    expect(alphaOf(layer['--dsh-theme-mist-shadow'].light), 'light shadow').toBeLessThanOrEqual(0.1)
     // Tinted with the palette's own ink — a neutral black reads dirty on a
     // tinted page.
     for (const scheme of ['light', 'dark'] as const) {
-      expect(layer['--dsh-go-shadow'][scheme]).not.toMatch(/^rgba\(0, 0, 0,/)
+      expect(layer['--dsh-theme-mist-shadow'][scheme]).not.toMatch(/^rgba\(0, 0, 0,/)
     }
   })
 
@@ -314,7 +314,7 @@ describe('card, pill and elevation (T2.4 / T2.5)', () => {
     expect(CARD_SECTION).toContain(':global(.md-code-block)')
     expect(CARD_SECTION).toContain("[data-slot='conversation.input.model'] button")
     expect(CARD_SECTION).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
-    expect(CARD_SECTION).toContain('inset 0 1px 0 var(--dsh-go-highlight)')
+    expect(CARD_SECTION).toContain('inset 0 1px 0 var(--dsh-theme-mist-highlight)')
     // The performance rule of the tier (surfaces.dart:17-19): no blur here.
     expect(CARD_SECTION).not.toContain('backdrop-filter')
   })
@@ -323,14 +323,14 @@ describe('card, pill and elevation (T2.4 / T2.5)', () => {
     // Declaring these on body alone is inert: the official theme re-declares
     // them on "body, body *", so each element keeps its own value
     // (visual-spec §8.1 R1).
-    expect(CSS_RULES).toMatch(/body\[data-dsh-go-theme\],\s*body\[data-dsh-go-theme\] \*\s*\{/)
+    expect(CSS_RULES).toMatch(/body\[data-dsh-theme-mist\],\s*body\[data-dsh-theme-mist\] \*\s*\{/)
     for (const name of ['--dsw-elevation-panel', '--dsw-elevation-prominent', '--dsw-elevation-soft']) {
-      const start = CSS_RULES.lastIndexOf('body[data-dsh-go-theme] *', CSS_RULES.indexOf(name))
+      const start = CSS_RULES.lastIndexOf('body[data-dsh-theme-mist] *', CSS_RULES.indexOf(name))
       expect(start, name + ' must be declared inside the scoped block').toBeGreaterThan(-1)
       expect(CSS_RULES.slice(start, CSS_RULES.indexOf('}', start))).toContain(name)
     }
     // Every recipe keeps the official stroke reference and adds the highlight.
-    expect(CSS_RULES.split('inset 0 1px 0 var(--dsh-go-highlight)').length - 1).toBeGreaterThanOrEqual(5)
+    expect(CSS_RULES.split('inset 0 1px 0 var(--dsh-theme-mist-highlight)').length - 1).toBeGreaterThanOrEqual(5)
   })
 })
 
@@ -338,15 +338,15 @@ describe('shape ladder (T2.1)', () => {
   // Bounded by the motion block, which is the last section and mentions the
   // composer card again (its transition) — this slice must stay about radii.
   const SHAPE_SECTION = CSS_RULES.slice(
-    CSS_RULES.indexOf('--dsh-go-radius-xs'),
-    CSS_RULES.indexOf('--dsh-go-duration-press'),
+    CSS_RULES.indexOf('--dsh-theme-mist-radius-xs'),
+    CSS_RULES.indexOf('--dsh-theme-mist-duration-press'),
   )
 
   it('defines the DSH Go ladder once and never touches the official radius tokens', () => {
     for (const [name, value] of [
       ['xs', '6px'], ['sm', '10px'], ['md', '14px'], ['lg', '20px'], ['xl', '28px'], ['pill', '999px'],
     ]) {
-      expect(SHAPE_SECTION).toContain('--dsh-go-radius-' + name + ': ' + value)
+      expect(SHAPE_SECTION).toContain('--dsh-theme-mist-radius-' + name + ': ' + value)
     }
     // visual-spec §1.1: overriding --dsw-radius-* would move radii on every
     // component at once, including the ones DSH Go has no opinion about.
@@ -356,11 +356,11 @@ describe('shape ladder (T2.1)', () => {
   it('re-points only the steps between the two ladders', () => {
     // 16 -> 14, 8 -> 6, 8 -> stadium; composer (28) and bubbles (20) already
     // match, so they must not be re-declared at all.
-    expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-go-radius-md)')
+    expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-theme-mist-radius-md)')
     expect(SHAPE_SECTION).toContain(':not(pre) > code')
-    expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-go-radius-xs)')
+    expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-theme-mist-radius-xs)')
     expect(SHAPE_SECTION).toContain("[role='menu']")
-    expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-go-radius-pill)')
+    expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-theme-mist-radius-pill)')
     expect(SHAPE_SECTION).toContain('corner-shape: round')
     expect(SHAPE_SECTION).not.toContain('[data-composer-card]')
     expect(SHAPE_SECTION).not.toContain('[data-message-bubble]')
@@ -368,14 +368,14 @@ describe('shape ladder (T2.1)', () => {
 })
 
 describe('motion (T2.6)', () => {
-  const MOTION = CSS_RULES.slice(CSS_RULES.indexOf('--dsh-go-duration-press'))
+  const MOTION = CSS_RULES.slice(CSS_RULES.indexOf('--dsh-theme-mist-duration-press'))
 
   it('uses its own duration scale and never redefines the shared official tokens', () => {
-    expect(MOTION).toContain('--dsh-go-duration-press: 90ms')
-    expect(MOTION).toContain('--dsh-go-duration-quick: 160ms')
-    expect(MOTION).toContain('--dsh-go-duration-standard: 240ms')
+    expect(MOTION).toContain('--dsh-theme-mist-duration-press: 90ms')
+    expect(MOTION).toContain('--dsh-theme-mist-duration-quick: 160ms')
+    expect(MOTION).toContain('--dsh-theme-mist-duration-standard: 240ms')
     expect(MOTION).toContain('cubic-bezier(0.4, 0, 0.2, 1)')
-    expect(MOTION).toContain('transition: background-color var(--dsh-go-duration-quick)')
+    expect(MOTION).toContain('transition: background-color var(--dsh-theme-mist-duration-quick)')
     // The official duration/easing tokens also drive the sidebar and panel drag
     // animations — redefining them would move the layout, not the theme.
     expect(CSS_RULES).not.toContain('--ds-transition-duration')
@@ -409,7 +409,7 @@ describe('material stylesheet', () => {
     // Sizing the image and anchoring its bottom-right corner keeps the band on
     // the page's own colour on both builds; measured 1/255 against 28/255.
     const veil = (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []).find(
-      (text) => text.includes('--dsh-go-veil-mask') && text.includes('background-size'),
+      (text) => text.includes('--dsh-theme-mist-veil-mask') && text.includes('background-size'),
     )
     expect(veil).toBeDefined()
     expect(veil).toContain('background-size: 100vw 100vh')
@@ -428,7 +428,7 @@ describe('material stylesheet', () => {
     // The dialog's own surfaces read bg-base; re-binding it hands them the
     // sheet fill without us painting anyone else's background.
     expect(CSS).toContain("[role='dialog'][aria-modal='true']")
-    expect(CSS).toContain('--dsw-alias-bg-base: var(--dsh-go-sheet-token)')
+    expect(CSS).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token)')
   })
 
   it('never uses !important', () => {

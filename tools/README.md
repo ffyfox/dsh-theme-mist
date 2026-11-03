@@ -93,7 +93,7 @@ node tools/e2e-lifecycle.mjs \
 | 组 | 查什么 |
 |---|---|
 | 基线/启用 | 禁用态无主题属性、无自带 style；启用后 6 个探针 token 全部改变，style 数恰好 3（`theme` / `material` / `settings` 三个模块样式表，等于 `src/client` 下的模块样式表数） |
-| 六套切换 | 每套的 `data-dsh-go-accent` 正确、style 数不增长、六套 token 组合互不相同（防「切换没生效但属性变了」） |
+| 六套切换 | 每套的 `data-dsh-theme-mist-accent` 正确、style 数不增长、六套 token 组合互不相同（防「切换没生效但属性变了」） |
 | 卸载与泄漏 | 禁用后 6 个 token 与基线 **逐字相同**、body 内联属性数复原；N 次启停后 style 数与属性集合不变 |
 
 **安全**：脚本拒绝操作 `~/.dsh/profiles/` 之外的路径，且退出时（含异常）恢复原始 `cordis.patch.yml`。
@@ -114,7 +114,7 @@ node tools/perf-scroll.mjs --url 'http://127.0.0.1:3190/?token=<TOKEN>' --cdp-po
 | 条件 | 做法 |
 |---|---|
 | `glass` | 出厂状态（composer seat 上有 `blur(18px)`） |
-| `no-blur` | 注入一条只把 `--dsh-go-glass-blur` 置 `none` 的样式，**填充不变**，唯一变量就是那层模糊 |
+| `no-blur` | 注入一条只把 `--dsh-theme-mist-glass-blur` 置 `none` 的样式，**填充不变**，唯一变量就是那层模糊 |
 
 输出 fps / p50 / p95 / max / >17ms / >33ms 与主线程 `TaskDuration`。会自己展开侧栏（新 profile 默认是图标栏）并打开一个长会话，找不到可滚动的会话就报错退出。
 
@@ -130,7 +130,7 @@ node tools/e2e-degraded.mjs            # 自带静态服务与 headless Chrome
 node tools/e2e-degraded.mjs --chrome chromium --keep
 ```
 
-14 条断言：装载、`apply()` 不抛、恰好一条含 `overrideTokens` 的 warn（走 `ctx.logger` 而非 console）、作用域属性与 accent 仍写入、两行设置仍注册、全部 `--dsh-go-*`（当前 15 个）是 `light-dark()` 对、**没有任何 `--dsw-*` 被手写**、页面渐变仍绘制、样式表已注入、无未捕获异常，以及卸载后属性 / 变量 / 渐变全部消失。
+14 条断言：装载、`apply()` 不抛、恰好一条含 `overrideTokens` 的 warn（走 `ctx.logger` 而非 console）、作用域属性与 accent 仍写入、两行设置仍注册、全部 `--dsh-theme-mist-*`（当前 15 个）是 `light-dark()` 对、**没有任何 `--dsw-*` 被手写**、页面渐变仍绘制、样式表已注入、无未捕获异常，以及卸载后属性 / 变量 / 渐变全部消失。
 
 ## 7. `e2e-dual-version.mjs`
 
@@ -144,7 +144,7 @@ node tools/e2e-dual-version.mjs --desktop-runtime /path/to/resources/app/dsh
 
 它会自己起两侧的服务：Web 侧用 `dsh` 打指定 profile；桌面侧用桌面端自带运行时（`--desktop-runtime`）配**临时 `DSH_HOME`** 和一个只声明本插件的临时 profile——**不碰真实 `desktop` profile、不重启应用**。
 
-15 条断言：两侧都挂载、各 3 张自有样式表、设置面板可打开且六色块 + 开关齐全、两侧都能进深色、无页面异常，以及**逐字段一致**——39 个令牌 × 浅色 / 面板 / 深色三态、布局矩形、模糊清单、页面渐变、`data-dsh-go-*` 属性、六套配色的 `brand-primary` 与 `page-base`。
+15 条断言：两侧都挂载、各 3 张自有样式表、设置面板可打开且六色块 + 开关齐全、两侧都能进深色、无页面异常，以及**逐字段一致**——39 个令牌 × 浅色 / 面板 / 深色三态、布局矩形、模糊清单、页面渐变、`data-dsh-theme-mist-*` 属性、六套配色的 `brand-primary` 与 `page-base`。
 
 比对前会**强制两侧切到同一外观**（profile 里记住的深色不是版本差异），跑完恢复原样；宿主的行数与样式表总数只打印、不参与 diff。
 
@@ -186,7 +186,7 @@ node tools/e2e-uninstall.mjs --shots /tmp/shots --keep   # 留截图与临时目
 |---|---|
 | 基线 / 挂载 | 插件不在时无标记、无自有样式表；挂载后 3 张自有样式表、body 内联属性 1 → 44、作用域类名与属性各就位且**只标记 1 个节点**；探测的 62 个名字里 58 个计算值变化（43 个由本层写入，其余是引用它们派生的色） |
 | **令牌快照 diff** | 卸载后 62 个名字的计算值与基线**逐字相同**；body 内联声明（名字 + 值 + 优先级）逐条复原——连带宿主自己写的那 1 条内联属性 |
-| **属性 / 样式标签 / 自有节点** | 三个 `data-dsh-go-*` 属性全无、`style[data-plugin*=…]` 与 `style[data-plugin-css*=…]` 都是 0、全站 `<style>` 数回到 149、没有节点带插件标记、没有任何类名来自我们的样式表 |
+| **属性 / 样式标签 / 自有节点** | 三个 `data-dsh-theme-mist-*` 属性全无、`style[data-plugin*=…]` 与 `style[data-plugin-css*=…]` 都是 0、全站 `<style>` 数回到 149、没有节点带插件标记、没有任何类名来自我们的样式表 |
 | 监听器与残留 | 卸载后再派发两个外部事件完全无反应（监听器已摘）；**唯一保留项**是配色偏好（有意为之）；第二轮挂载 → 卸载同样回到基线 |
 
 实测（2026-11-02）：

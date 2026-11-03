@@ -217,7 +217,7 @@ function probeInPage(tokens, pkg) {
   const rows = __rows__
   // Our two rows are addressed by the id their title carries: the panel follows
   // the interface language, the ids do not.
-  const ourGroups = [...document.querySelectorAll('[aria-labelledby^="dsh-go-"]')]
+  const ourGroups = [...document.querySelectorAll('[aria-labelledby^="dsh-theme-mist-"]')]
   const radiosIn = (id) => {
     const group = document.querySelector('[aria-labelledby="' + id + '"]')
     return group === null ? 0 : group.querySelectorAll('[role=radio]').length
@@ -226,7 +226,7 @@ function probeInPage(tokens, pkg) {
     safeMode: {
       tokens: tokensOut,
       ownAttrs: [...document.body.attributes]
-        .filter((attribute) => attribute.name.startsWith('data-dsh-go'))
+        .filter((attribute) => attribute.name.startsWith('data-dsh-theme-mist'))
         .map((attribute) => attribute.name + '=' + attribute.value)
         .sort(),
       colorScheme: getComputedStyle(document.documentElement).colorScheme,
@@ -239,14 +239,14 @@ function probeInPage(tokens, pkg) {
       blur,
     },
     host: {
-      themed: document.body.hasAttribute('data-dsh-go-theme'),
-      accent: document.body.getAttribute('data-dsh-go-accent'),
+      themed: document.body.hasAttribute('data-dsh-theme-mist'),
+      accent: document.body.getAttribute('data-dsh-theme-mist-accent'),
       ourStyles: [...document.querySelectorAll('style[data-plugin]')].filter((tag) => (tag.getAttribute('data-plugin') ?? '').includes(pkg)).length,
       styleTags: document.querySelectorAll('style[data-plugin]').length,
       rows: rows.length,
       ourGroups: ourGroups.length,
-      accentRadios: radiosIn('dsh-go-accent-title'),
-      sidebarRadios: radiosIn('dsh-go-sidebar-title'),
+      accentRadios: radiosIn('dsh-theme-mist-accent-title'),
+      sidebarRadios: radiosIn('dsh-theme-mist-sidebar-title'),
       // Two shipped rows carry switches ("code work view", "Session Log upload"),
       // so the question is never "does this panel have a switch" — it is "is
       // there one inside the two rows this plugin draws".
@@ -361,7 +361,7 @@ const pickAccent = (session, name) =>
 async function sampleVeil(session, shotsPrefix) {
   const PIN = '[data-composer-seat]{position:fixed!important;inset:auto 0 0 0!important;height:128px!important;margin:0!important;z-index:9!important;will-change:transform!important}'
   await session.evaluate(
-    '(() => { const tag = document.createElement("style"); tag.id = "dsh-go-e2e-seat";' +
+    '(() => { const tag = document.createElement("style"); tag.id = "dsh-theme-mist-e2e-seat";' +
       ' tag.textContent = ' + JSON.stringify(PIN) + '; document.head.appendChild(tag); return true })()',
   )
   await sleep(900)
@@ -383,19 +383,19 @@ async function sampleVeil(session, shotsPrefix) {
 
     const painted = readPng(await session.shotBuffer()).pixel(Math.round(x * box.dpr), Math.round(y * box.dpr))
     await session.evaluate(
-      '(() => { const tag = document.createElement("style"); tag.id = "dsh-go-e2e-bare";' +
-        ' tag.textContent = "body[data-dsh-go-theme] [data-composer-seat]::before{display:none!important}" +' +
-        ' "body[data-dsh-go-theme] [data-composer-seat]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}";' +
+      '(() => { const tag = document.createElement("style"); tag.id = "dsh-theme-mist-e2e-bare";' +
+        ' tag.textContent = "body[data-dsh-theme-mist] [data-composer-seat]::before{display:none!important}" +' +
+        ' "body[data-dsh-theme-mist] [data-composer-seat]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}";' +
         ' document.head.appendChild(tag); return true })()',
     )
     await sleep(500)
     const page = readPng(await session.shotBuffer()).pixel(Math.round(x * box.dpr), Math.round(y * box.dpr))
-    await session.evaluate('document.getElementById("dsh-go-e2e-bare")?.remove()')
+    await session.evaluate('document.getElementById("dsh-theme-mist-e2e-bare")?.remove()')
     await sleep(300)
 
     return { found: true, at: [x, Math.round(y)], seat: box.seat.map(Math.round), painted, page, delta: channelDelta(painted, page) }
   } finally {
-    await session.evaluate('document.getElementById("dsh-go-e2e-seat")?.remove()')
+    await session.evaluate('document.getElementById("dsh-theme-mist-e2e-seat")?.remove()')
     await sleep(300)
   }
 }
@@ -410,7 +410,7 @@ async function snapshotSide(session, url, label, shotsPrefix) {
   let themed = false
   for (let attempt = 0; attempt < 400; attempt++) {
     try {
-      if (await session.evaluate('document.body && document.body.hasAttribute("data-dsh-go-theme")')) {
+      if (await session.evaluate('document.body && document.body.hasAttribute("data-dsh-theme-mist")')) {
         themed = true
         break
       }
@@ -446,8 +446,8 @@ async function snapshotSide(session, url, label, shotsPrefix) {
     accentSweep[name] = {
       clicked,
       brand: await session.evaluate('getComputedStyle(document.body).getPropertyValue("--dsw-alias-brand-primary").trim()'),
-      pageBase: await session.evaluate('getComputedStyle(document.body).getPropertyValue("--dsh-go-page-base").trim()'),
-      accent: await session.evaluate('document.body.getAttribute("data-dsh-go-accent")'),
+      pageBase: await session.evaluate('getComputedStyle(document.body).getPropertyValue("--dsh-theme-mist-page-base").trim()'),
+      accent: await session.evaluate('document.body.getAttribute("data-dsh-theme-mist-accent")'),
     }
   }
   await pickAccent(session, 'Mist')
@@ -473,8 +473,8 @@ async function snapshotSide(session, url, label, shotsPrefix) {
 
 /* --- run --------------------------------------------------------------- */
 
-const temporaryHome = await mkdtemp(join(tmpdir(), 'dsh-go-dual-'))
-const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-go-dual-chrome-'))
+const temporaryHome = await mkdtemp(join(tmpdir(), 'dsh-theme-mist-dual-'))
+const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-theme-mist-dual-chrome-'))
 const debugPort = await freePort()
 
 const failures = []

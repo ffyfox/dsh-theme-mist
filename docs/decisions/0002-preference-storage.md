@@ -32,10 +32,10 @@ Accepted（2026-11-01）— 已知为临时方案，已规划迁移
 
 ## Decision
 
-**v1 用 `localStorage`**，键 `dsh.go-theme.preferences.v1`，结构：
+**v1 用 `localStorage`**，键 `dsh.theme-mist.preferences.v1`，结构：
 
 ```ts
-interface GoThemePreferences {
+interface MistPreferences {
   accent: AccentId          // 'mist' | 'daiqing' | ... 默认 'mist'
   sidebarMaterial: SidebarMaterial  // 'sheet' | 'flat'，默认 'sheet'（2026-11-03 加入）
   reduceMaterial: boolean   // 默认 false —— 2026-11-03 删除，读取时忽略，见下方修订
@@ -64,7 +64,7 @@ interface GoThemePreferences {
 
 **结论：推迟到 v2。**
 
-### 写插件自有 JSON（`~/.dsh/dsh-go-theme/config.json`）
+### 写插件自有 JSON（`~/.dsh/dsh-theme-mist/config.json`）
 
 **优点**：完全可控，可跨浏览器（同一 `DSH_HOME`）。
 

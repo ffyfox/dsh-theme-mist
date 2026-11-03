@@ -129,7 +129,7 @@ overrideTokens(
 
 1. **渐变挂在 `body`，列容器用 token 变半透明**，不写任何结构选择器。阶段 0 的结论：`body` 之上那 5 层遮挡全部由 `--dsw-alias-bg-base` 与 `--dsw-specific-sidebar-fill` 驱动，改这两个 token 即可。
    副作用要认：两个 token 共 39 处消费声明，其中全窗口接管面（登录 / 引导）会因半透明而透出聊天内容。
-2. **渐变的每个参数都是 `--dsh-go-*` 变量**，由 `tokens.ts` 随 token 层一起交给 `overrideTokens`。这是对 `overrideTokens` 的刻意扩展（它接受任意名字）：换来的是明暗由主题服务挑、卸载由同一个 disposer 收，CSS 里不需要判断明暗，也不需要第二份清理逻辑。官方 34 个 token（`TOKEN_NAMES`）与自有 5 个变量（`MATERIAL_VARS`）在代码与校验器里是两张独立的表。
+2. **渐变的每个参数都是 `--dsh-theme-mist-*` 变量**，由 `tokens.ts` 随 token 层一起交给 `overrideTokens`。这是对 `overrideTokens` 的刻意扩展（它接受任意名字）：换来的是明暗由主题服务挑、卸载由同一个 disposer 收，CSS 里不需要判断明暗，也不需要第二份清理逻辑。官方 34 个 token（`TOKEN_NAMES`）与自有 5 个变量（`MATERIAL_VARS`）在代码与校验器里是两张独立的表。
 
 配套守卫：`[role='dialog'][aria-modal='true']` 内把 `--dsw-alias-bg-base` 重绑回不透明页面色，只重绑变量、不改组件自己的 `background`。
 
@@ -142,10 +142,10 @@ overrideTokens(
 插件在 `document.body` 上打一个自有属性：
 
 ```ts
-body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
+body.dataset.dshThemeMistTheme = ''          // → <body data-dsh-theme-mist>
 ```
 
-所有自有 CSS 一律以 `body[data-dsh-go-theme]` 为前缀。这不是风格问题，是**安全边界**：
+所有自有 CSS 一律以 `body[data-dsh-theme-mist]` 为前缀。这不是风格问题，是**安全边界**：
 
 - 卸载时属性一删，全部自有样式立刻失效
 - 不会污染其他皮肤或官方组件
@@ -160,7 +160,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 > 「Contribute through slots: `ctx.slots.inject(ownerKey, () => ctx.slots.register(...))`…
 > **Do not write DOM outside your component or append to `document.body`.**」
 
-而本方案要在 `body` 上打一个 `data-dsh-go-theme` 属性——**字面上违反了这条**。
+而本方案要在 `body` 上打一个 `data-dsh-theme-mist` 属性——**字面上违反了这条**。
 
 **判断**：这条规范的适用对象是「贡献 UI 的业务插件」，不是「主题插件」。理由与取舍：
 
@@ -173,7 +173,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 
 **因此本方案的自我约束（写进验收）**：
 1. **不向 `body` 或 `head` append 任何元素**（`<style>` 由构建预设的 `data-plugin` 机制注入，不是我们手动 append）
-2. 全局 DOM 写入**仅限** `body` 上的 1 个 `data-dsh-go-theme` 属性
+2. 全局 DOM 写入**仅限** `body` 上的 1 个 `data-dsh-theme-mist` 属性
 3. 设置界面走官方 slot，不自建挂载点
 4. 若未来必须增补装饰节点，**改为通过 slot 组件渲染**并接受 React 生命周期管理，而不是 `document.body.append()`
 
@@ -193,7 +193,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 
 | 资源 | 清理方式 |
 |---|---|
-| `body[data-dsh-go-theme]` | `delete body.dataset.dshGoTheme` |
+| `body[data-dsh-theme-mist]` | `delete body.dataset.dshThemeMistTheme` |
 | 注入的 DOM 节点（光晕层等） | `.remove()` |
 | `MutationObserver` / `ResizeObserver` | `.disconnect()` |
 | `setTimeout` / `requestAnimationFrame` | 逐个 `clearTimeout` / `cancelAnimationFrame` |
@@ -209,7 +209,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 |---|---|---|---|
 | body 内联声明 | 1 条（宿主自己写的 1 个令牌） | 44 条 | 1 条，值与优先级逐字相同 |
 | 全站 `<style>` | 149 | 152（+3 张自有样式表） | 149 |
-| 探测到的 `--dsw-*` / `--dsh-go-*` 计算值 | 基线 | 58 / 62 变化 | 与基线逐字相同 |
+| 探测到的 `--dsw-*` / `--dsh-theme-mist-*` 计算值 | 基线 | 58 / 62 变化 | 与基线逐字相同 |
 | 作用域属性 / 类名 / 标记节点 | 无 | 3 属性 + 1 类名 + 1 节点 | 全无 |
 
 同一套断言在 0.2.2-alpha.2（桌面端自带的运行时，`--dsh` 指过去即可）上也跑过一遍：基线 body 内联 3 条 / 156 个 `<style>`，挂载后 46 条 / 159 个，卸载后回到 3 条 / 156 个，同样两轮零差异。数字不同只是因为宿主自己多写了两个令牌、多了几个样式表。
@@ -217,7 +217,7 @@ body.dataset.dshGoTheme = ''          // → <body data-dsh-go-theme>
 两个必须写下来的边界：
 
 1. **自有 `<style>` 是宿主回收的，不是我们删的。** 三个模块样式表由构建产物在 factory 里注入，插件自己没有删除逻辑；实测卸载后从 152 回到 149，靠的是宿主的 `removeOwnedStyles`。这意味着**如果宿主某天不再回收，它会泄漏**——脚本里那条断言就是为了让这一天立刻显形。
-2. **`localStorage['dsh.go-theme.preferences.v1']` 有意保留。** 配色与侧栏材质是用户的选择，不是插件的状态；装回来时应当还在。除此之外没有任何残留（监听器、属性、类名、变量全部清空）。
+2. **`localStorage['dsh.theme-mist.preferences.v1']` 有意保留。** 配色与侧栏材质是用户的选择，不是插件的状态；装回来时应当还在。除此之外没有任何残留（监听器、属性、类名、变量全部清空）。
 
 ### 3.3 生命周期边界
 
@@ -255,11 +255,11 @@ export function apply(ctx) {
   // 方案 A（推荐）：嵌入「设置 → 通用」面板，紧跟官方「外观」(10) 与「字号」(11)
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
-    id: 'dsh-go-theme',
+    id: 'dsh-theme-mist',
     order: 11.5,
     locale: NS,
     inject: () => ({ /* 配色列表、当前值、setAccent、setSidebarMaterial */ }),
-  }, DshGoThemeGeneralRow))
+  }, DshThemeMistThemeGeneralRow))
 
   // 方案 B（备选，若做成左侧独立导航页）：
   // 必须 label: () => t('section.label') 且声明 locale: NS。
@@ -296,7 +296,7 @@ T3.1 落地时逐行核对了在册项，发现**原计划的 `order: 12` 已被
 
 另两点实测：行容器带 `data-slot="settings.general.item"` 且 `display: contents`，**所有行都是它的子元素**（所以「第几行」要数它的 `children`，不是数 `[data-slot]` 节点）；末行底边由 `>:last-child{border-bottom:none}` 剥掉，因此行必须自画 `.5px solid var(--dsw-alias-border-l2)`。
 另一点对主题插件有用的实测：宿主在 `<html>` 上写了 `style="color-scheme: light|dark;"`（由「跟随系统」解析后的结果，不是偏好值）。
-这意味着**任何需要按明暗取不同颜色的插件 CSS 都不必自己监听 `theme/change`**：把一对值交给 CSS，用 `light-dark()` 让引擎按继承的 `color-scheme` 选。T3.2 的六个色块就是这样实现的（`--go-seed-light` / `--go-seed-dark` 内联在按钮上），既没有新增全局属性，也没有新增事件监听。
+这意味着**任何需要按明暗取不同颜色的插件 CSS 都不必自己监听 `theme/change`**：把一对值交给 CSS，用 `light-dark()` 让引擎按继承的 `color-scheme` 选。T3.2 的六个色块就是这样实现的（`--dsh-theme-mist-seed-light` / `--dsh-theme-mist-seed-dark` 内联在按钮上），既没有新增全局属性，也没有新增事件监听。
 
 **控件自包含约束**（官方明文规定）：
 
@@ -346,9 +346,9 @@ T3.1 落地时逐行核对了在册项，发现**原计划的 `order: 12` 已被
 |---|---|---|---|---|
 | Host settings | `ctx.configForms.get(entryId)` → `$DSH_HOME/cordis.patch.yml` | 官方推荐，跨浏览器共享，有 schema 校验 | 需要在 Node 半侧声明 settings entry 与 schema；复杂度高 | **v1 不用** |
 | `localStorage` | 浏览器本地 | 简单，无 Node 半侧依赖 | 不跨浏览器/不跨设备 | **v1 采用** |
-| 插件自有 JSON | `~/.dsh/dsh-go-theme/config.json` | 可控 | 要自己写路由与原子写 | 备选 |
+| 插件自有 JSON | `~/.dsh/dsh-theme-mist/config.json` | 可控 | 要自己写路由与原子写 | 备选 |
 
-**v1 决策**：`localStorage`，键 `dsh.go-theme.preferences.v1`，结构 `{ accent: 'mist', sidebarMaterial: 'sheet' }`。读取时逐字段做类型与取值白名单校验（未知 accent 回落 `mist`），对齐 `skin-manager/src/client/preferences.ts:45-70` 的规范化做法。
+**v1 决策**：`localStorage`，键 `dsh.theme-mist.preferences.v1`，结构 `{ accent: 'mist', sidebarMaterial: 'sheet' }`。读取时逐字段做类型与取值白名单校验（未知 accent 回落 `mist`），对齐 `skin-manager/src/client/preferences.ts:45-70` 的规范化做法。
 
 > ⚠️ 已知代价：`localStorage` 不跨设备。这与官方主题偏好（写 Host settings、跨已认证浏览器共享）不一致。记录在 [`docs/decisions/0002-preference-storage.md`](decisions/0002-preference-storage.md)，v2 再迁移到 `configForms`。
 
@@ -439,13 +439,13 @@ token 表全量下发（幂等，两版通用）
 const canOverride = typeof ctx.theme?.overrideTokens === 'function'
 if (!canOverride) {
   // 降级：只用自有 CSS 打属性作用域，不覆盖 token
-  ctx.logger?.warn?.('dsh-go-theme: theme service lacks overrideTokens; material layer only')
+  ctx.logger?.warn?.('dsh-theme-mist: theme service lacks overrideTokens; material layer only')
 }
 ```
 
 **不要**读 `ctx.theme` 的版本号做分支——官方没有暴露版本。用**能力探测 + try/catch**，这是唯一稳定的做法。
 
-落地形态（T4.2）：探测与写入都在 `src/client/writer.ts`。宿主有 `overrideTokens` 时原样转发；没有时只写自有的十五个 `--dsh-go-*`（以 `light-dark(light, dark)` 对写入——`light-dark()` 按 `<html>` 上的 `color-scheme` 解析，所以不需要自己监听 `theme/change`），官方令牌一个都不碰，作用域属性、设置行与偏好照旧，并记一条 `ctx.logger.warn`。`ctx.theme` 的读取本身也包在 try/catch 里：未注入的服务一读就抛，能力探测不该把插件带下去。
+落地形态（T4.2）：探测与写入都在 `src/client/writer.ts`。宿主有 `overrideTokens` 时原样转发；没有时只写自有的十五个 `--dsh-theme-mist-*`（以 `light-dark(light, dark)` 对写入——`light-dark()` 按 `<html>` 上的 `color-scheme` 解析，所以不需要自己监听 `theme/change`），官方令牌一个都不碰，作用域属性、设置行与偏好照旧，并记一条 `ctx.logger.warn`。`ctx.theme` 的读取本身也包在 try/catch 里：未注入的服务一读就抛，能力探测不该把插件带下去。
 
 **token 存在性**：`overrideTokens` 允许注册**任意** token 名（源码 `:1950-1951` 的 `exportInspectTokens` 会为未内建的 token 生成 `dynamicToken`），所以覆盖一个 0.2.1 不存在的 token **不会报错**——但也**不会生效**（没有消费方读它）。这意味着：**多覆盖无害，少覆盖会掉效果**。策略是覆盖一个跨版本超集，接受旧版冗余。
 
@@ -467,10 +467,10 @@ if (!canOverride) {
 | 比对项 | 结果 |
 |---|---|
 | 39 个被覆盖 / 被引用的令牌 × 明暗两档 | **逐字一致** |
-| 六套配色的 `--dsw-alias-brand-primary` 与 `--dsh-go-page-base` | 六套 × 2 字段**逐字一致** |
+| 六套配色的 `--dsw-alias-brand-primary` 与 `--dsh-theme-mist-page-base` | 六套 × 2 字段**逐字一致** |
 | 输入区座位 / 输入卡布局矩形 | 一致（1153×238 @ 280,280；774×114 @ 469,372） |
 | 全站 `backdrop-filter` 清单 | 都是 1 处、`blur(18px) saturate(1.25)` |
-| `body` 上的主题属性 | 一致（`data-dsh-go-theme` / `data-dsh-go-accent`） |
+| `body` 上的主题属性 | 一致（`data-dsh-theme-mist` / `data-dsh-theme-mist-accent`） |
 | 页面背景图（`background-image`） | 一致 |
 
 **唯一的差异是宿主自己的类名哈希前缀**：输入区座位在 0.2.1 是 `div.wSkVaW_composerSeat`、在 0.2.2 是 `div.e3z7WW_composerSeat`。我们的规则挂在 `[data-composer-seat]` / `[data-slot=…]` 上，不读这类哈希名，所以不受影响——这条差异正好从反面印证了「不依赖哈希类名」那条约定。
@@ -531,7 +531,7 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 
 共存原则：
 
-1. **作用域隔离**：本插件只写 `body[data-dsh-go-theme]` 下的样式，不碰 `body[data-dsh-orca-link]` 等他人属性。
+1. **作用域隔离**：本插件只写 `body[data-dsh-theme-mist]` 下的样式，不碰 `body[data-dsh-orca-link]` 等他人属性。
 2. **token 层冲突**：`overrideTokens` 的 source 用包名，各皮肤互不覆盖对方的层，但**后注册者胜出**。若两个皮肤同时启用，视觉会叠加——这是用户选择，不做强行互斥（互斥属于"皮肤管理器"的职责，不是主题的职责）。
 3. **不读取他人 `skin.json`**：那是 `skin-manager` 的私有协议，不是 DSH 核心契约。
 
@@ -572,9 +572,9 @@ DSH Go 本身的选择恰好是 (b)：它**刻意不打包中文字体**，理�
 | 两版渲染是否一致 | **一致**：39 个令牌 × 明暗、六套配色、布局矩形、模糊清单逐字相同；唯一差异是宿主自己的类名哈希 | 本文 §5.3；截图在 `reference/t41-preview/`（未入库） |
 | 围栏 `diff` 代码块没有红绿 | **宿主行为，与主题无关**：在桌面端把本插件停用后渲染完全相同 | 2026-11-02 用户实测；代码面只碰 `.md-code-block` 的圆角与底色，未改任何 `--shiki-*` |
 | 右栏与交互式终端 | **能开且正常**：右栏入口是 `aria-label="Open right sidebar"`，启动面板给 Workspace files / New terminal / More tools；终端是 xterm（38 行渲染、`bash` 提示符），终端面自身不透明、不串字，全站真模糊仍 1 处 | 2026-11-02 隔离实例实测；截图 `reference/t43-preview/14-terminal-live.png`（未入库） |
-| 卸载是否真的干净 | **干净，两个版本都是**：62 个令牌名的计算值、body 整条内联声明（含优先级）、3 个 `data-dsh-go-*` 属性、作用域类名、3 张自有 `<style>`、任何带插件标记的节点、两个 window 监听器，全部复原；两轮循环零差异。0.2.1：1 → 44 → 1 条内联、149 → 152 → 149 个样式表；0.2.2：3 → 46 → 3 条、156 → 159 → 156 个 | `tools/e2e-uninstall.mjs`（23 条断言 × 两版本）；单测 `tests/uninstall-audit.test.ts`（9 条）；本文 §3.2 |
+| 卸载是否真的干净 | **干净，两个版本都是**：62 个令牌名的计算值、body 整条内联声明（含优先级）、3 个 `data-dsh-theme-mist-*` 属性、作用域类名、3 张自有 `<style>`、任何带插件标记的节点、两个 window 监听器，全部复原；两轮循环零差异。0.2.1：1 → 44 → 1 条内联、149 → 152 → 149 个样式表；0.2.2：3 → 46 → 3 条、156 → 159 → 156 个 | `tools/e2e-uninstall.mjs`（23 条断言 × 两版本）；单测 `tests/uninstall-audit.test.ts`（9 条）；本文 §3.2 |
 | 自有 `<style>` 由谁回收 | **宿主回收**：插件自身没有删除逻辑，实测卸载后全站 `<style>` 从 152 回到 149 | 同上；宿主 `removeOwnedStyles` 实测 |
-| 卸载后还留下什么 | **只有一条配色偏好**（`localStorage` 的 `dsh.go-theme.preferences.v1`），有意为之：装回来时用户的选择还在 | 同上 |
+| 卸载后还留下什么 | **只有一条配色偏好**（`localStorage` 的 `dsh.theme-mist.preferences.v1`），有意为之：装回来时用户的选择还在 | 同上 |
 | 交叉场景脚本能否重跑 | **能，但工作区要有内容**：默认展开的工作区若只剩空白会话，markdown / 代码面两条断言会红；用 `--workspace <片段>` 指一个有真实对话的工作区 | 2026-11-02 实测；`tools/e2e-scenarios.mjs` |
 | 兼容门禁到底看什么 | **`engines.dsh` 单独决定**；没有它时只检查 `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` 的 peer（每个都得满足），其它 peer 名字一律跳过；比较用 `{ includePrerelease: true }`，所以 0.2.1-alpha.1 与 0.2.2-alpha.2 都算在 `>=0.2.1-alpha.1 <0.3.0` 里，而 0.2.0 不算 | `dsh-app-boot/lib/index.js` 的 `unmetRequirements` / `evaluatePluginCompatibility`；`tools/check-pack.mjs` 固定这两个字段 |
 
@@ -660,8 +660,8 @@ bg-base 归零后，靠它当填充的表面必须在语义钩子上重绑。宿
 只把**窗口框**的底交还给页面，其余不动：
 
 ```css
-html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']),
-html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar'])::before {
+html[data-windows-titlebar] body[data-dsh-theme-mist] [data-slot='root'] > :has([data-slot='sidebar']),
+html[data-windows-titlebar] body[data-dsh-theme-mist] [data-slot='root'] > :has([data-slot='sidebar'])::before {
   background: transparent;
 }
 ```
@@ -721,8 +721,8 @@ T5.6 把窗口框交还页面之后，用户的下一句是「左侧边栏和周
 ### 11.3 修法：把它真的画成一块玻璃（T5.7）
 
 - 侧栏列（层 2）不再画填充：它的盒子 `overflow: hidden`，圆角会被切方。形状交给根节点（层 3）。
-- 根节点：`background-color: var(--dsh-go-sheet-token)` + `border-radius: 0 28px 28px 0` + `inset 0 0 0 .5px var(--dsw-alias-border-l1)`（对应上游 ink@0.07）+ `inset 0 1px 0 var(--dsh-go-highlight)`。
-- 走 `--dsh-go-sheet-token` 而不是 `--dsh-go-sheet-fill`：这样系统级的「减少透明」降级用同一个指针把它换成近不透明的 solid，不需要为侧栏单写第四条规则。
+- 根节点：`background-color: var(--dsh-theme-mist-sheet-token)` + `border-radius: 0 28px 28px 0` + `inset 0 0 0 .5px var(--dsw-alias-border-l1)`（对应上游 ink@0.07）+ `inset 0 1px 0 var(--dsh-theme-mist-highlight)`。
+- 走 `--dsh-theme-mist-sheet-token` 而不是 `--dsh-theme-mist-sheet-fill`：这样系统级的「减少透明」降级用同一个指针把它换成近不透明的 solid，不需要为侧栏单写第四条规则。
 
 副作用是好的：只画一次之后底板从 (245,249,254) 变成 (244,246,253)，比原来更贴金标准的 (244,247,254)。发丝像素落在 (226,229,236)，右侧两角实测 28px 圆弧。
 
@@ -733,7 +733,7 @@ T5.6 把窗口框交还页面之后，用户的下一句是「左侧边栏和周
 - 顶端（0.82）：上游 sheet 档原值，匹配金标准。
 - 底端（0）：把右栏的语言搬过来。上游对两列是有意区别对待的（`adaptive_scaffold.dart`：「The panel is a flat column on the page…, set off from the chat by a hairline. The sidebar keeps the drawer's own glass.」），所以这是偏离，不是修正。
 
-既然两端都成立，就做成 `sidebarMaterial: 'sheet' | 'flat'`，默认 `sheet`（忠实值），平铺是可选项。实现要点：属性**始终**写在 `body` 上（`data-dsh-go-sidebar`），CSS 才能给两个状态都起名字，而不是把「属性缺席」当第三种状态。
+既然两端都成立，就做成 `sidebarMaterial: 'sheet' | 'flat'`，默认 `sheet`（忠实值），平铺是可选项。实现要点：属性**始终**写在 `body` 上（`data-dsh-theme-mist-sidebar`），CSS 才能给两个状态都起名字，而不是把「属性缺席」当第三种状态。
 
 平铺要关的是三处画填充，不是一处：列、根节点、会话列表末尾那 24px 的 `linear-gradient(transparent, var(--dsw-specific-sidebar-fill))`。列表没有语义属性，所以把令牌在 `[data-slot='sidebar']` 子树内改指 `transparent`——淡出于是淡到「没有」，而不是在页面渐变上留一条白带；行拖拽预览渲染在这个子树之外的 portal 里，填充不受影响。
 
@@ -760,7 +760,7 @@ T5.6 把窗口框交还页面之后，用户的下一句是「左侧边栏和周
 先排除了两件事：浮层自己的填充（宿主 `--dsw-menu-surface-fill` = `#f8f9fa94`，本主题从未触碰）与桌面端的差异（web 与桌面端完全一致）。真正的原因在祖先上——浮层渲染在**输入条底座里面**：
 
 - 底座被本主题加上了 `backdrop-filter: blur(18px)`。`backdrop-filter` 会建立 backdrop root，子孙的模糊只能采样到这个根内部，浮层自带的 `blur(40px)` 因此采样不到页面，等于没有；
-- 底座还有一条 `::before` 渐隐底带（`--dsh-go-veil-mask: linear-gradient(180deg, transparent 0, #000 36px)`），36px 以下以页面色**完全不透明**，把浮层下半背后整片盖平。
+- 底座还有一条 `::before` 渐隐底带（`--dsh-theme-mist-veil-mask: linear-gradient(180deg, transparent 0, #000 36px)`），36px 以下以页面色**完全不透明**，把浮层下半背后整片盖平。
 
 两者叠加 = 「半透明 + 无模糊」，于是透字。对照实验：把插件关掉，底座上没有这两样东西，浮层照常模糊。
 
@@ -771,10 +771,10 @@ T5.6 把窗口框交还页面之后，用户的下一句是「左侧边栏和周
 只在底座里存在打开的浮层时让开：
 
 ```css
-body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material]) {
+body[data-dsh-theme-mist] [data-composer-seat]:has([data-menu-material]) {
   backdrop-filter: none;
 }
-body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material])::before {
+body[data-dsh-theme-mist] [data-composer-seat]:has([data-menu-material])::before {
   display: none;
 }
 ```
@@ -791,7 +791,7 @@ body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material])::before {
 
 ### 13.1 它本来做什么
 
-`body[data-dsh-go-reduce-material]` 一条属性带三处改动：把 card / sheet / pill 三档的 token 从
+`body[data-dsh-theme-mist-reduce-material]` 一条属性带三处改动：把 card / sheet / pill 三档的 token 从
 `-fill` 换成 `-solid`（白 0.62 → 0.72、`mistLow` 0.82 → 不透明、白 0.55 → 0.66）、关掉输入条底座的
 `blur(18px)`、去掉那条 36px 的渐隐遮罩；输入条卡片的填充从白 0.70 换到 `mistLowest` 0.96。
 

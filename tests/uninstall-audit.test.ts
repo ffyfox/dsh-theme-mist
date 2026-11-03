@@ -14,7 +14,7 @@
  *   4. own nodes — the plugin never appends an element, not even a wrapper.
  *
  * Two residues are deliberate and are asserted as such, not as leaks:
- *   - `localStorage['dsh.go-theme.preferences.v1']` survives, so plugging the
+ *   - `localStorage['dsh.theme-mist.preferences.v1']` survives, so plugging the
  *     theme back in restores the user's accent;
  *   - nothing else may survive, including the two window listeners.
  *
@@ -291,16 +291,16 @@ describe('uninstall leaves no token behind', () => {
 describe('uninstall leaves no marker behind', () => {
   it('drops all three body attributes', () => {
     const run = mount()
-    expect(env.body.hasAttribute('data-dsh-go-theme')).toBe(true)
-    expect(env.body.hasAttribute('data-dsh-go-accent')).toBe(true)
-    expect(env.body.getAttribute('data-dsh-go-sidebar')).toBe('sheet')
+    expect(env.body.hasAttribute('data-dsh-theme-mist')).toBe(true)
+    expect(env.body.hasAttribute('data-dsh-theme-mist-accent')).toBe(true)
+    expect(env.body.getAttribute('data-dsh-theme-mist-sidebar')).toBe('sheet')
 
     run.dispose()
 
     expect(env.body.probe.attributes.size).toBe(0)
-    expect(env.body.hasAttribute('data-dsh-go-theme')).toBe(false)
-    expect(env.body.hasAttribute('data-dsh-go-accent')).toBe(false)
-    expect(env.body.hasAttribute('data-dsh-go-sidebar')).toBe(false)
+    expect(env.body.hasAttribute('data-dsh-theme-mist')).toBe(false)
+    expect(env.body.hasAttribute('data-dsh-theme-mist-accent')).toBe(false)
+    expect(env.body.hasAttribute('data-dsh-theme-mist-sidebar')).toBe(false)
   })
 })
 
@@ -330,22 +330,22 @@ describe('uninstall leaves no tag or node behind', () => {
 describe('uninstall leaves no listener behind', () => {
   it('removes both window listeners', () => {
     const run = mount()
-    expect(env.listeners.get('dsh-go-theme:accent')?.size).toBe(1)
-    expect(env.listeners.get('dsh-go-theme:sidebar-material')?.size).toBe(1)
+    expect(env.listeners.get('dsh-theme-mist:accent')?.size).toBe(1)
+    expect(env.listeners.get('dsh-theme-mist:sidebar-material')?.size).toBe(1)
 
     run.dispose()
 
-    expect(env.listeners.get('dsh-go-theme:accent')?.size ?? 0).toBe(0)
-    expect(env.listeners.get('dsh-go-theme:sidebar-material')?.size ?? 0).toBe(0)
+    expect(env.listeners.get('dsh-theme-mist:accent')?.size ?? 0).toBe(0)
+    expect(env.listeners.get('dsh-theme-mist:sidebar-material')?.size ?? 0).toBe(0)
   })
 
   it('ignores the external accent event once unmounted', () => {
     const run = mount()
     run.dispose()
 
-    env.window.dispatchEvent({ type: 'dsh-go-theme:accent', detail: 'amber' } as unknown as Event)
+    env.window.dispatchEvent({ type: 'dsh-theme-mist:accent', detail: 'amber' } as unknown as Event)
 
-    expect(env.body.hasAttribute('data-dsh-go-accent')).toBe(false)
+    expect(env.body.hasAttribute('data-dsh-theme-mist-accent')).toBe(false)
     expect(snapshot()['--dsw-alias-brand-primary']).toBe('')
   })
 })
@@ -360,7 +360,7 @@ describe('the one deliberate residue', () => {
     expect(env.localStorage.getItem(PREFERENCES_KEY)).toContain('turquoise')
 
     const again = mount()
-    expect(env.body.getAttribute('data-dsh-go-accent')).toBe('turquoise')
+    expect(env.body.getAttribute('data-dsh-theme-mist-accent')).toBe('turquoise')
     again.dispose()
 
     expect(env.body.probe.attributes.size).toBe(0)

@@ -114,9 +114,9 @@ const snapshotExpr = (tokens) => [
   '(() => {',
   '  const cs = getComputedStyle(document.body)',
   '  const out = { tokens: {}, styles: 0 }',
-  "  out.theme = document.body.getAttribute('data-dsh-go-theme')",
-  "  out.accent = document.body.getAttribute('data-dsh-go-accent')",
-  "  out.sidebar = document.body.getAttribute('data-dsh-go-sidebar')",
+  "  out.theme = document.body.getAttribute('data-dsh-theme-mist')",
+  "  out.accent = document.body.getAttribute('data-dsh-theme-mist-accent')",
+  "  out.sidebar = document.body.getAttribute('data-dsh-theme-mist-sidebar')",
   '  out.classes = [...document.body.classList].filter((c) => /_root$/.test(c)).sort()',
   '  for (const name of ' + JSON.stringify(tokens) + ') out.tokens[name] = cs.getPropertyValue(name).trim()',
   "  out.styles = [...document.querySelectorAll('style[data-plugin]')].filter((s) => s.dataset.plugin && s.dataset.plugin.includes(" + JSON.stringify(PKG) + ")).length",
@@ -136,7 +136,7 @@ const snapshot = async () => JSON.parse(await evaluate(snapshotExpr(PROBE_TOKENS
 const EXPECTED_STYLE_TAGS = 3
 const setPatch = (content) => writeFileSync(PATCH_FILE, content)
 const ENABLED_PATCH = '# e2e-lifecycle: bundle enabled via dsh.profile.bundles.\n[]\n'
-const DISABLED_PATCH = '# e2e-lifecycle: temporarily disabled.\n- id: ui-theme-go\n  disabled: true\n'
+const DISABLED_PATCH = '# e2e-lifecycle: temporarily disabled.\n- id: dsh-theme-mist\n  disabled: true\n'
 
 const failures = []
 const check = (name, ok, detail = '') => {
@@ -167,7 +167,7 @@ try {
   const ATTEMPTS = 8
   for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
     try {
-      await waitFor("document.body.getAttribute('data-dsh-go-theme') === null", 15000, 'theme absent while disabled')
+      await waitFor("document.body.getAttribute('data-dsh-theme-mist') === null", 15000, 'theme absent while disabled')
       break
     } catch (error) {
       if (attempt === ATTEMPTS) {
@@ -186,7 +186,7 @@ try {
 
   // -------------------------------------------------------- enable (cycle 1)
   setPatch(ENABLED_PATCH)
-  await waitFor("document.body.getAttribute('data-dsh-go-theme') !== null", 30000, 'theme mounts')
+  await waitFor("document.body.getAttribute('data-dsh-theme-mist') !== null", 30000, 'theme mounts')
   const enabled = await snapshot()
   console.log('', 'enabled:', JSON.stringify(enabled.tokens))
   check('theme attribute set', enabled.theme !== null)
@@ -199,7 +199,7 @@ try {
   const accents = ['mist', 'daiqing', 'dusk', 'turquoise', 'amber', 'graphite']
   const seen = new Map()
   for (const accent of accents) {
-    await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: " + JSON.stringify(accent) + ' }))')
+    await evaluate("window.dispatchEvent(new CustomEvent('dsh-theme-mist:accent', { detail: " + JSON.stringify(accent) + ' }))')
     await sleep(150)
     const now = await snapshot()
     check(accent + ': accent attribute applied', now.accent === accent, String(now.accent))
@@ -214,26 +214,26 @@ try {
     (await snapshot()).styles === EXPECTED_STYLE_TAGS, String((await snapshot()).styles))
 
   // -------------------------------------------------- sidebar material (T5.8)
-  await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'flat' }))")
+  await evaluate("window.dispatchEvent(new CustomEvent('dsh-theme-mist:sidebar-material', { detail: 'flat' }))")
   await sleep(200)
   check('sidebar-material attribute applied', (await snapshot()).sidebar === 'flat')
-  await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'sheet' }))")
+  await evaluate("window.dispatchEvent(new CustomEvent('dsh-theme-mist:sidebar-material', { detail: 'sheet' }))")
   await sleep(200)
   check('sidebar-material attribute restored', (await snapshot()).sidebar === 'sheet')
 
   // ------------------------------------------------------- persistence (T1.5)
-  await evaluate("window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: 'dusk' }))")
+  await evaluate("window.dispatchEvent(new CustomEvent('dsh-theme-mist:accent', { detail: 'dusk' }))")
   await sleep(200)
   // Snapshot right before the reload: the reload must land on this exact accent,
   // whatever it was. Comparing against `enabled` instead would only work on a
   // profile whose storage was empty on first load — a second run against the same
   // profile starts on the previously persisted accent and the check misfires.
   const beforeReload = await snapshot()
-  const stored = await evaluate("(function () { try { return localStorage.getItem('dsh.go-theme.preferences.v1') } catch (e) { return null } })()")
+  const stored = await evaluate("(function () { try { return localStorage.getItem('dsh.theme-mist.preferences.v1') } catch (e) { return null } })()")
   check('preference persisted to localStorage', typeof stored === 'string' && stored.indexOf('dusk') >= 0, String(stored))
 
   await send('Page.reload')
-  await waitFor("document.body.getAttribute('data-dsh-go-theme') !== null", 30000, 'theme remounts after reload')
+  await waitFor("document.body.getAttribute('data-dsh-theme-mist') !== null", 30000, 'theme remounts after reload')
   await sleep(500)
   const afterReload = await snapshot()
   check('accent survives a reload', afterReload.accent === 'dusk', String(afterReload.accent))
@@ -244,7 +244,7 @@ try {
 
   // ------------------------------------------------------------ disable again
   setPatch(DISABLED_PATCH)
-  await waitFor("document.body.getAttribute('data-dsh-go-theme') === null", 30000, 'theme unmounts')
+  await waitFor("document.body.getAttribute('data-dsh-theme-mist') === null", 30000, 'theme unmounts')
   await sleep(600)
   const afterDisable = await snapshot()
   console.log('', 'after disable:', JSON.stringify(afterDisable.tokens))
@@ -261,11 +261,11 @@ try {
   console.log('', CYCLES + ' enable/disable cycles…')
   for (let i = 1; i <= CYCLES; i += 1) {
     setPatch(ENABLED_PATCH)
-    await waitFor("document.body.getAttribute('data-dsh-go-theme') !== null", 30000, 'cycle ' + i + ' mount')
+    await waitFor("document.body.getAttribute('data-dsh-theme-mist') !== null", 30000, 'cycle ' + i + ' mount')
     const on = await snapshot()
     if (on.styles !== EXPECTED_STYLE_TAGS) check('cycle ' + i + ' style count while on', false, String(on.styles))
     setPatch(DISABLED_PATCH)
-    await waitFor("document.body.getAttribute('data-dsh-go-theme') === null", 30000, 'cycle ' + i + ' unmount')
+    await waitFor("document.body.getAttribute('data-dsh-theme-mist') === null", 30000, 'cycle ' + i + ' unmount')
   }
   await sleep(600)
   const afterCycles = await snapshot()
@@ -283,7 +283,7 @@ try {
     afterCycles.inlineProps === baseline.inlineProps, afterCycles.inlineProps + ' vs ' + baseline.inlineProps)
 
   // Leave no preference behind, or the next manual session would start on 'dusk'.
-  await evaluate("(function () { try { localStorage.removeItem('dsh.go-theme.preferences.v1') } catch (e) {} return true })()")
+  await evaluate("(function () { try { localStorage.removeItem('dsh.theme-mist.preferences.v1') } catch (e) {} return true })()")
   check('preference key cleaned up', true)
 } finally {
   writeFileSync(PATCH_FILE, originalPatch)

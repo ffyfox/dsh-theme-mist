@@ -45,7 +45,7 @@ const DSH = arg('dsh', 'dsh')
 const CHROME = arg('chrome', process.env.CHROME_PATH ?? 'google-chrome-stable')
 const SHOTS = arg('shots', join(REPO, 'docs', 'reference', 't44-preview'))
 const PROFILE_NAME = 'unaudit'
-const PREFERENCES_KEY = 'dsh.go-theme.preferences.v1'
+const PREFERENCES_KEY = 'dsh.theme-mist.preferences.v1'
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const BUNDLE = join(REPO, 'lib', 'client.js')
@@ -57,7 +57,7 @@ await mkdir(SHOTS, { recursive: true })
 
 /** Every custom property the layer can write, read off the bundle so it stays in sync. */
 const BUNDLE_TEXT = await readFile(BUNDLE, 'utf8')
-const TOKENS = [...new Set([...BUNDLE_TEXT.matchAll(/--(?:dsw|dsh-go)-[a-z0-9-]+/g)].map((match) => match[0]))].sort()
+const TOKENS = [...new Set([...BUNDLE_TEXT.matchAll(/--(?:dsw|dsh-theme-mist)-[a-z0-9-]+/g)].map((match) => match[0]))].sort()
 
 const freePort = () =>
   new Promise((resolve, reject) => {
@@ -193,17 +193,17 @@ function snapshotInPage(payload) {
   return {
     computed,
     inline,
-    marked: body.hasAttribute('data-dsh-go-theme'),
-    accent: body.getAttribute('data-dsh-go-accent'),
-    sidebar: body.getAttribute('data-dsh-go-sidebar'),
+    marked: body.hasAttribute('data-dsh-theme-mist'),
+    accent: body.getAttribute('data-dsh-theme-mist-accent'),
+    sidebar: body.getAttribute('data-dsh-theme-mist-sidebar'),
     bodyClasses: [...body.classList],
     ourStyleTags: count('style[data-plugin*="' + pkg + '"]'),
     ourStyleTagsCss: count('style[data-plugin-css*="' + pkg + '"]'),
     allStyleTags: count('style'),
     adopted: document.adoptedStyleSheets.length,
-    markedNodes: count('[data-dsh-go-theme]'),
-    accentNodes: count('[data-dsh-go-accent], [data-dsh-go-sidebar]'),
-    goInline: Array.from(body.style).filter((name) => name.startsWith('--dsh-go-')).length,
+    markedNodes: count('[data-dsh-theme-mist]'),
+    accentNodes: count('[data-dsh-theme-mist-accent], [data-dsh-theme-mist-sidebar]'),
+    goInline: Array.from(body.style).filter((name) => name.startsWith('--dsh-theme-mist-')).length,
     bodyInlineCount: body.style.length,
   }
 }
@@ -224,15 +224,15 @@ function diffMaps(before, after, limit = 6) {
 
 /* ------------------------------------------------------------------- run */
 
-const temporaryHome = await mkdtemp(join(tmpdir(), 'dsh-go-uninstall-'))
-const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-go-uninstall-chrome-'))
+const temporaryHome = await mkdtemp(join(tmpdir(), 'dsh-theme-mist-uninstall-'))
+const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-theme-mist-uninstall-chrome-'))
 const debugPort = await freePort()
 const profileDir = join(temporaryHome, 'profiles', PROFILE_NAME)
 const PATCH_FILE = join(profileDir, 'cordis.patch.yml')
 
 /** The patch layer, in both states. The disabled form is what "uninstalled" means here. */
 const PATCH_ENABLED = '# e2e-uninstall: bundle enabled through dsh.profile.bundles.\n[]\n'
-const PATCH_DISABLED = '# e2e-uninstall: plugin disabled — the audit measures this state.\n- id: ui-theme-go\n  disabled: true\n'
+const PATCH_DISABLED = '# e2e-uninstall: plugin disabled — the audit measures this state.\n- id: dsh-theme-mist\n  disabled: true\n'
 
 const failures = []
 let checks = 0
@@ -309,8 +309,8 @@ try {
   }
 
   const snapshot = async () => session.evaluate(SNAPSHOT(PKG))
-  const MOUNTED = 'document.body.hasAttribute("data-dsh-go-theme")'
-  const UNMOUNTED = 'document.body.getAttribute("data-dsh-go-theme") === null'
+  const MOUNTED = 'document.body.hasAttribute("data-dsh-theme-mist")'
+  const UNMOUNTED = 'document.body.getAttribute("data-dsh-theme-mist") === null'
 
   // ------------------------------------------------------------- baseline
   await session.send('Page.navigate', { url })
@@ -338,9 +338,9 @@ try {
 
   // A second layer before the audit: the accent switch rebuilds the layer, and the
   // audit must be comparing against the official values, not against our first write.
-  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-go-theme:accent", { detail: "graphite" }))')
+  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-theme-mist:accent", { detail: "graphite" }))')
   await sleep(600)
-  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-go-theme:accent", { detail: "dusk" }))')
+  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-theme-mist:accent", { detail: "dusk" }))')
   await sleep(600)
   const switched = await snapshot()
   check('the accent switch rewrote the layer', switched.accent === 'dusk' && switched.computed['--dsw-alias-brand-primary'] !== mounted.computed['--dsw-alias-brand-primary'], switched.accent)
@@ -372,8 +372,8 @@ try {
   check('the saved accent survives on purpose', typeof stored === 'string' && stored.includes('dusk'), String(stored))
 
   // ------------------------------------------------------------- no listener
-  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-go-theme:accent", { detail: "amber" }))')
-  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-go-theme:sidebar-material", { detail: "flat" }))')
+  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-theme-mist:accent", { detail: "amber" }))')
+  await session.evaluate('window.dispatchEvent(new CustomEvent("dsh-theme-mist:sidebar-material", { detail: "flat" }))')
   await sleep(500)
   const afterEvents = await snapshot()
   check('the external events are inert once unmounted', afterEvents.accent === null && afterEvents.sidebar === null && diffMaps(baseline.inline, afterEvents.inline).count === 0, JSON.stringify({ accent: afterEvents.accent, sidebar: afterEvents.sidebar }))

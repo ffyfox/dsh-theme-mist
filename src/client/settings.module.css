@@ -6,8 +6,8 @@
  * (`.objMSq_section > [data-slot="settings.general.item"] > :last-child`).
  *
  * Chrome reads only `--dsw-alias-*` / `--dsw-radius-*` tokens. The one thing
- * that must come from our own data is the swatch colour: `--go-seed-light` and
- * `--go-seed-dark` are set inline per button, and `light-dark()` picks the one
+ * that must come from our own data is the swatch colour: `--dsh-theme-mist-seed-light` and
+ * `--dsh-theme-mist-seed-dark` are set inline per button, and `light-dark()` picks the one
  * matching the resolved scheme (the host paints `color-scheme` on <html>).
  */
 .row {
@@ -78,8 +78,8 @@
   border-radius: 50%;
   /* First declaration is the fallback for engines without light-dark(); the
      second wins wherever it parses, which is everywhere this ships. */
-  background: var(--go-seed-light);
-  background: light-dark(var(--go-seed-light), var(--go-seed-dark));
+  background: var(--dsh-theme-mist-seed-light);
+  background: light-dark(var(--dsh-theme-mist-seed-light), var(--dsh-theme-mist-seed-dark));
   /* Light-mode seeds are all dark and dark-mode seeds all light, so the glyph
      has to flip with the mode as well. */
   color: light-dark(#ffffff, #16181d);

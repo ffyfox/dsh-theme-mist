@@ -16,7 +16,7 @@
  *  5. nothing from the forbidden list (visual-spec §8.3)
  *  6. buildTokenLayer() returns a complete layer of {light, dark} pairs for
  *     every palette, with CSS-shaped values and no bare strings
- *  7. the --dsh-go-* material variables (T2.2) are namespaced, do not collide
+ *  7. the --dsh-theme-mist-* material variables (T2.2) are namespaced, do not collide
  *     with official tokens, and are all present in every palette's layer
  *
  * Usage: node tools/check-tokens.mjs
@@ -90,8 +90,8 @@ const hitState = TOKEN_NAMES.filter((n) => n.startsWith(FORBIDDEN_STATE_PREFIX) 
 check('no forbidden state token', hitState.length === 0, hitState.join(' '))
 
 // -------------------------------------------------- 7. material variables
-const badNamespace = MATERIAL_VARS.filter((n) => !n.startsWith('--dsh-go-'))
-check('material vars are namespaced --dsh-go-*', badNamespace.length === 0, badNamespace.join(' '))
+const badNamespace = MATERIAL_VARS.filter((n) => !n.startsWith('--dsh-theme-mist-'))
+check('material vars are namespaced --dsh-theme-mist-*', badNamespace.length === 0, badNamespace.join(' '))
 const collision = MATERIAL_VARS.filter((n) => TOKEN_NAMES.includes(n))
 check('material vars do not shadow official tokens', collision.length === 0, collision.join(' '))
 

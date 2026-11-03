@@ -2,7 +2,7 @@
  * The token layer: DSH Go palette values projected onto official `--dsw-*` names.
  *
  * Scope is deliberately narrow — 34 official tokens, the same list as
- * docs/visual-spec.md §8.2, plus the five --dsh-go-* page-material variables
+ * docs/visual-spec.md §8.2, plus the five --dsh-theme-mist-* page-material variables
  * that material.module.css consumes (T2.2). The two lists are kept apart so
  * the official contract (34 names, each validated against the runtime) stays
  * unpolluted by our own namespace. Everything else is left to the official theme so
@@ -75,7 +75,7 @@ export const TOKEN_NAMES = [
 export type TokenName = (typeof TOKEN_NAMES)[number]
 
 /**
- * Page-material variables (--dsh-go-*). NOT official tokens — they exist so
+ * Page-material variables (--dsh-theme-mist-*). NOT official tokens — they exist so
  * material.module.css can reach per-accent, per-scheme values without
  * hard-coding six palettes in CSS. They ride the token layer because
  * overrideTokens already resolves light/dark and reverts them through the
@@ -83,21 +83,21 @@ export type TokenName = (typeof TOKEN_NAMES)[number]
  * second writer of body's inline style to tear down.
  */
 export const MATERIAL_VARS = [
-  '--dsh-go-page-base',
-  '--dsh-go-page-top',
-  '--dsh-go-page-bottom',
-  '--dsh-go-glow',
-  '--dsh-go-haze',
-  '--dsh-go-chrome-fill',
-  '--dsh-go-chrome-solid',
-  '--dsh-go-sheet-fill',
-  '--dsh-go-sheet-solid',
-  '--dsh-go-card-fill',
-  '--dsh-go-card-solid',
-  '--dsh-go-pill-fill',
-  '--dsh-go-pill-solid',
-  '--dsh-go-highlight',
-  '--dsh-go-shadow',
+  '--dsh-theme-mist-page-base',
+  '--dsh-theme-mist-page-top',
+  '--dsh-theme-mist-page-bottom',
+  '--dsh-theme-mist-glow',
+  '--dsh-theme-mist-haze',
+  '--dsh-theme-mist-chrome-fill',
+  '--dsh-theme-mist-chrome-solid',
+  '--dsh-theme-mist-sheet-fill',
+  '--dsh-theme-mist-sheet-solid',
+  '--dsh-theme-mist-card-fill',
+  '--dsh-theme-mist-card-solid',
+  '--dsh-theme-mist-pill-fill',
+  '--dsh-theme-mist-pill-solid',
+  '--dsh-theme-mist-highlight',
+  '--dsh-theme-mist-shadow',
 ] as const
 
 export type MaterialVar = (typeof MATERIAL_VARS)[number]
@@ -305,57 +305,57 @@ export function buildTokenLayer(p: AccentPalette): TokenLayer {
     // Not official tokens; consumed only by material.module.css. The glow and
     // haze arrive pre-multiplied, so each gradient stop is a plain colour and
     // each scheme carries its own intensity (42/38 light, 28/24 dark).
-    '--dsh-go-page-base': { light: p.light.mist, dark: p.dark.night },
-    '--dsh-go-page-top': { light: p.light.mistTop, dark: p.dark.nightTop },
-    '--dsh-go-page-bottom': { light: p.light.mistBottom, dark: p.dark.nightBottom },
-    '--dsh-go-glow': {
+    '--dsh-theme-mist-page-base': { light: p.light.mist, dark: p.dark.night },
+    '--dsh-theme-mist-page-top': { light: p.light.mistTop, dark: p.dark.nightTop },
+    '--dsh-theme-mist-page-bottom': { light: p.light.mistBottom, dark: p.dark.nightBottom },
+    '--dsh-theme-mist-glow': {
       light: withAlpha(p.accent.glow, GLOW_ALPHA.light),
       dark: withAlpha(p.accent.glowDark, GLOW_ALPHA.dark),
     },
-    '--dsh-go-haze': {
+    '--dsh-theme-mist-haze': {
       light: withAlpha(p.accent.haze, HAZE_ALPHA.light),
       dark: withAlpha(p.accent.hazeDark, HAZE_ALPHA.dark),
     },
     // --- Glass tiers (T2.3 / T5.5) -----------------------------------------
     // Two values per tier: the blur fill and the near-opaque fallback the
     // degradation paths swap in (see material.module.css).
-    '--dsh-go-chrome-fill': {
+    '--dsh-theme-mist-chrome-fill': {
       light: withAlpha('#FFFFFF', CHROME_ALPHA.light),
       dark: withAlpha(p.dark.smoke, CHROME_ALPHA.dark),
     },
-    '--dsh-go-chrome-solid': {
+    '--dsh-theme-mist-chrome-solid': {
       light: withAlpha(p.light.mistLowest, CHROME_SOLID_ALPHA.light),
       dark: withAlpha(p.dark.smoke, CHROME_SOLID_ALPHA.dark),
     },
-    '--dsh-go-sheet-fill': {
+    '--dsh-theme-mist-sheet-fill': {
       light: withAlpha(p.light.mistLow, SHEET_ALPHA.light),
       dark: withAlpha(p.dark.sheetDark, SHEET_ALPHA.dark),
     },
-    '--dsh-go-sheet-solid': { light: p.light.mistLow, dark: p.dark.sheetDark },
-    '--dsh-go-card-fill': {
+    '--dsh-theme-mist-sheet-solid': { light: p.light.mistLow, dark: p.dark.sheetDark },
+    '--dsh-theme-mist-card-fill': {
       light: withAlpha('#FFFFFF', CARD_ALPHA.light),
       dark: withAlpha('#FFFFFF', CARD_ALPHA.dark),
     },
-    '--dsh-go-card-solid': {
+    '--dsh-theme-mist-card-solid': {
       light: withAlpha('#FFFFFF', CARD_SOLID_ALPHA.light),
       dark: withAlpha('#FFFFFF', CARD_SOLID_ALPHA.dark),
     },
-    '--dsh-go-pill-fill': {
+    '--dsh-theme-mist-pill-fill': {
       light: withAlpha('#FFFFFF', PILL_ALPHA.light),
       dark: withAlpha('#FFFFFF', PILL_ALPHA.dark),
     },
-    '--dsh-go-pill-solid': {
+    '--dsh-theme-mist-pill-solid': {
       light: withAlpha('#FFFFFF', PILL_SOLID_ALPHA.light),
       dark: withAlpha('#FFFFFF', PILL_SOLID_ALPHA.dark),
     },
     // --- Rim, highlight and shadow (T2.4 / T2.5) ---------------------------
     // Shared by our own card/pill rules and by the elevation recipes below,
     // so the highlight and the shadow are defined once per scheme.
-    '--dsh-go-highlight': {
+    '--dsh-theme-mist-highlight': {
       light: withAlpha('#FFFFFF', HIGHLIGHT_ALPHA.light),
       dark: withAlpha('#FFFFFF', HIGHLIGHT_ALPHA.dark),
     },
-    '--dsh-go-shadow': {
+    '--dsh-theme-mist-shadow': {
       light: withAlpha(p.light.shadowInk, SHADOW_ALPHA.light),
       dark: withAlpha(p.dark.shadowNight, SHADOW_ALPHA.dark),
     },

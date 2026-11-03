@@ -189,11 +189,11 @@ const STATE_EXPR =
   ' const code = document.querySelector("pre, [class*=md-code-block]");' +
   ' const blur = [...document.querySelectorAll("*")].filter((node) => { const filter = getComputedStyle(node).backdropFilter; return filter && filter !== "none" }).length;' +
   ' const hostZ = [...document.querySelectorAll("body *")].reduce((max, node) => { const z = Number(getComputedStyle(node).zIndex); return Number.isFinite(z) && z > max ? z : max }, 0);' +
-  ' const ourNodes = [...document.querySelectorAll("*")].filter((node) => [...node.attributes].some((attribute) => attribute.name.startsWith("data-dsh-go") && node !== document.body)).length;' +
+  ' const ourNodes = [...document.querySelectorAll("*")].filter((node) => [...node.attributes].some((attribute) => attribute.name.startsWith("data-dsh-theme-mist") && node !== document.body)).length;' +
   ' return {' +
-  '   themed: document.body.hasAttribute("data-dsh-go-theme"),' +
-  '   accent: document.body.getAttribute("data-dsh-go-accent"),' +
-  '   pageBase: style.getPropertyValue("--dsh-go-page-base").trim(),' +
+  '   themed: document.body.hasAttribute("data-dsh-theme-mist"),' +
+  '   accent: document.body.getAttribute("data-dsh-theme-mist-accent"),' +
+  '   pageBase: style.getPropertyValue("--dsh-theme-mist-page-base").trim(),' +
   '   railWidth: rail ? Math.round(rail.getBoundingClientRect().width) : null,' +
   '   railBorder: rail ? getComputedStyle(rail).borderRightWidth : null,' +
   '   hairlinePx: (() => { const widths = [...document.querySelectorAll("body *")].slice(0, 4000).map((node) => parseFloat(getComputedStyle(node).borderTopWidth) || 0).filter((value) => value > 0); widths.sort((a, b) => a - b); return widths[0] ?? null })(),' +
@@ -218,7 +218,7 @@ const check = (name, ok, detail) => {
   if (!ok) failures.push(name)
 }
 
-const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-go-scen-chrome-'))
+const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-theme-mist-scen-chrome-'))
 let browser
 try {
   const port = await freePort()
@@ -399,9 +399,9 @@ try {
   // --- accent sweep on a content-heavy page --------------------------------
   let sweep = true
   for (const accent of ['daiqing', 'dusk', 'turquoise', 'amber', 'graphite', 'mist']) {
-    await browser.evaluate('window.dispatchEvent(new CustomEvent("dsh-go-theme:accent", { detail: ' + JSON.stringify(accent) + ' }))')
+    await browser.evaluate('window.dispatchEvent(new CustomEvent("dsh-theme-mist:accent", { detail: ' + JSON.stringify(accent) + ' }))')
     await sleep(280)
-    if ((await browser.evaluate('document.body.getAttribute("data-dsh-go-accent")')) !== accent) sweep = false
+    if ((await browser.evaluate('document.body.getAttribute("data-dsh-theme-mist-accent")')) !== accent) sweep = false
   }
   check('all six accents apply on a content-heavy page', sweep)
   await browser.shot('07-accent-mist')

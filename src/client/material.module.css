@@ -4,11 +4,11 @@
  *
  * This file deliberately declares no classes. CSS Modules only rewrites class
  * names, so every selector below stays global: the app shell is somebody
- * else's DOM. Every hook is a semantic attribute (data-dsh-go-theme,
+ * else's DOM. Every hook is a semantic attribute (data-dsh-theme-mist,
  * role / aria-modal), never a hashed class name — class names change with the
  * upstream build, attributes do not.
  *
- * All values arrive as --dsh-go-* variables written by tokens.ts through the
+ * All values arrive as --dsh-theme-mist-* variables written by tokens.ts through the
  * theme service, so each accent gets its own gradient, light/dark resolves
  * itself, and teardown happens with the tokens.
  */
@@ -22,8 +22,8 @@
  * vertical ramp underneath. Fixed attachment keeps the gradient still while the
  * panes scroll over it; without it the gradient would slide with the scrolling
  * content and read as a moving backdrop rather than as the page. */
-body[data-dsh-go-theme] {
-  background-color: var(--dsh-go-page-base);
+body[data-dsh-theme-mist] {
+  background-color: var(--dsh-theme-mist-page-base);
   /* The geometry is upstream's, not an approximation of it. backdrop.dart:303-333
      paints a *circle* of radius 0.62 x the longest side anchored at (92%, 0),
      and the haze at (0, 100%) at 0.55 x the same side, each fading linearly to
@@ -36,9 +36,9 @@ body[data-dsh-go-theme] {
      with no colour in it at all. Measured cost: the mean glow alpha over the
      page was 0.052 where DSH Go paints 0.084. */
   background-image:
-    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-go-glow) 0%, transparent 100%),
-    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-go-haze) 0%, transparent 100%),
-    linear-gradient(to bottom, var(--dsh-go-page-top), var(--dsh-go-page-bottom));
+    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow) 0%, transparent 100%),
+    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze) 0%, transparent 100%),
+    linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
   background-repeat: no-repeat;
   background-attachment: fixed;
 }
@@ -54,8 +54,8 @@ body[data-dsh-go-theme] {
  * dialog that already painted itself from another token keeps that paint, and
  * the true full-window cases simply get the opaque page colour back. aria-modal
  * is the semantic (non-hashed) way to name exactly that set. */
-body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
-  --dsw-alias-bg-base: var(--dsh-go-sheet-token);
+body[data-dsh-theme-mist] [role='dialog'][aria-modal='true'] {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token);
 }
 
 /* The desktop window backdrop belongs to the page, not to the sheet (T5.6).
@@ -74,8 +74,8 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
  * the sidebar column keeps its own fill because that element paints the same
  * token itself. Structural, hash-free hook: the frame is the one child of
  * [data-slot='root'] that contains the sidebar slot. */
-html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']),
-html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar'])::before {
+html[data-windows-titlebar] body[data-dsh-theme-mist] [data-slot='root'] > :has([data-slot='sidebar']),
+html[data-windows-titlebar] body[data-dsh-theme-mist] [data-slot='root'] > :has([data-slot='sidebar'])::before {
   background: transparent;
 }
 
@@ -99,19 +99,19 @@ html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([d
  * Radius 28 is the sheet tier's own (shapes.dart xl, GlassSurface's default for
  * chrome and sheet). Hooks are structural: the column is the frame child that
  * contains the sidebar slot, the root is that slot's first child. */
-body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']) > :has(> [data-slot='sidebar']) {
+body[data-dsh-theme-mist] [data-slot='root'] > :has([data-slot='sidebar']) > :has(> [data-slot='sidebar']) {
   background: transparent;
   border-right: 0;
 }
 
-body[data-dsh-go-theme] [data-slot='sidebar'] > :first-child {
+body[data-dsh-theme-mist] [data-slot='sidebar'] > :first-child {
   /* The tier token, not the raw fill: the two OS-level degradation paths swap
      every tier to its near-opaque fallback in one place (see above). */
-  background-color: var(--dsh-go-sheet-token);
+  background-color: var(--dsh-theme-mist-sheet-token);
   border-radius: 0 28px 28px 0;
   box-shadow:
     inset 0 0 0 0.5px var(--dsw-alias-border-l1),
-    inset 0 1px 0 var(--dsh-go-highlight);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight);
 }
 
 /* --- ...and the same column, flat (T5.8, `sidebarMaterial: 'flat'`) ------
@@ -141,17 +141,17 @@ body[data-dsh-go-theme] [data-slot='sidebar'] > :first-child {
  * The hairline is border-l1 (ink 0.08) — the value upstream uses for the panel
  * (chrome.hairline, ink 0.08) and for the sheet's edge (ink 0.07). The host's own
  * column divider is border-l3 (ink 0.25), three times heavier. */
-body[data-dsh-go-theme][data-dsh-go-sidebar='flat'] [data-slot='sidebar'] {
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='sidebar'] {
   --dsw-specific-sidebar-fill: transparent;
 }
 
-body[data-dsh-go-theme][data-dsh-go-sidebar='flat'] [data-slot='root'] > :has([data-slot='sidebar']) > :has(> [data-slot='sidebar']) {
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='root'] > :has([data-slot='sidebar']) > :has(> [data-slot='sidebar']) {
   background: transparent;
   border-right: 0;
   box-shadow: inset -0.5px 0 0 var(--dsw-alias-border-l1);
 }
 
-body[data-dsh-go-theme][data-dsh-go-sidebar='flat'] [data-slot='sidebar'] > :first-child {
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='sidebar'] > :first-child {
   background-color: transparent;
   border-radius: 0;
   box-shadow: none;
@@ -169,19 +169,19 @@ body[data-dsh-go-theme][data-dsh-go-sidebar='flat'] [data-slot='sidebar'] > :fir
  * The three surfaces we could not reach — cordis' business card, trajectory's
  * tool-catalog row and the conversation's image thumbnail — have no semantic
  * attribute; they are listed in README's known limits. */
-body[data-dsh-go-theme] [data-message-bubble],
-body[data-dsh-go-theme] [data-tool],
-body[data-dsh-go-theme] [data-chat-call-id],
-body[data-dsh-go-theme] [data-disclosure-header],
-body[data-dsh-go-theme] [data-compaction-disclosure],
-body[data-dsh-go-theme] [data-schedule-reminder-entry],
-body[data-dsh-go-theme] [data-session-schedule-task] {
-  --dsw-alias-bg-base: var(--dsh-go-card-token);
+body[data-dsh-theme-mist] [data-message-bubble],
+body[data-dsh-theme-mist] [data-tool],
+body[data-dsh-theme-mist] [data-chat-call-id],
+body[data-dsh-theme-mist] [data-disclosure-header],
+body[data-dsh-theme-mist] [data-compaction-disclosure],
+body[data-dsh-theme-mist] [data-schedule-reminder-entry],
+body[data-dsh-theme-mist] [data-session-schedule-task] {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-card-token);
 }
 
-body[data-dsh-go-theme] [role='menu'],
-body[data-dsh-go-theme] [role='listbox'] {
-  --dsw-alias-bg-base: var(--dsh-go-sheet-token);
+body[data-dsh-theme-mist] [role='menu'],
+body[data-dsh-theme-mist] [role='listbox'] {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token);
 }
 
 /* --- Glass, tier 1 of 2: chrome (T2.3) -----------------------------------
@@ -208,13 +208,13 @@ body[data-dsh-go-theme] [role='listbox'] {
    which out-specifies a bare attribute selector. Matching on both attributes
    we already know are on this node reaches (0,3,1) and wins without
    !important. */
-body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
-  --dsh-go-glass-blur: blur(18px) saturate(1.3);
-  --dsh-go-veil-mask: linear-gradient(180deg, transparent 0, #000 36px);
+body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='composer'] {
+  --dsh-theme-mist-glass-blur: blur(18px) saturate(1.3);
+  --dsh-theme-mist-veil-mask: linear-gradient(180deg, transparent 0, #000 36px);
   /* The host's own fade ends in bg-base, which is transparent now, so it paints
      nothing at all. The band is repainted by the next rule instead. */
   background-image: none;
-  backdrop-filter: var(--dsh-go-glass-blur);
+  backdrop-filter: var(--dsh-theme-mist-glass-blur);
 }
 
 /* The veil: DSH Go's BackdropVeil, in CSS (backdrop.dart:111-230).
@@ -255,22 +255,22 @@ body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'
  * which none of the samples above resolved). `100vw` includes a classic
  * scrollbar, so on a layout that shows one the image would slide ~15px
  * sideways; at a 62vmax radius that is a fraction of a colour step. */
-body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer']::before {
+body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='composer']::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-color: var(--dsh-go-page-base);
+  background-color: var(--dsh-theme-mist-page-base);
   background-image:
-    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-go-glow) 0%, transparent 100%),
-    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-go-haze) 0%, transparent 100%),
-    linear-gradient(to bottom, var(--dsh-go-page-top), var(--dsh-go-page-bottom));
+    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow) 0%, transparent 100%),
+    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze) 0%, transparent 100%),
+    linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
   background-repeat: no-repeat;
   background-size: 100vw 100vh;
   background-position: 100% 100%;
-  -webkit-mask-image: var(--dsh-go-veil-mask);
-  mask-image: var(--dsh-go-veil-mask);
+  -webkit-mask-image: var(--dsh-theme-mist-veil-mask);
+  mask-image: var(--dsh-theme-mist-veil-mask);
 }
 
 /* --- A menu opened from the composer keeps the page behind it (T5.9) -----
@@ -290,25 +290,25 @@ body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'
  * and hands the page back to the popover. Nothing is visible behind the menu's
  * own panel that the menu does not already cover, and the bar returns to its
  * frosted self the moment the menu closes. */
-body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material]) {
+body[data-dsh-theme-mist] [data-composer-seat]:has([data-menu-material]) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
-body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material])::before {
+body[data-dsh-theme-mist] [data-composer-seat]:has([data-menu-material])::before {
   display: none;
 }
 
 /* The card itself: fill, hairline, top highlight, soft lift. Radius and
    geometry stay official — only the material is ours. */
-body[data-dsh-go-theme] [data-composer-card] {
-  --dsh-go-glass-fill: var(--dsh-go-chrome-fill);
-  background-color: var(--dsh-go-glass-fill);
+body[data-dsh-theme-mist] [data-composer-card] {
+  --dsh-theme-mist-glass-fill: var(--dsh-theme-mist-chrome-fill);
+  background-color: var(--dsh-theme-mist-glass-fill);
   box-shadow:
     inset 0 0 0 0.5px var(--dsw-alias-border-l1),
-    inset 0 1px 0 var(--dsh-go-highlight),
-    0 8px 24px var(--dsh-go-shadow),
-    0 1px 3px var(--dsh-go-shadow);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight),
+    0 8px 24px var(--dsh-theme-mist-shadow),
+    0 1px 3px var(--dsh-theme-mist-shadow);
 }
 
 /* --- Degradation ---------------------------------------------------------
@@ -327,32 +327,32 @@ body[data-dsh-go-theme] [data-composer-card] {
 @supports not (backdrop-filter: blur(1px)) {
   /* html-qualified so this out-specifies the defaults on body further down
      (same element, equal specificity, later in the sheet). */
-  html body[data-dsh-go-theme] {
-    --dsh-go-card-token: var(--dsh-go-card-solid);
-    --dsh-go-sheet-token: var(--dsh-go-sheet-solid);
-    --dsh-go-pill-token: var(--dsh-go-pill-solid);
+  html body[data-dsh-theme-mist] {
+    --dsh-theme-mist-card-token: var(--dsh-theme-mist-card-solid);
+    --dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-solid);
+    --dsh-theme-mist-pill-token: var(--dsh-theme-mist-pill-solid);
   }
-  body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
-    --dsh-go-glass-blur: none;
-    --dsh-go-veil-mask: none;
+  body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='composer'] {
+    --dsh-theme-mist-glass-blur: none;
+    --dsh-theme-mist-veil-mask: none;
   }
-  body[data-dsh-go-theme] [data-composer-card] {
-    --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
+  body[data-dsh-theme-mist] [data-composer-card] {
+    --dsh-theme-mist-glass-fill: var(--dsh-theme-mist-chrome-solid);
   }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  html body[data-dsh-go-theme] {
-    --dsh-go-card-token: var(--dsh-go-card-solid);
-    --dsh-go-sheet-token: var(--dsh-go-sheet-solid);
-    --dsh-go-pill-token: var(--dsh-go-pill-solid);
+  html body[data-dsh-theme-mist] {
+    --dsh-theme-mist-card-token: var(--dsh-theme-mist-card-solid);
+    --dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-solid);
+    --dsh-theme-mist-pill-token: var(--dsh-theme-mist-pill-solid);
   }
-  body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'] {
-    --dsh-go-glass-blur: none;
-    --dsh-go-veil-mask: none;
+  body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='composer'] {
+    --dsh-theme-mist-glass-blur: none;
+    --dsh-theme-mist-veil-mask: none;
   }
-  body[data-dsh-go-theme] [data-composer-card] {
-    --dsh-go-glass-fill: var(--dsh-go-chrome-solid);
+  body[data-dsh-theme-mist] [data-composer-card] {
+    --dsh-theme-mist-glass-fill: var(--dsh-theme-mist-chrome-solid);
   }
 }
 
@@ -366,10 +366,10 @@ body[data-dsh-go-theme] [data-composer-card] {
  * The fills are mostly free: every card painted with --dsw-alias-bg-base went
  * translucent back in T2.7. These rules only add the rim and the highlight.
  */
-body[data-dsh-go-theme] [data-message-bubble] {
+body[data-dsh-theme-mist] [data-message-bubble] {
   box-shadow:
     inset 0 0 0 0.5px var(--dsw-alias-border-l1),
-    inset 0 1px 0 var(--dsh-go-highlight);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight);
 }
 
 /* Markdown code blocks. The renderer keeps one stable, non-hashed class name
@@ -377,10 +377,10 @@ body[data-dsh-go-theme] [data-message-bubble] {
    class has to be escaped with :global() or lightningcss would localise it and
    the rule would silently match nothing. The fill stays the codeWell token: a
    well is a recessed surface, not a translucent card. */
-body[data-dsh-go-theme] :global(.md-code-block) {
+body[data-dsh-theme-mist] :global(.md-code-block) {
   box-shadow:
     inset 0 0 0 0.5px var(--dsw-alias-border-l1),
-    inset 0 1px 0 var(--dsh-go-highlight);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight);
 }
 
 /* Pill tier: the model capsule in the composer footer — the one pill on this
@@ -388,11 +388,11 @@ body[data-dsh-go-theme] :global(.md-code-block) {
    the slot (8px radius); the slot's own child wrapper is a square box, so
    painting it would show corners behind the pill. Fill is derived from the
    chrome glass, so the pill reads as part of the same material family. */
-body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
-  background-color: var(--dsh-go-pill-token);
+body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button {
+  background-color: var(--dsh-theme-mist-pill-token);
   box-shadow:
     inset 0 0 0 0.5px var(--dsw-alias-border-l1),
-    inset 0 1px 0 var(--dsh-go-highlight);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight);
 }
 
 /* --- Shape: the DSH Go radius ladder (T2.1) ------------------------------
@@ -408,37 +408,37 @@ body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
  * surfaces DSH Go has no opinion about (sidebar rows, menus of third-party
  * plugins, the terminal). See visual-spec §1.1.
  */
-body[data-dsh-go-theme] {
-  --dsh-go-radius-xs: 6px;
-  --dsh-go-radius-sm: 10px;
-  --dsh-go-radius-md: 14px;
-  --dsh-go-radius-lg: 20px;
-  --dsh-go-radius-xl: 28px;
-  --dsh-go-radius-pill: 999px;
+body[data-dsh-theme-mist] {
+  --dsh-theme-mist-radius-xs: 6px;
+  --dsh-theme-mist-radius-sm: 10px;
+  --dsh-theme-mist-radius-md: 14px;
+  --dsh-theme-mist-radius-lg: 20px;
+  --dsh-theme-mist-radius-xl: 28px;
+  --dsh-theme-mist-radius-pill: 999px;
 }
 
 /* Card tier: markdown code blocks move 16 -> 14 (official md 12 / lg 16 sit on
    either side of the DSH Go md step). */
-body[data-dsh-go-theme] :global(.md-code-block) {
-  border-radius: var(--dsh-go-radius-md);
+body[data-dsh-theme-mist] :global(.md-code-block) {
+  border-radius: var(--dsh-theme-mist-radius-md);
 }
 
 /* Inline code: 8 -> 6. :not(pre) keeps the block's own <code> out of it. */
-body[data-dsh-go-theme] :not(pre) > code {
-  border-radius: var(--dsh-go-radius-xs);
+body[data-dsh-theme-mist] :not(pre) > code {
+  border-radius: var(--dsh-theme-mist-radius-xs);
 }
 
 /* Menu surfaces: 16 -> 14. Semantic hook, no class names. */
-body[data-dsh-go-theme] [role='menu'] {
-  border-radius: var(--dsh-go-radius-md);
+body[data-dsh-theme-mist] [role='menu'] {
+  border-radius: var(--dsh-theme-mist-radius-md);
 }
 
 
 /* Chip / model capsule: 8 -> stadium. corner-shape: round is required — the
    official sheet applies superellipse(1.5) to every element, which would bend
    the caps of a 999px radius away from a true semicircle. */
-body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
-  border-radius: var(--dsh-go-radius-pill);
+body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button {
+  border-radius: var(--dsh-theme-mist-radius-pill);
   corner-shape: round;
 }
 
@@ -455,20 +455,20 @@ body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
  * alphas), add the DSH Go top highlight, and swap the neutral-black ambient
  * shadow for the palette's cold ink at a low alpha.
  */
-body[data-dsh-go-theme],
-body[data-dsh-go-theme] * {
+body[data-dsh-theme-mist],
+body[data-dsh-theme-mist] * {
   --dsw-elevation-panel:
     var(--dsw-elevation-stroke),
-    inset 0 1px 0 var(--dsh-go-highlight),
-    0 2px 8px var(--dsh-go-shadow);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight),
+    0 2px 8px var(--dsh-theme-mist-shadow);
   --dsw-elevation-prominent:
     var(--dsw-elevation-stroke),
-    inset 0 1px 0 var(--dsh-go-highlight),
-    0 6px 20px var(--dsh-go-shadow);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight),
+    0 6px 20px var(--dsh-theme-mist-shadow);
   --dsw-elevation-soft:
     var(--dsw-elevation-stroke),
-    inset 0 1px 0 var(--dsh-go-highlight),
-    0 4px 16px var(--dsh-go-shadow);
+    inset 0 1px 0 var(--dsh-theme-mist-highlight),
+    0 4px 16px var(--dsh-theme-mist-shadow);
 }
 
 /* --- Motion (T2.6) -------------------------------------------------------
@@ -490,36 +490,36 @@ body[data-dsh-go-theme] * {
  * DSH Go reserves its ambient 2.4s breath for the connection status dot, which
  * is official DOM we do not own.
  */
-body[data-dsh-go-theme] {
+body[data-dsh-theme-mist] {
   /* Tier fills, indirected so the degradation paths can swap all of them at
      once. The `-fill` values are the blurred/translucent ones, `-solid` the
      near-opaque fallbacks (surfaces.dart's fallbackFill). */
-  --dsh-go-card-token: var(--dsh-go-card-fill);
-  --dsh-go-sheet-token: var(--dsh-go-sheet-fill);
-  --dsh-go-pill-token: var(--dsh-go-pill-fill);
-  --dsh-go-duration-press: 90ms;
-  --dsh-go-duration-quick: 160ms;
-  --dsh-go-duration-standard: 240ms;
-  --dsh-go-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --dsh-theme-mist-card-token: var(--dsh-theme-mist-card-fill);
+  --dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-fill);
+  --dsh-theme-mist-pill-token: var(--dsh-theme-mist-pill-fill);
+  --dsh-theme-mist-duration-press: 90ms;
+  --dsh-theme-mist-duration-quick: 160ms;
+  --dsh-theme-mist-duration-standard: 240ms;
+  --dsh-theme-mist-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body[data-dsh-go-theme] [data-slot='conversation.input.model'] button {
-  transition: background-color var(--dsh-go-duration-quick) var(--dsh-go-ease-standard);
+body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button {
+  transition: background-color var(--dsh-theme-mist-duration-quick) var(--dsh-theme-mist-ease-standard);
 }
 
-body[data-dsh-go-theme] [data-composer-card] {
+body[data-dsh-theme-mist] [data-composer-card] {
   transition:
-    background-color var(--dsh-go-duration-standard) var(--dsh-go-ease-standard),
-    box-shadow var(--dsh-go-duration-standard) var(--dsh-go-ease-standard);
+    background-color var(--dsh-theme-mist-duration-standard) var(--dsh-theme-mist-ease-standard),
+    box-shadow var(--dsh-theme-mist-duration-standard) var(--dsh-theme-mist-ease-standard);
 }
 
 /* Reduced motion: our transitions are decorative, so they go away entirely.
  * Nothing in this stylesheet animates, and this guard is what keeps that true
  * if something is added later. */
 @media (prefers-reduced-motion: reduce) {
-  body[data-dsh-go-theme] [data-slot='conversation.input.model'] button,
-  body[data-dsh-go-theme] [data-composer-card],
-  body[data-dsh-go-theme] [data-composer-seat] {
+  body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button,
+  body[data-dsh-theme-mist] [data-composer-card],
+  body[data-dsh-theme-mist] [data-composer-seat] {
     transition: none;
     animation: none;
   }

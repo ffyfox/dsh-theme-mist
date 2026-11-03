@@ -5,7 +5,7 @@
  * Normally the host theme owns `overrideTokens`: it resolves every
  * `{ light, dark }` pair for the active colour scheme and rewrites body's inline
  * style on each theme change. A host without that method is one we cannot move
- * official tokens on — but the material layer only needs our own `--dsh-go-*`
+ * official tokens on — but the material layer only needs our own `--dsh-theme-mist-*`
  * variables, and those are plain colours, so the page gradient can still paint
  * while every official token keeps its shipped value.
  *
@@ -22,10 +22,10 @@ import { MATERIAL_VARS, type TokenLayer } from './tokens.ts'
  * Layer identity for `overrideTokens`. One layer per source, so re-issuing with
  * the same source replaces the previous layer instead of stacking on top.
  */
-export const LAYER_SOURCE = 'dsh-go-theme'
+export const LAYER_SOURCE = 'dsh-theme-mist'
 
 /** Prefix on every line this plugin logs, so a message names its owner. */
-const LOG_PREFIX = 'dsh-go-theme: '
+const LOG_PREFIX = 'dsh-theme-mist: '
 
 /** The one method this plugin needs from the host theme service. */
 interface ThemeService {
@@ -64,7 +64,7 @@ function readTheme(ctx: Context): ThemeService | undefined {
 }
 
 /**
- * Write only the `--dsh-go-*` material variables straight onto body.
+ * Write only the `--dsh-theme-mist-*` material variables straight onto body.
  *
  * Values go in as `light-dark(light, dark)` pairs so one write serves both
  * schemes. Whatever body already carried for those nine names is captured first

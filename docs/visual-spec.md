@@ -70,7 +70,7 @@ DSH Go 的主题源码把设计意图写进了注释，这些原则决定了移�
 
 ### 1.2 落地情况（T2.1，2026-11-02 实测）
 
-六档阶梯作为**自有变量**落在 `material.module.css` 的作用域里（`--dsh-go-radius-xs/sm/md/lg/xl/pill` = 6/10/14/20/28/999），只改**两套阶梯之间**的那几级，且只在 DSH Go 里真实存在的容器上动手：
+六档阶梯作为**自有变量**落在 `material.module.css` 的作用域里（`--dsh-theme-mist-radius-xs/sm/md/lg/xl/pill` = 6/10/14/20/28/999），只改**两套阶梯之间**的那几级，且只在 DSH Go 里真实存在的容器上动手：
 
 | 表面 | 官方实测 | 改成 | 是否可见 |
 |---|---|---|---|
@@ -171,11 +171,11 @@ floatInset 12   浮动控件离阅读列两边
 **动效刻度是我们自己的变量**，不碰官方 token：
 
 ```css
-body[data-dsh-go-theme] {
-  --dsh-go-duration-press: 90ms;
-  --dsh-go-duration-quick: 160ms;
-  --dsh-go-duration-standard: 240ms;
-  --dsh-go-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+body[data-dsh-theme-mist] {
+  --dsh-theme-mist-duration-press: 90ms;
+  --dsh-theme-mist-duration-quick: 160ms;
+  --dsh-theme-mist-duration-standard: 240ms;
+  --dsh-theme-mist-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 ```
 
@@ -538,7 +538,7 @@ DSH Go 把玻璃分四档，**只有两档真模糊**：
 
 ```css
 /* chrome：真模糊 */
-body[data-dsh-go-theme] [data-dsh-chrome] {
+body[data-dsh-theme-mist] [data-dsh-chrome] {
   background: rgba(255, 255, 255, 0.70);
   backdrop-filter: blur(18px) saturate(1.3);
   box-shadow:
@@ -565,15 +565,15 @@ body[data-dsh-go-theme] [data-dsh-chrome] {
 
 ### 页面渐变与光晕（T2.2 · 已实测落地）
 
-`body` 上三层 `background-image`，取值**全部是 `--dsh-go-*` 变量**——变量由 `src/client/tokens.ts` 随 token 层一起写入：
+`body` 上三层 `background-image`，取值**全部是 `--dsh-theme-mist-*` 变量**——变量由 `src/client/tokens.ts` 随 token 层一起写入：
 
 ```css
-body[data-dsh-go-theme] {
-  background-color: var(--dsh-go-page-base);   /* 不透明兜底 = 调色板页面色 */
+body[data-dsh-theme-mist] {
+  background-color: var(--dsh-theme-mist-page-base);   /* 不透明兜底 = 调色板页面色 */
   background-image:
-    radial-gradient(120% 80% at 100% 0%, var(--dsh-go-glow), transparent 70%),   /* 右上主色光晕 */
-    radial-gradient(100% 70% at 0% 100%, var(--dsh-go-haze), transparent 70%),   /* 左下邻近光晕 */
-    linear-gradient(to bottom, var(--dsh-go-page-top), var(--dsh-go-page-bottom));
+    radial-gradient(120% 80% at 100% 0%, var(--dsh-theme-mist-glow), transparent 70%),   /* 右上主色光晕 */
+    radial-gradient(100% 70% at 0% 100%, var(--dsh-theme-mist-haze), transparent 70%),   /* 左下邻近光晕 */
+    linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
   background-repeat: no-repeat;
   background-attachment: fixed;
 }
@@ -583,23 +583,23 @@ body[data-dsh-go-theme] {
 
 | 变量 | 雾蓝浅色 | 雾蓝深色 | 说明 |
 |---|---|---|---|
-| `--dsh-go-page-base` | `#F0F4FD`（mist） | `#1C1F28`（night） | 不透明兜底；也是 `bg-base` 改半透明之前的原值 |
-| `--dsh-go-page-top` | `#EBF1FE`（mistTop） | `#1D222C`（nightTop） | 渐变起点 |
-| `--dsh-go-page-bottom` | `#F6F7FC`（mistBottom） | `#1B1C23`（nightBottom） | 渐变终点 |
-| `--dsh-go-glow` | `rgba(171,195,252,0.42)` | `rgba(81,103,157,0.28)` | 主色光晕，**alpha 已预乘** |
-| `--dsh-go-haze` | `rgba(213,203,235,0.38)` | `rgba(81,71,101,0.24)` | 邻近色光晕 |
+| `--dsh-theme-mist-page-base` | `#F0F4FD`（mist） | `#1C1F28`（night） | 不透明兜底；也是 `bg-base` 改半透明之前的原值 |
+| `--dsh-theme-mist-page-top` | `#EBF1FE`（mistTop） | `#1D222C`（nightTop） | 渐变起点 |
+| `--dsh-theme-mist-page-bottom` | `#F6F7FC`（mistBottom） | `#1B1C23`（nightBottom） | 渐变终点 |
+| `--dsh-theme-mist-glow` | `rgba(171,195,252,0.42)` | `rgba(81,103,157,0.28)` | 主色光晕，**alpha 已预乘** |
+| `--dsh-theme-mist-haze` | `rgba(213,203,235,0.38)` | `rgba(81,71,101,0.24)` | 邻近色光晕 |
 
 **为什么 alpha 预乘、不在 CSS 里写 42%**：`color-mix(...)` 的百分比是常量，做不到「浅色 42%、深色 28%」。把强度折进变量，一份 CSS 就能同时服务两套明暗 × 六套配色。渐变停止点因此都是普通颜色，e2e 也能逐字比对。
 
-**为什么这些变量走 token 层**：`overrideTokens` 的入参本来就是 `{light, dark}` 对，**由主题服务挑出当前明暗的那一半**写进 `body` 内联样式，卸载时同一个 disposer 一并清掉。于是 CSS 不需要判断明暗，也不需要第二处写 `body` 内联样式再配一套清理逻辑。代价是这 5 个名字进了 token 层——用 `--dsh-go-` 前缀与官方 `--dsw-*` 隔开，代码与校验器里是两张独立的表（`TOKEN_NAMES` 34 个官方 token / `MATERIAL_VARS` 5 个自有变量）。
+**为什么这些变量走 token 层**：`overrideTokens` 的入参本来就是 `{light, dark}` 对，**由主题服务挑出当前明暗的那一半**写进 `body` 内联样式，卸载时同一个 disposer 一并清掉。于是 CSS 不需要判断明暗，也不需要第二处写 `body` 内联样式再配一套清理逻辑。代价是这 5 个名字进了 token 层——用 `--dsh-theme-mist-` 前缀与官方 `--dsw-*` 隔开，代码与校验器里是两张独立的表（`TOKEN_NAMES` 34 个官方 token / `MATERIAL_VARS` 5 个自有变量）。
 
 #### 全屏接管面必须保持不透明（`aria-modal` 守卫）
 
 `--dsw-alias-bg-base` 一旦半透明，**所有**读它的表面都会透。实测这类声明共 39 处，其中一处是登录用的全窗口 `PlatformOverlay`（`position:fixed; inset:0; z-index:1001`）——半透明的话聊天内容会从登录页后面透出来。该节点带 `role="dialog"` 与 `aria-modal="true"`，是**语义而非哈希类名**的钩子：
 
 ```css
-body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
-  --dsw-alias-bg-base: var(--dsh-go-sheet-token);
+body[data-dsh-theme-mist] [role='dialog'][aria-modal='true'] {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token);
 }
 ```
 
@@ -635,12 +635,12 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
 **修法**（`material.module.css`）：
 
 - 侧栏列（层 2）不再画填充——它的盒子会把圆角切方；形状交给侧栏根节点（层 3）。
-- 根节点用 `--dsh-go-sheet-token` 画 0.82 的 sheet 填充 + `border-radius: 0 28px 28px 0` + `inset 0 0 0 .5px` 发丝（`border-l1`，对应上游 ink@0.07）+ `inset 0 1px 0` 顶边高光。
+- 根节点用 `--dsh-theme-mist-sheet-token` 画 0.82 的 sheet 填充 + `border-radius: 0 28px 28px 0` + `inset 0 0 0 .5px` 发丝（`border-l1`，对应上游 ink@0.07）+ `inset 0 1px 0` 顶边高光。
 - 顺带修掉一处**重复绘制**：列与根节点各画一次同一个令牌，等效 alpha 0.968；只画一次之后底板 `245,249,254 → 244,246,253`，反而比原来更贴金标准的 `244,247,254`。
 
 **平铺变体（T5.8，默认关闭）**：上游对两列是有意区别对待的，`adaptive_scaffold.dart` 的类注释原文是「The panel is a flat column on the page (not a card), set off from the chat by a hairline. The sidebar keeps the drawer's own glass.」。把右栏的语言搬到侧栏就是平铺：三处画填充全部关掉（列、根节点、会话列表末尾 24px 的淡入），只留一根 `border-l1` 发丝。实测侧栏 `235,235,248` 与聊天区同色，发丝像素 `220,220,234`。代价是与金标准的侧栏值不再一致，所以做成偏好、不做成默认。
 
-**偏好**：`sidebarMaterial: 'sheet' | 'flat'`，默认 `sheet`；`body` 上**始终**带 `data-dsh-go-sidebar="<值>"`（属性常在，CSS 才能给两个状态都起名字），持久化在同一份 `localStorage` 偏好里，外部可用 `window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'flat' }))` 驱动。设置入口在「设置 → 通用 → 侧栏材质」（`order: 11.7`）。
+**偏好**：`sidebarMaterial: 'sheet' | 'flat'`，默认 `sheet`；`body` 上**始终**带 `data-dsh-theme-mist-sidebar="<值>"`（属性常在，CSS 才能给两个状态都起名字），持久化在同一份 `localStorage` 偏好里，外部可用 `window.dispatchEvent(new CustomEvent('dsh-theme-mist:sidebar-material', { detail: 'flat' }))` 驱动。设置入口在「设置 → 通用 → 侧栏材质」（`order: 11.7`）。
 
 **还没做的**：sheet 档第五件「形状外的投影」——侧栏列 `overflow: hidden` 会把它裁掉，要做只能从聊天列一侧用 inset 阴影模拟；折叠成 rail 的窄态没有截图；深色（`sheetDark @ 0.86`）走同一路径但没有实测。
 
@@ -693,7 +693,7 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
 
 **卡片填充换了之后才看得见**：旧实现卡片读 bg-base（mist 0.36），压在同样偏 mist 的页面上，与页面的 ΔE00 只有 **0.71** —— 等于没有卡片。上游 card 档（白 0.62）对页面是 **5.04**，差 7 倍。这是「界面发平」的第二个来源，与光晕无关。
 
-**降级路径**：两条（`@supports not (backdrop-filter)` / `prefers-reduced-transparency`），每条同时改四个东西——`--dsh-go-glass-fill`、`--dsh-go-glass-blur`、`--dsh-go-veil-mask`，以及 card / sheet / pill 三档的 token 指针。侧栏的 sheet 填充走 `--dsh-go-sheet-token` 这一个指针，所以同一条降级会自动把它换成近不透明的 solid，不需要为它单写规则。实测同屏真模糊 1 → 0，输入条填充 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1（不降反升）。
+**降级路径**：两条（`@supports not (backdrop-filter)` / `prefers-reduced-transparency`），每条同时改四个东西——`--dsh-theme-mist-glass-fill`、`--dsh-theme-mist-glass-blur`、`--dsh-theme-mist-veil-mask`，以及 card / sheet / pill 三档的 token 指针。侧栏的 sheet 填充走 `--dsh-theme-mist-sheet-token` 这一个指针，所以同一条降级会自动把它换成近不透明的 solid，不需要为它单写规则。实测同屏真模糊 1 → 0，输入条填充 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1（不降反升）。
 
 #### 输入条那条带子：重画背景，而不是填一个色（T5.5）
 
@@ -729,22 +729,22 @@ bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 �
 
 | 档 | 落在哪 | 填充 | 实现 |
 |---|---|---|---|
-| card | 用户气泡、Markdown 代码块、工具行内嵌的提问卡、披露头 | `--dsh-go-card-fill`（白 0.62 / 0.05）；气泡与代码块仍用各自的语义 token | 只补 `inset` 发丝线 + 顶边高光 |
-| pill | composer 里的模型胶囊 | `--dsh-go-pill-fill`（白 0.55 / 0.06） | 填充 + 发丝线 + 高光 |
-> **T2.4 当时以为 card 的填充是"免费"的**（凡是画 `--dsw-alias-bg-base` 的卡片自然半透明），这个判断在 T5.5 被推翻：那层 0.36 的 mist 压在同样偏 mist 的页面上，卡片与页面只差 ΔE00 0.71，等于没有卡片。现在 card 档有自己的填充 `--dsh-go-card-fill`（白 0.62 / 0.05），与页面的差是 5.04。
+| card | 用户气泡、Markdown 代码块、工具行内嵌的提问卡、披露头 | `--dsh-theme-mist-card-fill`（白 0.62 / 0.05）；气泡与代码块仍用各自的语义 token | 只补 `inset` 发丝线 + 顶边高光 |
+| pill | composer 里的模型胶囊 | `--dsh-theme-mist-pill-fill`（白 0.55 / 0.06） | 填充 + 发丝线 + 高光 |
+> **T2.4 当时以为 card 的填充是"免费"的**（凡是画 `--dsw-alias-bg-base` 的卡片自然半透明），这个判断在 T5.5 被推翻：那层 0.36 的 mist 压在同样偏 mist 的页面上，卡片与页面只差 ΔE00 0.71，等于没有卡片。现在 card 档有自己的填充 `--dsh-theme-mist-card-fill`（白 0.62 / 0.05），与页面的差是 5.04。
 
-**T2.5：一条高度配方覆盖所有官方浮层。** `--dsw-elevation-*` 我们在**自己的作用域**上重绑（`body[data-dsh-go-theme], body[data-dsh-go-theme] *`），给每档加顶边高光、把中性黑的环境阴影换成调色板的冷墨：
+**T2.5：一条高度配方覆盖所有官方浮层。** `--dsw-elevation-*` 我们在**自己的作用域**上重绑（`body[data-dsh-theme-mist], body[data-dsh-theme-mist] *`），给每档加顶边高光、把中性黑的环境阴影换成调色板的冷墨：
 
 ```css
 --dsw-elevation-panel:
   var(--dsw-elevation-stroke),              /* 保留各组件自选的描边色 */
-  inset 0 1px 0 var(--dsh-go-highlight),    /* DSH Go 的顶边高光 */
-  0 2px 8px var(--dsh-go-shadow);           /* 冷墨，7%（浅）/ 45%（深） */
+  inset 0 1px 0 var(--dsh-theme-mist-highlight),    /* DSH Go 的顶边高光 */
+  0 2px 8px var(--dsh-theme-mist-shadow);           /* 冷墨，7%（浅）/ 45%（深） */
 ```
 
 - **为什么必须在作用域上重绑**：官方把 4 个 `--dsw-elevation-*` 声明在 `body, body *`，只写 `body` 是**静默失效**（§8.1 R1）。改完后实测解析成我们的配方，覆盖约 15 个包里的 30 处消费点。
 - **描边色不动**：`--dsw-elevation-stroke-color` 的默认值来自 `border-l4`/`border-l3`，已经是我们的 alpha；部分组件（日程、会话、user-questions 等）自己挑 l1/l2/l3 —— 也都是我们的 alpha。所以"高层级表面描边更清晰一档"是**配色层已经给的**，T2.5 只需不破坏它。
-- **高光与阴影各一个变量**：`--dsh-go-highlight`（白，浅 0.55 / 深 0.10）、`--dsh-go-shadow`（冷墨，浅 7% / 深 45%）。深色高光只留一点痕迹，否则暗色卡上的一条亮线读作"接缝"而不是"受光"。
+- **高光与阴影各一个变量**：`--dsh-theme-mist-highlight`（白，浅 0.55 / 深 0.10）、`--dsh-theme-mist-shadow`（冷墨，浅 7% / 深 45%）。深色高光只留一点痕迹，否则暗色卡上的一条亮线读作"接缝"而不是"受光"。
 
 ##### 一个把规则变成空操作的坑
 
@@ -766,7 +766,7 @@ bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 �
    |---|---|---|
    | 1 · AppFrame | `[id='root'] > div[data-slot='root'] > div` | `--dsw-alias-bg-base` |
    | 2 · SidebarCol | `[data-slot='root'] > div > :has(> [data-slot='sidebar'])` | `--dsw-specific-sidebar-fill`；**T5.7 起本层不再画**（见「侧栏是一块玻璃」） |
-   | 3 · SidebarRoot | `[data-slot='sidebar'] > :first-child` | `--dsh-go-sheet-token`（原为 `--dsw-specific-sidebar-fill`，同一个值） |
+   | 3 · SidebarRoot | `[data-slot='sidebar'] > :first-child` | `--dsh-theme-mist-sheet-token`（原为 `--dsw-specific-sidebar-fill`，同一个值） |
    | 4 · ConversationRoot | `[data-slot='main.conversation'] > div` | `--dsw-alias-bg-base` |
    | 5 · ComposerSeat（仅 `[data-phase=active]`） | `[data-composer-seat]` | `--dsw-alias-bg-base`（36px 渐变的**终点色**） |
 
@@ -797,7 +797,7 @@ bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 �
 | **R3** | 整值替换，无回退链 | `composeActive` 里 `tokens[name] = modes[colorScheme]` 整体替换（`client.js:2125`） | 覆盖复合值时必须**自己重拼** `var(...)` 引用，否则丢掉被引用的部分 |
 | **R4** | 组件就近声明压过 body | 组件在自己容器上重绑同名变量 | 往 body 覆盖这些**对具体组件无效**（例：`--dsh-chat-content-width` 被 `.body` 容器重绑） |
 
-> ⚠️ **R1 推翻了一个直觉**：`--dsw-elevation-*` 看起来很适合用 token 调阴影，实际上通过 `overrideTokens` **完全无效**。要调高层级表面阴影，只能走自有 CSS（在具体元素上写 `box-shadow`，或用 `body[data-dsh-go-theme], body[data-dsh-go-theme] *` 重绑）。
+> ⚠️ **R1 推翻了一个直觉**：`--dsw-elevation-*` 看起来很适合用 token 调阴影，实际上通过 `overrideTokens` **完全无效**。要调高层级表面阴影，只能走自有 CSS（在具体元素上写 `box-shadow`，或用 `body[data-dsh-theme-mist], body[data-dsh-theme-mist] *` 重绑）。
 
 ### 8.2 必须覆盖（34 个：27 alias + 7 specific）
 
@@ -892,7 +892,7 @@ DSH Go 是移动端优先，桌面端必须做**相反方向**的适配决策：
 | 每组状态下正文对比度 ≥ 4.5:1 | 计算 `label-primary` 与 `bg-base` 的对比度 |
 | 每组状态下主按钮文字对比度 ≥ 4.5:1 | 计算按钮前景/背景 |
 | 关闭插件后所有 `--dsw-alias-*` 回到官方值 | `getComputedStyle` 快照 diff |
-| 卸载后 body 无 `data-dsh-go-theme`、无残留 `<style data-plugin="...">` | DOM 断言 |
+| 卸载后 body 无 `data-dsh-theme-mist`、无残留 `<style data-plugin="...">` | DOM 断言 |
 | `prefers-reduced-motion` 下无动画 | 媒体查询模拟 |
 | `prefers-reduced-transparency` 下无 `backdrop-filter` | 同上 |
 | 侧栏折叠 / 展开、右栏、设置弹窗、终端区无视觉断裂 | 截图基线对比 |

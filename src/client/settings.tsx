@@ -40,7 +40,7 @@ import styles from './settings.module.css'
  * Entry key inside `settings.general.item`. A fresh id is added beside the
  * shipped rows; reusing a shipped id would replace that row instead.
  */
-const ROW_ID = 'dsh-go-theme'
+const ROW_ID = 'dsh-theme-mist'
 
 /**
  * Element id the accent group points `aria-labelledby` at.
@@ -48,10 +48,10 @@ const ROW_ID = 'dsh-go-theme'
  * Both groups are labelled by their visible title rather than by an
  * `aria-label`, so the accessible name and the painted text can never drift
  * apart — and the id doubles as the hook the dual-version e2e counts our rows
- * with (`[aria-labelledby^="dsh-go-"]`), which keeps that assertion independent
+ * with (`[aria-labelledby^="dsh-theme-mist-"]`), which keeps that assertion independent
  * of the interface language.
  */
-const ACCENT_TITLE_ID = 'dsh-go-accent-title'
+const ACCENT_TITLE_ID = 'dsh-theme-mist-accent-title'
 
 /**
  * Position inside the General column.
@@ -72,7 +72,7 @@ const ROW_ORDER = 11.5
  * shipped entry: the accent strip is already 111px tall, and one setting per row
  * is what every shipped entry does.
  */
-const SIDEBAR_ROW_ID = 'dsh-go-sidebar-material'
+const SIDEBAR_ROW_ID = 'dsh-theme-mist-sidebar-material'
 
 /**
  * Sits one tenth below the accent row and still above `transcript-view` (12), so
@@ -81,7 +81,7 @@ const SIDEBAR_ROW_ID = 'dsh-go-sidebar-material'
 const SIDEBAR_ROW_ORDER = 11.7
 
 /** Element id the choice's group points `aria-labelledby` at. */
-const SIDEBAR_TITLE_ID = 'dsh-go-sidebar-title'
+const SIDEBAR_TITLE_ID = 'dsh-theme-mist-sidebar-title'
 
 /** Translator handed to the component by the host because the row declares `locale`. */
 type Translate = (key: string) => string
@@ -91,8 +91,8 @@ type Translate = (key: string) => string
  * `light-dark()` in the stylesheet decides which one the current scheme uses.
  */
 type SwatchStyle = CSSProperties & {
-  readonly '--go-seed-light': string
-  readonly '--go-seed-dark': string
+  readonly '--dsh-theme-mist-seed-light': string
+  readonly '--dsh-theme-mist-seed-dark': string
 }
 
 /**
@@ -168,8 +168,8 @@ function AccentRow({ t }: { readonly t: Translate }) {
           const selected = id === accent
           const palette = PALETTES[id]
           const swatch: SwatchStyle = {
-            '--go-seed-light': palette.accent.seed,
-            '--go-seed-dark': palette.accent.seedDark,
+            '--dsh-theme-mist-seed-light': palette.accent.seed,
+            '--dsh-theme-mist-seed-dark': palette.accent.seedDark,
           }
           return (
             <button
@@ -260,7 +260,7 @@ function SidebarRow({ t }: { readonly t: Translate }) {
  * @param id - material id.
  */
 function sidebarButtonId(id: SidebarMaterial): string {
-  return 'dsh-go-sidebar-' + id
+  return 'dsh-theme-mist-sidebar-' + id
 }
 
 /**
@@ -268,7 +268,7 @@ function sidebarButtonId(id: SidebarMaterial): string {
  * @param id - accent id.
  */
 function buttonId(id: AccentId): string {
-  return 'dsh-go-accent-' + id
+  return 'dsh-theme-mist-accent-' + id
 }
 
 /**

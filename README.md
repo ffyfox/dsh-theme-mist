@@ -1,4 +1,4 @@
-# dsh-Go-theme
+# dsh-theme-mist
 
 把 [DSH Go](https://github.com/ccch1mneyyy/dsh-Go)（DeepSeek Harness 的 Android 客户端，Flutter）的视觉语言，移植成 DSH 桌面端 / Web 端的**客户端主题插件**。
 
@@ -31,7 +31,7 @@ dsh plugin --profile web add "$(pwd)"          # 装进自带的 web profile
 
 包清单里声明了 `dsh.bundle`，所以 `add` 之后会被写进该 profile 的 `dsh.profile.bundles` —— 这是「能不能当层」的唯一开关，只进 `dependencies` 而不进 `bundles` 的包完全惰性。
 
-包名是 `dsh-go-theme`（无 scope；npm 新包名不允许大写，所以仓库用 `dsh-Go-theme`、包名是全小写），卸载时用的就是它。
+包名与仓库名都是 `dsh-theme-mist`（无 scope，全小写——npm 从 2017 年起不接受新包名里的大写字母），卸载时用的就是它。
 
 **想用独立 profile，先按 web 模板建一个**：
 
@@ -45,15 +45,15 @@ dsh plugin --profile themego add "$(pwd)"
 ### 卸载
 
 ```bash
-dsh plugin --profile <profile> remove dsh-go-theme
+dsh plugin --profile <profile> remove dsh-theme-mist
 ```
 
 桌面端在「插件」页移除。这条命令实测（2026-11-02）：它同时摘掉 `dependencies` 里的条目**和** `dsh.profile.bundles` 里的那一项，再 `add` 回来会重新装回原位。
 
-卸载后页面会回到官方外观：`body` 上的三个 `data-dsh-go-*` 属性、注入的三张样式表、`body` 的内联令牌层与两个事件监听全部被清掉（逐项断言见 `tools/e2e-uninstall.mjs`，两版本各 23 条）。**唯一保留的是偏好本身**——配色与「侧栏材质」记在 `localStorage`，装回来时你上次的选择还在。想彻底清掉：
+卸载后页面会回到官方外观：`body` 上的三个 `data-dsh-theme-mist-*` 属性、注入的三张样式表、`body` 的内联令牌层与两个事件监听全部被清掉（逐项断言见 `tools/e2e-uninstall.mjs`，两版本各 23 条）。**唯一保留的是偏好本身**——配色与「侧栏材质」记在 `localStorage`，装回来时你上次的选择还在。想彻底清掉：
 
 ```js
-localStorage.removeItem('dsh.go-theme.preferences.v1')
+localStorage.removeItem('dsh.theme-mist.preferences.v1')
 ```
 
 ## 支持的版本
@@ -71,7 +71,7 @@ localStorage.removeItem('dsh.go-theme.preferences.v1')
 脚本或其他插件可以绕过界面直接驱动，与界面共用同一份状态，选择同样会持久化：
 
 ```js
-window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: 'amber' }))
+window.dispatchEvent(new CustomEvent('dsh-theme-mist:accent', { detail: 'amber' }))
 ```
 
 输入框上方弹出的浮层（`/`、`@` 菜单）保持正常的背景模糊：此前这层模糊被输入条底座的磨砂与渐隐底带挡住，浮层只剩半透明、背后的字看得一清二楚；现在底座只在浮层打开时让开，浮层一关就恢复磨砂（T5.9）。
@@ -84,7 +84,7 @@ window.dispatchEvent(new CustomEvent('dsh-go-theme:accent', { detail: 'amber' })
 也可以用事件驱动：
 
 ```js
-window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'flat' }))
+window.dispatchEvent(new CustomEvent('dsh-theme-mist:sidebar-material', { detail: 'flat' }))
 ```
 
 ## 六套配色

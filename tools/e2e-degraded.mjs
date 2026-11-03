@@ -42,7 +42,7 @@ const EXPECTED_ID = JSON.parse(await readFile(join(REPO, 'package.json'), 'utf8'
    the settings rows are registered through `slots.inject`, which this fake never
    calls back, so nothing renders. It exists only so the bundle's top-level
    `require('react')` has something to bind. */
-const HTML = "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>dsh-go-theme degraded harness</title>\n    <style>\n      html { color-scheme: light dark; }\n      body { margin: 0; min-height: 100vh; }\n    </style>\n  </head>\n  <body>\n    <div id=\"probe\">degraded harness</div>\n    <script>\n      window.__warnings = []\n      window.__shim = new Proxy({}, { get: (target, key) => (target[key] ??= () => ({ type: String(key), args: [] })) })\n      window.__ModuleLoader__ = {\n        load(definition) {\n          window.__pluginId = definition.id\n          window.__plugin = definition.factory((name) => {\n            if (name === 'react' || name === 'react/jsx-runtime') return window.__shim\n            throw new Error('unexpected external: ' + name)\n          })\n        },\n      }\n    </script>\n    <script src=\"/client.js\"></script>\n    <script>\n      ;(() => {\n        const disposers = []\n        const ctx = {\n          effect: (fn) => { const dispose = fn(); disposers.push(dispose); return dispose },\n          theme: {},\n          locale: { register: () => () => {} },\n          slots: { inject: (key) => { (window.__injected ??= []).push(key) } },\n          logger: { warn: (message) => window.__warnings.push(String(message)) },\n        }\n        try {\n          window.__plugin.apply(ctx)\n          window.__result = { ok: true }\n        } catch (error) {\n          window.__result = { ok: false, error: String(error) }\n        }\n        window.__dispose = () => { for (const dispose of disposers) if (typeof dispose === 'function') dispose() }\n      })()\n    </script>\n  </body>\n</html>\n"
+const HTML = "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>dsh-theme-mist degraded harness</title>\n    <style>\n      html { color-scheme: light dark; }\n      body { margin: 0; min-height: 100vh; }\n    </style>\n  </head>\n  <body>\n    <div id=\"probe\">degraded harness</div>\n    <script>\n      window.__warnings = []\n      window.__shim = new Proxy({}, { get: (target, key) => (target[key] ??= () => ({ type: String(key), args: [] })) })\n      window.__ModuleLoader__ = {\n        load(definition) {\n          window.__pluginId = definition.id\n          window.__plugin = definition.factory((name) => {\n            if (name === 'react' || name === 'react/jsx-runtime') return window.__shim\n            throw new Error('unexpected external: ' + name)\n          })\n        },\n      }\n    </script>\n    <script src=\"/client.js\"></script>\n    <script>\n      ;(() => {\n        const disposers = []\n        const ctx = {\n          effect: (fn) => { const dispose = fn(); disposers.push(dispose); return dispose },\n          theme: {},\n          locale: { register: () => () => {} },\n          slots: { inject: (key) => { (window.__injected ??= []).push(key) } },\n          logger: { warn: (message) => window.__warnings.push(String(message)) },\n        }\n        try {\n          window.__plugin.apply(ctx)\n          window.__result = { ok: true }\n        } catch (error) {\n          window.__result = { ok: false, error: String(error) }\n        }\n        window.__dispose = () => { for (const dispose of disposers) if (typeof dispose === 'function') dispose() }\n      })()\n    </script>\n  </body>\n</html>\n"
 
 const server = createServer((request, response) => {
   if (request.url === '/client.js') {
@@ -57,7 +57,7 @@ await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
 const PAGE_PORT = server.address().port
 
 const debugPort = 9400 + Math.floor(Math.random() * 400)
-const profile = await mkdtemp(join(tmpdir(), 'dsh-go-degraded-'))
+const profile = await mkdtemp(join(tmpdir(), 'dsh-theme-mist-degraded-'))
 const chrome = spawn(
   CHROME,
   [
@@ -145,17 +145,17 @@ try {
   const state = await evaluate(`(() => {
     const style = getComputedStyle(document.body)
     const inline = Array.from(document.body.style)
-    const goInline = inline.filter((name) => name.startsWith('--dsh-go-'))
+    const goInline = inline.filter((name) => name.startsWith('--dsh-theme-mist-'))
     const tags = [...document.querySelectorAll('style[data-plugin]')].map((tag) => tag.getAttribute('data-plugin'))
     return {
       pluginId: window.__pluginId,
       result: window.__result,
       warnings: window.__warnings,
       injected: window.__injected ?? [],
-      themed: document.body.hasAttribute('data-dsh-go-theme'),
-      accent: document.body.getAttribute('data-dsh-go-accent'),
-      pageBase: style.getPropertyValue('--dsh-go-page-base').trim(),
-      glow: style.getPropertyValue('--dsh-go-glow').trim(),
+      themed: document.body.hasAttribute('data-dsh-theme-mist'),
+      accent: document.body.getAttribute('data-dsh-theme-mist-accent'),
+      pageBase: style.getPropertyValue('--dsh-theme-mist-page-base').trim(),
+      glow: style.getPropertyValue('--dsh-theme-mist-glow').trim(),
       backgroundImage: style.backgroundImage,
       inlineDsw: inline.filter((name) => name.startsWith('--dsw-')),
       goInline,
@@ -167,7 +167,7 @@ try {
   check('the bundle loads through the stub loader', state.pluginId === EXPECTED_ID, state.pluginId)
   check('apply() survives a theme service without overrideTokens', state.result?.ok === true, JSON.stringify(state.result))
   check('exactly one warning naming the missing capability', state.warnings.length === 1 && /overrideTokens/.test(state.warnings[0]), JSON.stringify(state.warnings))
-  check('the warning goes through ctx.logger, not the console', /^dsh-go-theme: /.test(state.warnings[0] ?? ''), state.warnings[0])
+  check('the warning goes through ctx.logger, not the console', /^dsh-theme-mist: /.test(state.warnings[0] ?? ''), state.warnings[0])
   check('the scope attribute and accent are still set', state.themed && state.accent === 'mist', state.themed + ' / ' + state.accent)
   check('settings rows are still registered', state.injected.filter((key) => key === 'settings.general.item').length === 2, JSON.stringify(state.injected))
   // At least the original nine, and every one of them a pair: the exact count
@@ -182,9 +182,9 @@ try {
     window.__dispose()
     const style = getComputedStyle(document.body)
     return {
-      themed: document.body.hasAttribute('data-dsh-go-theme'),
-      accent: document.body.getAttribute('data-dsh-go-accent'),
-      inline: Array.from(document.body.style).filter((name) => name.startsWith('--dsh-go-')),
+      themed: document.body.hasAttribute('data-dsh-theme-mist'),
+      accent: document.body.getAttribute('data-dsh-theme-mist-accent'),
+      inline: Array.from(document.body.style).filter((name) => name.startsWith('--dsh-theme-mist-')),
       backgroundImage: style.backgroundImage,
     }
   })()`)

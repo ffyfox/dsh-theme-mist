@@ -17,7 +17,7 @@ const DICTIONARIES = { zh, en } as const
 
 describe('settings dictionaries', () => {
   it('declares a stable namespace', () => {
-    expect(SETTINGS_NS).toBe('dsh-go-theme')
+    expect(SETTINGS_NS).toBe('dsh-theme-mist')
   })
 
   it('covers exactly the same keys in every locale', () => {

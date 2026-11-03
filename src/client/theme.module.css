@@ -5,5 +5,5 @@
  * The real material layer (surfaces, hairlines, glow) lands in T2.
  */
 .root {
-  --dsh-go-active: 1;
+  --dsh-theme-mist-active: 1;
 }

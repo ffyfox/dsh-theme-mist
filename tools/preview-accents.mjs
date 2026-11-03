@@ -231,7 +231,7 @@ const WORKSPACE_POINT = [
   '})()',
 ].join('\n')
 
-const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-go-preview-chrome-'))
+const chromeProfile = await mkdtemp(join(tmpdir(), 'dsh-theme-mist-preview-chrome-'))
 let browser
 try {
   const bin = DESKTOP_RUNTIME === undefined
@@ -251,7 +251,7 @@ try {
   }
   const overlays = []
   if (patchLines.length > 0) {
-    const overlay = join(await mkdtemp(join(tmpdir(), 'dsh-go-preview-patch-')), 'preview.yml')
+    const overlay = join(await mkdtemp(join(tmpdir(), 'dsh-theme-mist-preview-patch-')), 'preview.yml')
     await writeFile(overlay, patchLines.join('\n') + '\n')
     overlays.push('--patch', overlay)
   }
@@ -298,7 +298,7 @@ try {
   }
   await dismissModals()
 
-  check('the plugin mounted', await browser.evaluate('document.body.hasAttribute("data-dsh-go-theme")'))
+  check('the plugin mounted', await browser.evaluate('document.body.hasAttribute("data-dsh-theme-mist")'))
   check('three stylesheets are injected',
     (await browser.evaluate('[...document.querySelectorAll("style[data-plugin-css]")].filter((node) => node.dataset.pluginCss.includes(' + JSON.stringify(PKG) + ')).length')) === 3)
 
@@ -367,7 +367,7 @@ try {
     if ((await rows()) === 0) {
       console.log('info could not reach Settings → General on this shell; shooting the page as it is')
     } else {
-      const swatches = await browser.evaluate('document.querySelectorAll("[id^=dsh-go-accent-]").length')
+      const swatches = await browser.evaluate('document.querySelectorAll("[id^=dsh-theme-mist-accent-]").length')
       check('the settings dialog shows the accent row', true)
       check('six swatches are rendered', swatches === 6, String(swatches))
     }
@@ -379,9 +379,9 @@ try {
     // Again here: the preview notice lands a few seconds after the shell does,
     // so a single pass at startup can still be too early.
     await dismissModals()
-    await browser.evaluate('window.dispatchEvent(new CustomEvent("dsh-go-theme:accent", { detail: ' + JSON.stringify(accent) + ' }))')
+    await browser.evaluate('window.dispatchEvent(new CustomEvent("dsh-theme-mist:accent", { detail: ' + JSON.stringify(accent) + ' }))')
     await sleep(600)
-    const applied = await browser.evaluate('document.body.getAttribute("data-dsh-go-accent")')
+    const applied = await browser.evaluate('document.body.getAttribute("data-dsh-theme-mist-accent")')
     check(accent + ': applied', applied === accent, String(applied))
     // Park the pointer: the last click left a hover card over the transcript.
     await browser.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2, button: 'none', buttons: 0 })
