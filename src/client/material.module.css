@@ -58,6 +58,27 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
   --dsw-alias-bg-base: var(--dsh-go-sheet-token);
 }
 
+/* The desktop window backdrop belongs to the page, not to the sheet (T5.6).
+ *
+ * Electron runs with `data-windows-titlebar` on <html>, and the layout package
+ * paints that whole frame with the *sidebar* fill
+ * (`[data-windows-titlebar] .frame { background: var(--dsw-specific-sidebar-fill) }`,
+ * plus the same colour on `.frame::before` for the drag strip). The web build has
+ * no such wrapper, which is why the previews looked right while the desktop app
+ * did not: our sidebar fill is the sheet tier (mistLow @ 0.82), so over the page
+ * it turns the whole window into a near-opaque sheet and the accent glow is left
+ * at 18%. Measured at 1524x903@2x, mist light, top-right corner:
+ *   web (no wrapper)     211,224,253  — the T5.5 acceptance value
+ *   desktop (wrapper)    240,244,253  — flat mist, i.e. the page colour alone
+ * Painting the frame transparent hands the backdrop back to the page gradient;
+ * the sidebar column keeps its own fill because that element paints the same
+ * token itself. Structural, hash-free hook: the frame is the one child of
+ * [data-slot='root'] that contains the sidebar slot. */
+html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']),
+html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar'])::before {
+  background: transparent;
+}
+
 /* --- Glass tiers, re-bound (T5.5) ---------------------------------------
  *
  * bg-base is transparent now (tokens.ts TRANSPARENT), so every surface that was

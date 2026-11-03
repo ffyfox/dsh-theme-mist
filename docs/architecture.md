@@ -638,3 +638,41 @@ bg-base 归零后，靠它当填充的表面必须在语义钩子上重绑。宿
 
 另：`[data-tool]` / `[data-chat-call-id]` 上把 `--dsw-alias-bg-base` 重绑到 card 档的规则**并非空操作**——AskQuestionCard 渲染在 `[data-tool="ask_user_question"]` 内并声明 `background: var(--dsw-alias-bg-base)`，按继承应已拿到该填充。所以上文「4 处只剩哈希类名」里的**提问卡一项待实景复核**，验过之前不要当作确定缺口。
 
+
+## 10. 桌面端与网页端不是同一棵树（T5.6）
+
+2026-11-03 用户反馈「整体色彩还是没变化，颜色很浅，只有输入框两侧的颜色变化、变深、界限明显」。这句话推翻的是 T5.5 的验收口径，不是它的结论——T5.5 的像素基线全部取自**浏览器**，而桌面端多了一层。
+
+### 10.1 怎么定位的
+
+1. 应用窗口截图实测：右上角 (240,244,253)，而 T5.5 的验收值是 (211,224,253)；中心 (244,247,254) vs 基准 (235,240,252)。整页接近纯 `mist`。
+2. 同一份插件集、同一个桌面运行时、同样 1524×903@2x，在 Chromium 里重放：右上角 **(211,224,253)**，与验收值一致 → CSS 没问题，差在应用这一侧。
+3. 在插件里临时把计算值写进 `document.title`（诊断代码已撤除），从窗口标题读回应用自己的 DOM 事实：
+   - `body` 的 `background-image` 计算值正确（`radial-gradient(62vmax at 92% 0%, rgba(171,195,252,0.42) …)`），`background-attachment` = `fixed, fixed, fixed`；
+   - 窗口不滚动（`scrollY 0`，`scrollHeight` = `innerHeight` = 903），`body` 的祖先里没有任何 transform / filter；
+   - **窗口右上角命中的是一个 `background: rgba(246,249,254,0.82)` 的 `div`** —— 正是我们的 sheet 档填充，直接盖在 `body` 之上。
+4. 该颜色的来源在宿主 `dsh-client-ui-layout`：`[data-windows-titlebar] .frame { background: var(--dsw-specific-sidebar-fill) }`，`<html>` 上的 `data-windows-titlebar` 由 Electron 环境加上。给浏览器重放页手工加这个属性，右上角立刻从 (211,224,253) 变成 (240,245,254)，与应用一致——机理确认。
+
+0.82 的雾正好解释数值：`0.82 × mistLow(246,249,254) + 0.18 × 页面渐变` ≈ (240,245,254)，与实测逐通道吻合；页面正中 (244,247,254) 同理。
+
+### 10.2 修法
+
+只把**窗口框**的底交还给页面，其余不动：
+
+```css
+html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar']),
+html[data-windows-titlebar] body[data-dsh-go-theme] [data-slot='root'] > :has([data-slot='sidebar'])::before {
+  background: transparent;
+}
+```
+
+- 选中的是 `.frame`（`[data-slot='root']` 的唯一子元素，且含有 `[data-slot='sidebar']`），不碰哈希类名；
+- 侧栏列自己就画 `--dsw-specific-sidebar-fill`，所以列的颜色不变；
+- `::before` 是那条拖拽横带，原来涂的是同一令牌，现在露出页面渐变；
+- 只作用于 `html[data-windows-titlebar]`，网页端零变化。
+
+**实测**：桌面模式下右上角 (211,224,253)（= T5.5 验收值），页面左侧 (236,240,251)，左下 (247,249,254)（雾罩）；网页端不加该属性时仍为 (211,224,253)。`tests/material.test.ts` 新增一条契约，锁住「这条规则存在且只写 `background: transparent`、不碰侧栏」。
+
+### 10.3 教训
+
+**验收基线必须来自被测环境本身。** T5.5 的像素值取自浏览器预览脚本，`e2e:dual` 比的是 39 个令牌的**值**与布局矩形——两者都绕过了「桌面端在页面之上多涂一层」这件事。今后凡改页面材质，桌面端的验收要在**应用窗口里**取像素，或在重放页上显式加上 `data-windows-titlebar` 再比。

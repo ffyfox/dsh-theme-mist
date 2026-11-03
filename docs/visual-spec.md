@@ -665,6 +665,20 @@ bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 �
 
 > 订正（2026-11-03，按上游源码复核）：此前写成「要让工具行像 DSH Go 那样成卡」是误记——上游工具行**本来就是平面行**。`chat_rows.dart` 的 `toolGroupThreshold = 3` 把连续 ≥3 次调用收成一行摘要；单行外壳 `stream_row.dart:StreamRowFrame` 是 `minHeight 32` + 上下 4 + 左右 8 的 bleed + `InkWell` / `Squircle.border(sm)`，不画背景。玻璃卡 `ChatCard`（`GlassSurface(tier: card)`、圆角 20）只给审批 / 提问 / 改动 / 产物四种卡。宿主同为平面行（`[data-tool]` 根只有 `flex-direction:column`），所以 `[data-tool]` 上补背景是反方向改动；剩下的差异只有分组（上游连续 ≥3 次合并，宿主是整轮过程折叠）。
 
+#### 桌面端多出来的那一层：窗口框底（T5.6）
+
+网页端与桌面端不是同一棵树：Electron 给 `<html>` 加了 `data-windows-titlebar`，布局包据此把**整个窗口框**涂成侧栏令牌——
+
+```
+[data-windows-titlebar] .frame            { background: var(--dsw-specific-sidebar-fill) }
+[data-windows-titlebar] .frame::before    { background: var(--dsw-specific-sidebar-fill) }  /* 拖拽条 */
+[data-windows-titlebar] .centerCol        { background: var(--dsw-alias-bg-base) }         /* 已透明 */
+```
+
+本主题把该令牌映射成 sheet 档（`mistLow`@0.82 / `sheetDark`@0.86），所以整窗变成一层近不透明的雾，页面的光晕只剩 18%。**网页端没有这层包装**，这正是「浏览器验收值很好、装进应用却像没换配色」的原因：实测 1524×903@2x、雾蓝浅色、右上角 —— 网页 211,224,253，桌面 240,244,253（= 纯页面底色）。
+
+修法（`material.module.css` 顶部）：只在 `html[data-windows-titlebar]` 下把那个窗口框及其 `::before` 的背景改回 `transparent`，把底交还给页面渐变；侧栏列自己就画同一个令牌，不受影响。结构钩子不碰哈希类名：窗口框 = `[data-slot='root']` 的子元素中**含有 `[data-slot='sidebar']`** 的那一个。修后桌面模式下右上角回到 211,224,253，拖拽条也跟着露出页面渐变（原来是一条纯色横带）。
+
 #### card / pill 与统一的高度配方（T2.4 + T2.5）
 
 **两档都不模糊**：背后是静态的页面渐变，不是滚动内容（`surfaces.dart:17-19`）。三件套 = 半透明填充 + 0.5px 发丝线 + 1px 顶边高光。

@@ -78,6 +78,21 @@ describe('page surfaces (T2.7 -> T5.5)', () => {
       expect(layer[SIDEBAR][scheme]).not.toBe(layer['--dsw-alias-bg-base'][scheme])
     }
   })
+
+  it('hands the desktop window frame back to the page (T5.6)', () => {
+    // Electron runs with data-windows-titlebar on <html>, and the layout package
+    // paints that frame with the sidebar token. Left alone, the 0.82 sheet turns
+    // the whole window into a near-opaque wash: measured at 1524x903@2x in mist
+    // light, the top-right corner reads 240,244,253 instead of 211,224,253.
+    const rule = CSS_RULES.match(/([^{}]*\[data-windows-titlebar\][^{}]*)\{([^}]*)\}/g) ?? []
+    const frameRules = rule.filter((text) => text.includes("[data-slot='root']"))
+    expect(frameRules.length).toBeGreaterThan(0)
+    for (const text of frameRules) {
+      expect(text).toContain('background: transparent')
+      // Structural hook only: the sidebar column keeps painting the token itself.
+      expect(text).not.toMatch(/sidebar-?[cC]ol|_sidebar/iu)
+    }
+  })
 })
 
 describe('glass tiers (T5.5)', () => {
