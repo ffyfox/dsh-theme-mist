@@ -402,6 +402,21 @@ describe('material stylesheet', () => {
     expect(CSS).toContain('background-attachment: fixed')
   })
 
+  it('sizes the composer veil to the viewport instead of fixing it (T5.12)', () => {
+    // A fixed background stops tracking the viewport the moment its element
+    // becomes a containing block for fixed backgrounds, and 0.2.2-alpha.3
+    // turns the seat into one with `will-change: transform` (alpha.2 does not).
+    // Sizing the image and anchoring its bottom-right corner keeps the band on
+    // the page's own colour on both builds; measured 1/255 against 28/255.
+    const veil = (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []).find(
+      (text) => text.includes('--dsh-go-veil-mask') && text.includes('background-size'),
+    )
+    expect(veil).toBeDefined()
+    expect(veil).toContain('background-size: 100vw 100vh')
+    expect(veil).toContain('background-position: 100% 100%')
+    expect(veil).not.toContain('background-attachment')
+  })
+
   it('paints three layers: glow, haze, ramp', () => {
     // Scoped to the page rule: the glass section adds its own linear-gradient
     // later in the file, and this test is about the page surface alone.

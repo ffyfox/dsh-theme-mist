@@ -228,7 +228,33 @@ body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'
  * A pseudo rather than a mask on the seat, which would feather the composer
  * card sitting inside it. z-index -1 keeps it above the seat's own (now empty)
  * background and below that card: the seat is already a stacking context
- * (position: sticky, z-index 7). */
+ * (position: sticky, z-index 7).
+ *
+ * The layers are sized to the *viewport* and anchored to its bottom-right
+ * corner instead of using `background-attachment: fixed`. Fixed attachment
+ * stops tracking the viewport as soon as the seat becomes a containing block
+ * for fixed backgrounds, and 0.2.2-alpha.3 made it one: `.root[data-phase=active]
+ * .composerSeat` now carries `will-change: transform` (alpha.2 has no such
+ * declaration). The gradients then expanded across the seat box — 1237x128 —
+ * instead of the viewport, 1524x903, so every layer landed on the wrong colour
+ * (T5.12). Measured inside the band, at the four columns 292/382/898/1505:
+ *
+ *   page itself (veil hidden)   237,235,248  238,237,248  252,252,254  241,243,252
+ *   alpha.2, fixed attachment   237,235,247  238,237,248  252,252,254  241,243,252
+ *   alpha.3, fixed attachment   230,229,246  230,230,247  245,248,254  213,225,252
+ *   alpha.3, sized + anchored   237,235,248  238,237,248  252,252,254  241,243,252
+ *
+ * That is the dark strip around the input: a 28-step drop in the pale mist
+ * palette, visible as a band because the seat is 128px tall while the image is
+ * 903px. Sizing the image and anchoring its corner reproduces the viewport
+ * geometry without depending on the containing block at all — it lands on the
+ * page's own colour on both 0.2.2 alphas.
+ *
+ * The anchor is bottom-right, not bottom-left: the seat's right edge and bottom
+ * edge do sit on the viewport's (the only inset is the 7px scrollbar gutter,
+ * which none of the samples above resolved). `100vw` includes a classic
+ * scrollbar, so on a layout that shows one the image would slide ~15px
+ * sideways; at a 62vmax radius that is a fraction of a colour step. */
 body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer']::before {
   content: '';
   position: absolute;
@@ -241,7 +267,8 @@ body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'
     radial-gradient(circle 55vmax at 0% 100%, var(--dsh-go-haze) 0%, transparent 100%),
     linear-gradient(to bottom, var(--dsh-go-page-top), var(--dsh-go-page-bottom));
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-size: 100vw 100vh;
+  background-position: 100% 100%;
   -webkit-mask-image: var(--dsh-go-veil-mask);
   mask-image: var(--dsh-go-veil-mask);
 }

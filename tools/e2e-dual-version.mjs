@@ -32,6 +32,7 @@ import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { channelDelta, readPng } from './png-pixels.mjs'
 
 const REPO = dirname(dirname(fileURLToPath(import.meta.url)))
 const argv = process.argv.slice(2)
@@ -176,6 +177,11 @@ class Session {
   async shot(path) {
     const result = await this.send('Page.captureScreenshot', { format: 'png' })
     await writeFile(path, Buffer.from(result.data, 'base64'))
+  }
+
+  async shotBuffer() {
+    const result = await this.send('Page.captureScreenshot', { format: 'png' })
+    return Buffer.from(result.data, 'base64')
   }
 }
 
@@ -335,6 +341,66 @@ const pickAccent = (session, name) =>
   )
 
 /**
+ * The band under the composer has to paint the page's own colour (T5.12).
+ *
+ * Pixels, not computed style: the broken build declared exactly the same
+ * background-image, background-size and background-position as the fixed one,
+ * and only the frame showed that the layers had resolved against the wrong box.
+ *
+ * The seat is pinned to the geometry a real session renders — full width,
+ * bottom-right of the viewport, 128px tall, layer-promoted. The hero page the
+ * rest of this probe runs on puts the seat mid-page with no `will-change`, and
+ * the band cannot fail there; measured on the hero geometry the fixed build
+ * passes, which is how this check was first written and why it is pinned now.
+ *
+ * The reference is the same point with the veil hidden and the seat's blur off:
+ * that is the page gradient itself, which the band reproduces. The sample sits
+ * in the right gutter near the bottom edge — the accent glow makes the error
+ * largest there (26 steps on the fixed build against 1 to 2 here).
+ */
+async function sampleVeil(session, shotsPrefix) {
+  const PIN = '[data-composer-seat]{position:fixed!important;inset:auto 0 0 0!important;height:128px!important;margin:0!important;z-index:9!important;will-change:transform!important}'
+  await session.evaluate(
+    '(() => { const tag = document.createElement("style"); tag.id = "dsh-go-e2e-seat";' +
+      ' tag.textContent = ' + JSON.stringify(PIN) + '; document.head.appendChild(tag); return true })()',
+  )
+  await sleep(900)
+
+  try {
+    const box = await session.evaluate(
+      '(() => { const seat = document.querySelector("[data-composer-seat][data-conversation-region=\\"composer\\"]");' +
+        ' if (!seat) return null;' +
+        ' const card = document.querySelector("[data-composer-card]") ?? seat;' +
+        ' const s = seat.getBoundingClientRect(), c = card.getBoundingClientRect();' +
+        ' return { dpr: window.devicePixelRatio || 1, seat: [s.x, s.y, s.width, s.height], card: [c.x, c.y, c.width, c.height] } })()',
+    )
+    if (box === null) return { found: false }
+
+    const rightX = box.seat[0] + box.seat[2] - 8
+    const y = box.seat[1] + box.seat[3] - 16
+    const insideCard = rightX >= box.card[0] && rightX <= box.card[0] + box.card[2] && y >= box.card[1] && y <= box.card[1] + box.card[3]
+    const x = Math.round(insideCard ? box.seat[0] + 8 : rightX)
+
+    const painted = readPng(await session.shotBuffer()).pixel(Math.round(x * box.dpr), Math.round(y * box.dpr))
+    await session.evaluate(
+      '(() => { const tag = document.createElement("style"); tag.id = "dsh-go-e2e-bare";' +
+        ' tag.textContent = "body[data-dsh-go-theme] [data-composer-seat]::before{display:none!important}" +' +
+        ' "body[data-dsh-go-theme] [data-composer-seat]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}";' +
+        ' document.head.appendChild(tag); return true })()',
+    )
+    await sleep(500)
+    const page = readPng(await session.shotBuffer()).pixel(Math.round(x * box.dpr), Math.round(y * box.dpr))
+    await session.evaluate('document.getElementById("dsh-go-e2e-bare")?.remove()')
+    await sleep(300)
+
+    return { found: true, at: [x, Math.round(y)], seat: box.seat.map(Math.round), painted, page, delta: channelDelta(painted, page) }
+  } finally {
+    await session.evaluate('document.getElementById("dsh-go-e2e-seat")?.remove()')
+    await sleep(300)
+  }
+}
+
+/**
  * Snapshot one side: light, settings panel, six accents, dark — with the
  * appearance forced on both sides so the colour tokens are comparable.
  */
@@ -366,6 +432,7 @@ async function snapshotSide(session, url, label, shotsPrefix) {
   await sleep(600)
   const light = await session.evaluate(PROBE)
   await session.shot(shotsPrefix + '-light.png')
+  const veil = await sampleVeil(session, shotsPrefix)
 
   await openPanel(session)
   await sleep(500)
@@ -401,7 +468,7 @@ async function snapshotSide(session, url, label, shotsPrefix) {
     await closePanel(session)
   }
 
-  return { label, themed, panelOpened, darkSwitched, light, panel, darkState, accentSweep, exceptions: [...session.exceptions] }
+  return { label, themed, panelOpened, darkSwitched, light, panel, darkState, veil, accentSweep, exceptions: [...session.exceptions] }
 }
 
 /* --- run --------------------------------------------------------------- */
@@ -477,6 +544,11 @@ try {
     check(side.label + ': both settings rows rendered', side.panel.host.ourGroups === 2 && side.panel.host.accentRadios === 6, 'rows=' + side.panel.host.rows + ' groups=' + side.panel.host.ourGroups + ' accent=' + side.panel.host.accentRadios)
     check(side.label + ': the sidebar row offers two choices', side.panel.host.sidebarRadios === 2, String(side.panel.host.sidebarRadios))
     check(side.label + ': the removed transparency switch is gone', side.panel.host.ourSwitches === false)
+    check(
+      side.label + ': the composer veil paints the page colour',
+      side.veil.found === true && side.veil.delta <= 4,
+      JSON.stringify(side.veil),
+    )
     check(side.label + ': dark mode reached', side.darkSwitched === true && side.darkState.safeMode.colorScheme === 'dark', side.darkState.safeMode.colorScheme)
     check(side.label + ': no page exception', side.exceptions.length === 0, JSON.stringify(side.exceptions))
   }
