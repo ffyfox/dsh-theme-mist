@@ -1,6 +1,7 @@
 {
   "meta": {
     "title": "Mist theme",
-    "description": "Six accent palettes with light, dark and system modes in the DSH Go visual language — depth-layered surfaces, hairline borders and a single accent glow."
+    "description": "Six accent palettes with light, dark and system modes in the DSH Go visual language — depth-layered surfaces, hairline borders and a single accent glow.",
+    "detail": "README.en.md"
   }
 }

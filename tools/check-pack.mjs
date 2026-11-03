@@ -33,6 +33,7 @@ const REQUIRED = [
   'locale/zh.json',
   'icon.svg',
   'README.md',
+  'README.en.md',
   'LICENSE',
   'NOTICE',
 ]

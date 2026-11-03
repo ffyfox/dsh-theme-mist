@@ -1,5 +1,7 @@
 # Mist 主题 (`dsh-theme-mist`)
 
+**简体中文** | [English](README.en.md)
+
 为 **DeepSeek Harness**（桌面端与 Web 端）打造的客户端视觉主题插件。
 
 设计灵感源自 [DSH Go](https://github.com/ccch1mneyyy/dsh-Go)，以**低饱和东方色韵、分层纸墨表面、0.5px 发丝描边、悬浮毛玻璃与右上角单点光晕**重塑界面质感——同时**完整保留官方三栏布局与交互逻辑**，即装即用，卸载无残留。
