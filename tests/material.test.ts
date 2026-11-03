@@ -144,6 +144,35 @@ describe('sidebar material (T5.7 / T5.8)', () => {
   })
 })
 
+describe('composer seat and popovers (T5.9)', () => {
+  /** Rules whose selector mentions one marker, comments already stripped. */
+  const rulesFor = (marker: string): string[] =>
+    (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []).filter((text) => text.slice(0, text.indexOf('{')).includes(marker))
+
+  it('steps the frosted seat out of the way while a popover is open', () => {
+    // The popover is rendered inside the seat, and a backdrop-filter on an
+    // ancestor is a backdrop root: the popover's own blur would sample the
+    // seat's paint instead of the page. Same for the seat's veil, which paints
+    // the page colour at full opacity. Both have to stand down while one is open.
+    const rules = rulesFor(':has([data-menu-material])')
+    expect(rules.length).toBe(2)
+    const joined = rules.join('\n')
+    expect(joined).toContain('backdrop-filter: none')
+    expect(joined).toContain('display: none')
+    // Scoped to the seat: the sidebar column and the page keep their paint.
+    for (const text of rules) expect(text.slice(0, text.indexOf('{'))).toContain("[data-composer-seat]")
+  })
+
+  it('keeps the seat frosted when nothing is open', () => {
+    // The rule that turns the frost on must not be carrying the popover
+    // condition itself, or the seat would lose its blur permanently.
+    const base = rulesFor("[data-composer-seat][data-conversation-region='composer']")
+    const blurOn = base.filter((text) => text.includes('backdrop-filter: var(--dsh-go-glass-blur)'))
+    expect(blurOn.length).toBe(1)
+    expect(blurOn[0]).not.toContain(':has(')
+  })
+})
+
 describe('glass tiers (T5.5)', () => {
   it.each(ACCENT_IDS)('%s: card and pill are white glass, sheet follows the palette', (id) => {
     const p = PALETTES[id]

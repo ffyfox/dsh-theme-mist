@@ -246,6 +246,32 @@ body[data-dsh-go-theme] [data-composer-seat][data-conversation-region='composer'
   mask-image: var(--dsh-go-veil-mask);
 }
 
+/* --- A menu opened from the composer keeps the page behind it (T5.9) -----
+ *
+ * `/` and `@` open the host's MenuSurface *inside* the composer: the popover's
+ * ancestors are the composer card and this seat. Both of them are painted by
+ * the theme in a way that puts a flat, opaque surface between the popover and
+ * the page — the seat is a backdrop root (its own backdrop-filter) and its veil
+ * paints the page colour at full opacity below 36px. The menu's own
+ * `backdrop-filter: blur(40px)` (host style, `--dsw-menu-surface-fill` 58 %
+ * white over it) then has nothing to sample, and a 58 % white panel over a flat
+ * colour reads as "translucent with nothing behind it" — while the part of the
+ * menu that reaches past the composer lets sharp text show through.
+ *
+ * Measured with the plugin disabled (host glass only): the menu blurs normally.
+ * So while a menu is open the seat steps out of the way — no frost, no veil —
+ * and hands the page back to the popover. Nothing is visible behind the menu's
+ * own panel that the menu does not already cover, and the bar returns to its
+ * frosted self the moment the menu closes. */
+body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material]) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body[data-dsh-go-theme] [data-composer-seat]:has([data-menu-material])::before {
+  display: none;
+}
+
 /* The card itself: fill, hairline, top highlight, soft lift. Radius and
    geometry stay official — only the material is ours. */
 body[data-dsh-go-theme] [data-composer-card] {
