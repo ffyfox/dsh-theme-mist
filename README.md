@@ -6,22 +6,31 @@
 
 设计灵感源自 [DSH Go](https://github.com/ccch1mneyyy/dsh-Go)，以**低饱和东方色韵、分层纸墨表面、0.5px 发丝描边、悬浮毛玻璃与右上角单点光晕**重塑界面质感——同时**完整保留官方三栏布局与交互逻辑**，即装即用，卸载无残留。
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/hero-light.webp" width="100%" alt="浅色模式"><br><sub><b>浅色</b> · 雾蓝 · 玻璃侧栏</sub></td>
+    <td width="50%"><img src="docs/images/hero-dark.webp" width="100%" alt="深色模式"><br><sub><b>深色</b> · 雾蓝 · 玻璃侧栏</sub></td>
+  </tr>
+</table>
+
+同一段对话、同一套布局，只换明暗：用户气泡、代码槽底色、表格发丝线，以及从输入卡背后透出来的滚动文字都在画面里。
+
 ---
 
 ## 预览 · 六套配色
 
-主题内置六套强调色，右上角氛围光晕、主操作按钮、选中态与同色相纸墨底色随配色联动，点击图片可查看大图：
+主题内置六套强调色，右上角氛围光晕、主操作按钮、选中态与同色相纸墨底色随配色联动，点击图片可查看大图。每张图沿对角线切开：**左上浅色、右下深色**，一张图看全两种明暗。
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/accents/mist.png" width="400" alt="雾蓝 Mist"><br><sub><b>雾蓝 Mist</b>（默认 · 冷白雾纸）</sub></td>
-    <td align="center"><img src="docs/images/accents/daiqing.png" width="400" alt="黛青 Daiqing"><br><sub><b>黛青 Daiqing</b>（深青瓷釉）</sub></td>
-    <td align="center"><img src="docs/images/accents/dusk.png" width="400" alt="暮紫 Dusk"><br><sub><b>暮紫 Dusk</b>（暮色微岚）</sub></td>
+    <td align="center"><img src="docs/images/accents/mist.webp" width="400" alt="雾蓝 Mist"><br><sub><b>雾蓝 Mist</b>（默认 · 冷白雾纸）</sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.webp" width="400" alt="黛青 Daiqing"><br><sub><b>黛青 Daiqing</b>（深青瓷釉）</sub></td>
+    <td align="center"><img src="docs/images/accents/dusk.webp" width="400" alt="暮紫 Dusk"><br><sub><b>暮紫 Dusk</b>（暮色微岚）</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accents/turquoise.png" width="400" alt="松石 Turquoise"><br><sub><b>松石 Turquoise</b>（温润松绿）</sub></td>
-    <td align="center"><img src="docs/images/accents/amber.png" width="400" alt="琥珀 Amber"><br><sub><b>琥珀 Amber</b>（暖金松脂）</sub></td>
-    <td align="center"><img src="docs/images/accents/graphite.png" width="400" alt="石墨 Graphite"><br><sub><b>石墨 Graphite</b>（纯粹水墨）</sub></td>
+    <td align="center"><img src="docs/images/accents/turquoise.webp" width="400" alt="松石 Turquoise"><br><sub><b>松石 Turquoise</b>（温润松绿）</sub></td>
+    <td align="center"><img src="docs/images/accents/amber.webp" width="400" alt="琥珀 Amber"><br><sub><b>琥珀 Amber</b>（暖金松脂）</sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.webp" width="400" alt="石墨 Graphite"><br><sub><b>石墨 Graphite</b>（纯粹水墨）</sub></td>
   </tr>
 </table>
 
@@ -75,6 +84,17 @@ dsh plugin --profile web add "$(pwd)"
 |---|---|---|
 | **配色（Accent）** | `雾蓝` · `黛青` · `暮紫` · `松石` · `琥珀` · `石墨` | 点击色块即时切换，无需刷新页面；自动适配当前浅色/深色/跟随系统模式。 |
 | **侧栏材质（Sidebar material）** | `玻璃`（默认） · `平铺` | **玻璃**：半透明抽屉底板配 0.5px 发丝描边与右侧大圆角；**平铺**：去除底板，让页面渐变与光晕直接贯穿三栏。 |
+
+<img src="docs/images/settings.webp" width="800" alt="设置 → 通用：外观、字号、配色、侧栏材质同框">
+
+两种侧栏材质并排看（同一配色、同一浅色模式）：
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/sidebar-sheet.webp" width="220" alt="玻璃侧栏"><br><sub><b>玻璃</b>（默认）</sub></td>
+    <td align="center"><img src="docs/images/sidebar-flat.webp" width="220" alt="平铺侧栏"><br><sub><b>平铺</b></sub></td>
+  </tr>
+</table>
 
 <details>
 <summary><b>进阶：通过脚本或控制台事件切换（点击展开）</b></summary>
@@ -132,6 +152,7 @@ pnpm verify           # 运行全量检查（构建 + 类型检查 + 单元测�
 - [视觉规范 (`docs/visual-spec.md`)](docs/visual-spec.md)：OKLCH 色彩推导、对比度矩阵、五层背景穿透与玻璃材质配方
 - [配色色阶表 (`docs/reference/palette-tables.md`)](docs/reference/palette-tables.md)：六套配色的浅色/深色完整色值表
 - [工具集说明 (`tools/README.md`)](tools/README.md)：令牌生成脚本、双版本回归测试与预览图自动拍摄脚本
+- README 里的图都由 `pnpm preview:album --desktop-runtime <桌面端 dsh 目录>` 生成：临时实例 + 本地假模型服务，内容可复现，不含任何真实会话
 - [变更日志 (`CHANGELOG.md`)](CHANGELOG.md)：版本迭代记录
 
 ---

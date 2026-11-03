@@ -228,7 +228,7 @@ node tools/check-pack.mjs      # 也在 pnpm verify 里
 
 ## 11. `preview-accents.mjs`
 
-README 里六套配色预览图的生成器（T5.3）：起一个实例、切六次配色、各拍一张，让图片成为**可重跑的产物**而不是谁手贴上去的截图。
+空状态六色预览的生成器（T5.3）：起一个实例、切六次配色、各拍一张，让图片成为**可重跑的产物**而不是谁手贴上去的截图。README 现在用的是第 12 条的相册脚本；这一条留着验配色最直接。
 
 ```bash
 pnpm build
@@ -250,6 +250,30 @@ node tools/preview-accents.mjs --home /tmp/x --profile web   # 也可以拿来�
 > `--dialog` 是尽力而为：它依赖宿主当次是否弹出首启模态，以及设置入口在哪个 slot（0.2.1 走侧栏按钮，0.2.2 走账号菜单）。拿不到就打印一行 info 继续拍，不会失败。
 
 实测（2026-11-02）：六张 1280×800 PNG，共约 720 KB，全部来自全新 profile 的空状态——**不含任何用户的会话内容**。
+
+## 12. `preview-album.mjs`
+
+README 里所有图片的生成器（T5.14）。与第 11 条的分工：`preview-accents.mjs` 回答「这套配色对不对」，拍的是空状态；这一条回答「README 第一眼看到什么」，拍的是**一段有内容的对话**，并把浅色/深色合成一张。
+
+```bash
+pnpm build
+pnpm preview:album --desktop-runtime /path/to/desktop/resources/app/dsh
+```
+
+产物（全部 WebP，2x 原生 2560×1600）：`accents/<配色>.webp`（左上浅 + 右下深的对角双拼）、`hero-light.webp` / `hero-dark.webp`（首屏深浅各一张）、`settings.webp`（设置 → 通用同框）、`sidebar-sheet.webp` / `sidebar-flat.webp`（侧栏列裁切）。
+
+几件踩过的事：
+
+- **演示会话必须是「真发一条消息」**：headless 跑一轮只会把提问写进 inbox，transcript 里没有用户气泡；脚本用 CDP 点输入框、`Input.insertText`、回车，气泡才会被宿主画出来。对话内容由脚本内置的本地假模型服务（OpenAI 兼容 SSE）给出，完全不碰真实历史。
+- **模型胶囊要 `--patch` 覆盖层**：`agent-default-model` + `llm-pi-ai` 写进 profile 的 `cordis.patch.yml` 不生效，胶囊仍是「请选择模型」；写成启动器 `--patch` 才显示 `DeepSeek-V4.1-Flash Max`。
+- **工作区标题来自 `storages/workspace.json`**：全新 home 会显示「默认工作区」，脚本在首次启动前写一条 workspace 记录（路径 = 仓库目录，标题 `dsh-theme-mist`），截出来的侧栏才是项目名。
+- **滚动位置**：transcript 的滚动容器置 `scrollTop = 0`——滚到底会把用户气泡切掉；顶到 0 时最后一行正好半压在毛玻璃输入框后面，是想要的构图。
+- **2x 截图 + WebP**：`deviceScaleFactor: 2` 拿 2560×1600，再在页面里用 canvas 编码 WebP q88。同一张图 PNG 868 KB、WebP 105 KB，0.5px 发丝线在 1:1 下依然锐利。
+- **对角双拼的两端**：左边缘 0.80、右边缘 0.27（`SPLIT_LEFT_Y` / `SPLIT_RIGHT_Y`），保证右上角光晕与用户气泡整块留在浅色里、左侧栏底部露出深色；分界线是「暗影 + 白色光晕 + 硬芯」四层叠出来的，切过正文时才读得成刻意的分界。
+
+19 条断言：插件挂载、演示回合渲染、六色逐个生效（明暗各一轮）、侧栏材质可切、设置里六个色块、无页面异常。
+
+实测（2026-11-04，0.2.2-alpha.3）：六张配色图各 113–120 KB，首屏 107/104 KB，设置 81 KB，侧栏 19 KB。
 
 ## 参考源码
 

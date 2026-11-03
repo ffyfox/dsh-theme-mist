@@ -6,22 +6,31 @@ A hot-pluggable client theme plugin for **DeepSeek Harness** (Desktop & Web).
 
 Inspired by the visual language of [DSH Go](https://github.com/ccch1mneyyy/dsh-Go), Mist brings **low-saturation Eastern palettes, depth-layered paper & ink surfaces, 0.5px hairline borders, frosted glass chrome, and a single corner accent glow** to the official three-column interface — **without altering the host layout or interaction model**.
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/hero-light.webp" width="100%" alt="Light appearance"><br><sub><b>Light</b> · Mist · glass sidebar</sub></td>
+    <td width="50%"><img src="docs/images/hero-dark.webp" width="100%" alt="Dark appearance"><br><sub><b>Dark</b> · Mist · glass sidebar</sub></td>
+  </tr>
+</table>
+
+Same conversation, same layout, only the appearance changes: user bubble, code well, table hairlines, and the message scrolling out from behind the composer card.
+
 ---
 
 ## Preview · Six Accent Palettes
 
-Mist includes six curated accent palettes. The top-right ambient glow, primary action buttons, active indicators, and hue-tinted paper/night surfaces adapt automatically to the selected accent (click any image to enlarge):
+Mist includes six curated accent palettes. The top-right ambient glow, primary action buttons, active indicators, and hue-tinted paper/night surfaces adapt automatically to the selected accent (click any image to enlarge). Each image is cut along one diagonal: **light at the top left, dark at the bottom right**, so a single frame shows both appearances.
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/accents/mist.png" width="400" alt="Mist"><br><sub><b>Mist 雾蓝</b> (Default · Cool Mist Paper)</sub></td>
-    <td align="center"><img src="docs/images/accents/daiqing.png" width="400" alt="Daiqing"><br><sub><b>Daiqing 黛青</b> (Deep Celadon Glaze)</sub></td>
-    <td align="center"><img src="docs/images/accents/dusk.png" width="400" alt="Dusk"><br><sub><b>Dusk 暮紫</b> (Twilight Haze)</sub></td>
+    <td align="center"><img src="docs/images/accents/mist.webp" width="400" alt="Mist"><br><sub><b>Mist 雾蓝</b> (Default · Cool Mist Paper)</sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.webp" width="400" alt="Daiqing"><br><sub><b>Daiqing 黛青</b> (Deep Celadon Glaze)</sub></td>
+    <td align="center"><img src="docs/images/accents/dusk.webp" width="400" alt="Dusk"><br><sub><b>Dusk 暮紫</b> (Twilight Haze)</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accents/turquoise.png" width="400" alt="Turquoise"><br><sub><b>Turquoise 松石</b> (Warm Pine Teal)</sub></td>
-    <td align="center"><img src="docs/images/accents/amber.png" width="400" alt="Amber"><br><sub><b>Amber 琥珀</b> (Warm Rosin Gold)</sub></td>
-    <td align="center"><img src="docs/images/accents/graphite.png" width="400" alt="Graphite"><br><sub><b>Graphite 石墨</b> (Monochrome Ink)</sub></td>
+    <td align="center"><img src="docs/images/accents/turquoise.webp" width="400" alt="Turquoise"><br><sub><b>Turquoise 松石</b> (Warm Pine Teal)</sub></td>
+    <td align="center"><img src="docs/images/accents/amber.webp" width="400" alt="Amber"><br><sub><b>Amber 琥珀</b> (Warm Rosin Gold)</sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.webp" width="400" alt="Graphite"><br><sub><b>Graphite 石墨</b> (Monochrome Ink)</sub></td>
   </tr>
 </table>
 
@@ -75,6 +84,17 @@ Once installed, open **Settings → General** to find two new rows right below t
 |---|---|---|
 | **Accent** | `Mist` · `Daiqing` · `Dusk` · `Turquoise` · `Amber` · `Graphite` | Applies immediately without reloading and persists across sessions. |
 | **Sidebar material** | `Glass` (Default) · `Flat` | **Glass**: Translucent sheet with a 0.5px hairline border and 28px right corners. **Flat**: Removes the sidebar backing so the page gradient flows seamlessly across all columns. |
+
+<img src="docs/images/settings.webp" width="800" alt="Settings → General: appearance, font size, accent and sidebar material in one panel">
+
+The two sidebar materials side by side (same accent, same light appearance):
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/sidebar-sheet.webp" width="220" alt="Glass sidebar"><br><sub><b>Glass</b> (default)</sub></td>
+    <td align="center"><img src="docs/images/sidebar-flat.webp" width="220" alt="Flat sidebar"><br><sub><b>Flat</b></sub></td>
+  </tr>
+</table>
 
 <details>
 <summary><b>Advanced: Switch via CustomEvent (Console / Scripts)</b></summary>

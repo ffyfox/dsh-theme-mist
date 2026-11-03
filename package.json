@@ -61,7 +61,8 @@
     "e2e:dual": "node tools/e2e-dual-version.mjs",
     "e2e:uninstall": "node tools/e2e-uninstall.mjs",
     "e2e:scenarios": "node tools/e2e-scenarios.mjs",
-    "preview:accents": "node tools/preview-accents.mjs"
+    "preview:accents": "node tools/preview-accents.mjs",
+    "preview:album": "node tools/preview-album.mjs"
   },
   "license": "MIT",
   "peerDependencies": {
