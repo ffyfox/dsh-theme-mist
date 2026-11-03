@@ -10,7 +10,7 @@ Accepted（2026-11-01）— 已知为临时方案，已规划迁移
 
 ## Context
 
-插件需要记住用户选的配色（六选一）与「减少透明效果」开关。
+插件需要记住用户选的配色（六选一）与一项材质偏好：本 ADR 落笔时是「减少透明效果」开关，2026-11-03 换成「侧栏材质」（玻璃 / 平铺），开关连同它的字段一并删除（见下方修订）。
 
 官方提供两条路：
 
@@ -37,7 +37,8 @@ Accepted（2026-11-01）— 已知为临时方案，已规划迁移
 ```ts
 interface GoThemePreferences {
   accent: AccentId          // 'mist' | 'daiqing' | ... 默认 'mist'
-  reduceMaterial: boolean   // 默认 false
+  sidebarMaterial: SidebarMaterial  // 'sheet' | 'flat'，默认 'sheet'（2026-11-03 加入）
+  reduceMaterial: boolean   // 默认 false —— 2026-11-03 删除，读取时忽略，见下方修订
 }
 ```
 
