@@ -610,7 +610,7 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
 | `--dsw-alias-bg-base` | `transparent` | `transparent` | 页面即背景，不再叠一层雾 |
 | `--dsw-specific-sidebar-fill` | `mistLow` @ 0.82 | `sheetDark` @ 0.86 | 侧栏是 sheet，不是页面 |
 
-侧栏两个数是**逐像素拟合上游自己的 golden**（`app/test/shell/adaptive/goldens/wide_sidebar_{light,dark}.png`）得到的，复现误差 1.5 / 0.6 per 255。旧值 `mistLow`@0.40 / `nightLowest`@0.42 是错的——颜色错、alpha 也错，只是因为页面 wash 在替它兜底才没被发现。
+侧栏两个数**不是拟合出来的，是上游 `sheet` 档的原值**：`surfaces.dart:216-224` 写的是 `fill: mistLow @ 0.82` / `sheetDark @ 0.86`。把它们放到页面上，与上游自己的 golden（`app/test/shell/adaptive/goldens/wide_sidebar_{light,dark}.png`）的复现误差是 1.5 / 0.6 per 255。旧值 `mistLow`@0.40 / `nightLowest`@0.42 是错的——颜色错、alpha 也错，只是因为页面 wash 在替它兜底才没被发现。
 
 **为什么必须改成 0**：旧实现叠两层 0.36，眼睛实际看到 0.59 的不透明罩子，把光晕和竖向渐变一起压到 41%。对上游 golden 复算，六套配色在右上角的最大色差 ΔE00 只有 15.75，而上游是 28.27 —— 这就是「六套配色看不出区别」的量化来源。改成 0 之后实测像素：
 
@@ -621,6 +621,24 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
 | 侧栏（雾蓝，浅） | (244,247,254) | (246,249,254) | ΔE00 ≈1 |
 | 右上角（雾蓝，深） | (41,51,71) | (41,51,71) | 0 |
 | 侧栏（雾蓝，深） | (35,39,50) | (35,39,50) | 0 |
+
+#### 侧栏是一块玻璃，不是一个色块（T5.7 / T5.8）
+
+**症状**（2026-11-03 实测，1524×903@2x，雾蓝浅色）：侧栏底板 `245,249,254` 与聊天区 `236,236,248` 在 **1 个像素**内直接相接——没有发丝、没有高光、没有圆角。桌面端还有第二条边：标题条（`--dsh-windows-titlebar-height` = 40px）是页面渐变，底板从 y=40 才开始，横向也是一步跳变。
+
+**根因**：上游的 `sheet` 档是五件套（`surfaces.dart:216-224`）——fill / hairline / rim / blur / shadow——我们只抄了 fill。`glass.dart` 的绘制顺序是「模糊背后 → 半透明填充 → 发丝描边 + 顶边高光 → 形状**外**的投影」；圆角来自 `sessions_drawer.dart:198-203`，只圆右侧两角，左边贴窗口边。少了这四件，玻璃就读成了贴上去的色块。
+
+**修法**（`material.module.css`）：
+
+- 侧栏列（层 2）不再画填充——它的盒子会把圆角切方；形状交给侧栏根节点（层 3）。
+- 根节点用 `--dsh-go-sheet-token` 画 0.82 的 sheet 填充 + `border-radius: 0 28px 28px 0` + `inset 0 0 0 .5px` 发丝（`border-l1`，对应上游 ink@0.07）+ `inset 0 1px 0` 顶边高光。
+- 顺带修掉一处**重复绘制**：列与根节点各画一次同一个令牌，等效 alpha 0.968；只画一次之后底板 `245,249,254 → 244,246,253`，反而比原来更贴金标准的 `244,247,254`。
+
+**平铺变体（T5.8，默认关闭）**：上游对两列是有意区别对待的，`adaptive_scaffold.dart` 的类注释原文是「The panel is a flat column on the page (not a card), set off from the chat by a hairline. The sidebar keeps the drawer's own glass.」。把右栏的语言搬到侧栏就是平铺：三处画填充全部关掉（列、根节点、会话列表末尾 24px 的淡入），只留一根 `border-l1` 发丝。实测侧栏 `235,235,248` 与聊天区同色，发丝像素 `220,220,234`。代价是与金标准的侧栏值不再一致，所以做成偏好、不做成默认。
+
+**偏好**：`sidebarMaterial: 'sheet' | 'flat'`，默认 `sheet`；`body` 上**始终**带 `data-dsh-go-sidebar="<值>"`（属性常在，CSS 才能给两个状态都起名字），持久化在同一份 `localStorage` 偏好里，外部可用 `window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'flat' }))` 驱动。设置入口在「设置 → 通用 → 侧栏材质」（`order: 11.7`）。
+
+**还没做的**：sheet 档第五件「形状外的投影」——侧栏列 `overflow: hidden` 会把它裁掉，要做只能从聊天列一侧用 inset 阴影模拟；折叠成 rail 的窄态没有截图；深色（`sheetDark @ 0.86`）走同一路径但没有实测。
 
 #### 光晕几何：圆，不是椭圆
 
@@ -651,7 +669,7 @@ body[data-dsh-go-theme] [role='dialog'][aria-modal='true'] {
 
 **卡片填充换了之后才看得见**：旧实现卡片读 bg-base（mist 0.36），压在同样偏 mist 的页面上，与页面的 ΔE00 只有 **0.71** —— 等于没有卡片。上游 card 档（白 0.62）对页面是 **5.04**，差 7 倍。这是「界面发平」的第二个来源，与光晕无关。
 
-**降级路径**：三条（`@supports not (backdrop-filter)` / `prefers-reduced-transparency` / `[data-dsh-go-reduce-material]`），每条同时改四个东西——`--dsh-go-glass-fill`、`--dsh-go-glass-blur`、`--dsh-go-veil-mask`，以及 card / sheet / pill 三档的 token 指针。实测同屏真模糊 1 → 0，输入条填充 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1（不降反升）。
+**降级路径**：三条（`@supports not (backdrop-filter)` / `prefers-reduced-transparency` / `[data-dsh-go-reduce-material]`），每条同时改四个东西——`--dsh-go-glass-fill`、`--dsh-go-glass-blur`、`--dsh-go-veil-mask`，以及 card / sheet / pill 三档的 token 指针。侧栏的 sheet 填充走 `--dsh-go-sheet-token` 这一个指针，所以同一条降级会自动把它换成近不透明的 solid，不需要为它单写规则。实测同屏真模糊 1 → 0，输入条填充 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1（不降反升）。
 
 #### 输入条那条带子：重画背景，而不是填一个色（T5.5）
 
@@ -721,8 +739,8 @@ bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 �
    | 层 | 真实盒节点 | 驱动它的 token |
    |---|---|---|
    | 1 · AppFrame | `[id='root'] > div[data-slot='root'] > div` | `--dsw-alias-bg-base` |
-   | 2 · SidebarCol | `[data-slot='root'] > div > :has(> [data-slot='sidebar'])` | `--dsw-specific-sidebar-fill` |
-   | 3 · SidebarRoot | `[data-slot='sidebar'] > :first-child` | `--dsw-specific-sidebar-fill` |
+   | 2 · SidebarCol | `[data-slot='root'] > div > :has(> [data-slot='sidebar'])` | `--dsw-specific-sidebar-fill`；**T5.7 起本层不再画**（见「侧栏是一块玻璃」） |
+   | 3 · SidebarRoot | `[data-slot='sidebar'] > :first-child` | `--dsh-go-sheet-token`（原为 `--dsw-specific-sidebar-fill`，同一个值） |
    | 4 · ConversationRoot | `[data-slot='main.conversation'] > div` | `--dsw-alias-bg-base` |
    | 5 · ComposerSeat（仅 `[data-phase=active]`） | `[data-composer-seat]` | `--dsw-alias-bg-base`（36px 渐变的**终点色**） |
 

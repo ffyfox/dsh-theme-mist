@@ -8,7 +8,7 @@
 
 ## 现在的状态
 
-阶段 0–3 已完成：令牌层与材质层可用，装上即变色；「设置 → 通用」里有「配色」与「减少透明效果」两行，六套强调色与材质降级都能在界面里完成，不需要改配置或写脚本。
+阶段 0–3 已完成：令牌层与材质层可用，装上即变色；「设置 → 通用」里有「配色」「减少透明效果」「侧栏材质」三行，六套强调色、材质降级与侧栏材质都能在界面里完成，不需要改配置或写脚本。
 
 阶段 4 已完成：客户端两版（`0.2.1-alpha.1` 与 `0.2.2-alpha.2`）的渲染一致性、八个交叉场景、降级路径与**卸载清洁度**都有脚本可重跑；桌面端 Electron 窗口内的实际效果已确认，不需要版本分支。
 
@@ -50,7 +50,7 @@ dsh plugin --profile <profile> remove dsh-go-theme
 
 桌面端在「插件」页移除。这条命令实测（2026-11-02）：它同时摘掉 `dependencies` 里的条目**和** `dsh.profile.bundles` 里的那一项，再 `add` 回来会重新装回原位。
 
-卸载后页面会回到官方外观：`body` 上的三个 `data-dsh-go-*` 属性、注入的三张样式表、`body` 的内联令牌层与两个事件监听全部被清掉（逐项断言见 `tools/e2e-uninstall.mjs`，两版本各 23 条）。**唯一保留的是偏好本身**——配色与「减少透明效果」记在 `localStorage`，装回来时你上次的选择还在。想彻底清掉：
+卸载后页面会回到官方外观：`body` 上的四个 `data-dsh-go-*` 属性、注入的三张样式表、`body` 的内联令牌层与三个事件监听全部被清掉（逐项断言见 `tools/e2e-uninstall.mjs`，两版本各 23 条）。**唯一保留的是偏好本身**——配色、「减少透明效果」与「侧栏材质」记在 `localStorage`，装回来时你上次的选择还在。想彻底清掉：
 
 ```js
 localStorage.removeItem('dsh.go-theme.preferences.v1')
@@ -76,6 +76,17 @@ window.dispatchEvent(new CustomEvent('dsh-go-theme:reduce-material', { detail: t
 ```
 
 「减少透明效果」也有界面开关：「设置 → 通用 → 减少透明效果」。关掉后所有 `backdrop-filter` 消失，玻璃面改用近不透明的 solid 填充（输入条 alpha 0.70 → 0.96，正文对比度 15.17:1 → 15.27:1，不降反升）。
+
+「侧栏材质」在同一个位置，两档：
+
+- **玻璃**（默认）：上游抽屉的材质——`mistLow @ 0.82` 的半透明白底、0.5px 发丝描边、顶边高光、右侧两角 28px 圆角。与上游金标准一致。
+- **平铺**：不画底板，页面渐变直接穿过去，只留一根 0.5px 分隔线。这是上游右侧详情列的画法，搬到左侧之后侧栏与聊天区同色（`245,249,254` → `235,235,248`），代价是不再匹配金标准的侧栏值，所以做成可选而非默认。
+
+也可以用事件驱动：
+
+```js
+window.dispatchEvent(new CustomEvent('dsh-go-theme:sidebar-material', { detail: 'flat' }))
+```
 
 ## 六套配色
 
@@ -152,12 +163,12 @@ build/
 src/
   index.ts                    Node 半侧（空实现，纯浏览器插件）
   client/index.ts             浏览器半侧入口（inject + apply + 清理）
-  client/state.ts             强调色与「减少透明效果」的状态机
+  client/state.ts             强调色、「减少透明效果」与侧栏材质的状态机
   client/preferences.ts       偏好持久化（localStorage，带降级）
   client/tokens.ts            官方令牌覆盖层 + 材质变量
   client/writer.ts            令牌层的写入与能力降级（没有 overrideTokens 时只写材质变量）
   client/palettes.ts          六套配色（由脚本生成，勿手改）
-  client/settings.tsx         设置 → 通用里的「配色」行（槽位注册 + 组件）
+  client/settings.tsx         设置 → 通用里的三行：配色、减少透明效果、侧栏材质
   client/settings.module.css  该行的样式（只读 --dsw-* 令牌）
   client/strings.ts           该行的中英文案（ctx.locale 字典）
   client/dsh-slots.d.ts       槽位服务的类型声明（坑位契约，实测得出）
