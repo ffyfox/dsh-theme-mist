@@ -192,7 +192,7 @@ const TOKENS = [
 
 const ROWS_SELECTOR = '[data-slot="settings.general.item"]'
 const ROWS_EXPR = '[...document.querySelectorAll(' + JSON.stringify(ROWS_SELECTOR) + ')].flatMap((handle) => [...handle.children])'
-const OUR_ROW_EXPR = '(' + ROWS_EXPR + ').find((entry) => (entry.textContent ?? "").includes("Graphite"))'
+const OUR_ROW_EXPR = '(' + ROWS_EXPR + ').find((entry) => (entry.textContent ?? "").includes("Slate"))'
 
 /**
  * Runs in the page. Kept as one self-contained function so the same code runs on
@@ -327,7 +327,7 @@ async function closePanel(session) {
 /** Click one of Light / Dark / System in the Appearance row. */
 const pickAppearance = (session, label) =>
   session.evaluate(
-    '(() => { const row = (' + ROWS_EXPR + ').find((entry) => /LightDarkSystem/.test((entry.textContent ?? "").replace(/\\s+/g, "")) && !/Graphite/.test(entry.textContent ?? ""));' +
+    '(() => { const row = (' + ROWS_EXPR + ').find((entry) => /LightDarkSystem/.test((entry.textContent ?? "").replace(/\\s+/g, "")) && !/Slate/.test(entry.textContent ?? ""));' +
       ' if (!row) return false; const button = [...row.querySelectorAll("button")].find((node) => node.textContent.trim() === ' + JSON.stringify(label) + ');' +
       ' if (!button) return false; button.click(); return true })()',
   )
@@ -464,7 +464,7 @@ async function snapshotSide(session, url, label, shotsPrefix) {
   await session.shot(shotsPrefix + '-panel.png')
 
   const accentSweep = {}
-  for (const name of ['Mist', 'Daiqing', 'Dusk', 'Turquoise', 'Amber', 'Graphite']) {
+  for (const name of ['Mist', 'Teal', 'Dusk', 'Aqua', 'Amber', 'Slate']) {
     const clicked = await pickAccent(session, name)
     await sleep(420)
     accentSweep[name] = {
@@ -594,6 +594,11 @@ try {
   for (const name of Object.keys(web.accentSweep)) {
     const left = web.accentSweep[name]
     const right = desktop.accentSweep[name]
+    // A missing swatch yields clicked:false on both shells, which would otherwise
+    // compare equal — the label under test has to be found, not just matched.
+    if (left.clicked !== true || right.clicked !== true) {
+      differences.push('accent.' + name + ': swatch not found (' + left.clicked + '/' + right.clicked + ')')
+    }
     if (JSON.stringify(left) !== JSON.stringify(right)) {
       differences.push('accent.' + name + ': ' + JSON.stringify(left) + ' vs ' + JSON.stringify(right))
     }

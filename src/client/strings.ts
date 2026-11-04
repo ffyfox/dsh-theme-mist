@@ -9,6 +9,10 @@
  * resolves against the *active interface language*, while `label` is only a
  * per-palette pair of strings with no notion of which one is current.
  * `tests/strings.test.ts` pins the two together so they cannot drift.
+ *
+ * Both dictionaries quote upstream dsh-Go rather than translate: zh is
+ * `app_zh.arb`'s `phoneAccent*` verbatim, en is `app_en.arb`'s. That is why
+ * three English names (Teal / Aqua / Slate) do not spell the palette ids.
  */
 
 /** Namespace for every string this plugin contributes. */
@@ -45,11 +49,11 @@ export const zh: Readonly<Record<StringKey, string>> = Object.freeze({
 export const en: Readonly<Record<StringKey, string>> = Object.freeze({
   'accent.title': 'Accent',
   'accent.mist': 'Mist',
-  'accent.daiqing': 'Daiqing',
+  'accent.daiqing': 'Teal',
   'accent.dusk': 'Dusk',
-  'accent.turquoise': 'Turquoise',
+  'accent.turquoise': 'Aqua',
   'accent.amber': 'Amber',
-  'accent.graphite': 'Graphite',
+  'accent.graphite': 'Slate',
   'sidebar.title': 'Sidebar material',
   'sidebar.sheet': 'Glass',
   'sidebar.flat': 'Flat',

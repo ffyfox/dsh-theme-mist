@@ -134,7 +134,7 @@ export const PALETTES: { readonly [K in AccentId]: AccentPalette } = {
   },
   daiqing: {
     id: "daiqing",
-    label: { zh: "黛青", en: "Daiqing" },
+    label: { zh: "黛青", en: "Teal" },
     tint: { hue: 238, chroma: 0.9 },
     light: {
       mistTop: "#E7F3FB",
@@ -296,7 +296,7 @@ export const PALETTES: { readonly [K in AccentId]: AccentPalette } = {
   },
   turquoise: {
     id: "turquoise",
-    label: { zh: "松石", en: "Turquoise" },
+    label: { zh: "松石", en: "Aqua" },
     tint: { hue: 190, chroma: 0.7 },
     light: {
       mistTop: "#E8F4F3",
@@ -458,7 +458,7 @@ export const PALETTES: { readonly [K in AccentId]: AccentPalette } = {
   },
   graphite: {
     id: "graphite",
-    label: { zh: "石墨", en: "Graphite" },
+    label: { zh: "石墨", en: "Slate" },
     tint: { hue: 262, chroma: 0.25 },
     light: {
       mistTop: "#EFF1F4",

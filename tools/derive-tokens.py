@@ -388,14 +388,15 @@ DARK_SURFACES = ["nightTop", "nightBottom", "night", "nightLowest", "nightLow",
 # 6. 供 TypeScript 消费的派生量与序列化
 # ==========================================================================
 
-# 六套配色的显示名（DSH Go 原文名 + 英文名）
+# 六套配色的显示名：中文和英文都照抄 DSH Go（app_zh.arb / app_en.arb 的 phoneAccent*）。
+# 英文名不是 id 的音译 —— Teal / Aqua / Slate 三个与 id 不同名，那是上游自己的英文写法。
 ACCENT_LABELS = {
     "mist": ("雾蓝", "Mist"),
-    "daiqing": ("黛青", "Daiqing"),
+    "daiqing": ("黛青", "Teal"),
     "dusk": ("暮紫", "Dusk"),
-    "turquoise": ("松石", "Turquoise"),
+    "turquoise": ("松石", "Aqua"),
     "amber": ("琥珀", "Amber"),
-    "graphite": ("石墨", "Graphite"),
+    "graphite": ("石墨", "Slate"),
 }
 
 # 描边 alpha 梯度：四档，对应 --dsw-alias-border-l1..l4（visual-spec §6.1.2）

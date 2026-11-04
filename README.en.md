@@ -22,13 +22,13 @@ Mist includes six curated accent palettes. The top-right ambient glow, primary a
 <table>
   <tr>
     <td align="center"><img src="docs/images/accents/mist.webp" width="300" alt="Mist"><br><sub><b>Mist</b></sub></td>
-    <td align="center"><img src="docs/images/accents/daiqing.webp" width="300" alt="Daiqing"><br><sub><b>Daiqing</b></sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.webp" width="300" alt="Teal"><br><sub><b>Teal</b></sub></td>
     <td align="center"><img src="docs/images/accents/dusk.webp" width="300" alt="Dusk"><br><sub><b>Dusk</b></sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accents/turquoise.webp" width="300" alt="Turquoise"><br><sub><b>Turquoise</b></sub></td>
+    <td align="center"><img src="docs/images/accents/turquoise.webp" width="300" alt="Aqua"><br><sub><b>Aqua</b></sub></td>
     <td align="center"><img src="docs/images/accents/amber.webp" width="300" alt="Amber"><br><sub><b>Amber</b></sub></td>
-    <td align="center"><img src="docs/images/accents/graphite.webp" width="300" alt="Graphite"><br><sub><b>Graphite</b></sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.webp" width="300" alt="Slate"><br><sub><b>Slate</b></sub></td>
   </tr>
 </table>
 
@@ -36,7 +36,7 @@ Mist includes six curated accent palettes. The top-right ambient glow, primary a
 
 ## Features
 
-- **Six Accents × Light / Dark / System**: Seamlessly layers Mist, Daiqing, Dusk, Turquoise, Amber, and Graphite over the host's Light, Dark, and System appearance modes. Cool-white paper surfaces in light mode and a blue-shifted slate in dark mode (never pure black) pass WCAG AA contrast checks across all 12 combinations.
+- **Six Accents × Light / Dark / System**: Seamlessly layers Mist, Teal, Dusk, Aqua, Amber, and Slate over the host's Light, Dark, and System appearance modes. Cool-white paper surfaces in light mode and a blue-shifted charcoal in dark mode (never pure black) pass WCAG AA contrast checks across all 12 combinations.
 - **Restrained Accent Budget**: Saturated color is reserved strictly for primary actions, active selections, and the subtle top-right glow. Depth is defined through luminance steps and 0.5px hairlines.
 - **Frosted Glass & Dual Sidebar Materials**: The floating composer bar blurs scrolling messages underneath in real time, while the left sidebar offers a one-click choice between **Glass** and **Flat**.
 - **Native Settings Integration & Clean Teardown**: Integrates directly into **Settings → General**. Disabling or uninstalling the plugin restores every host token and stylesheet with zero DOM residue.
@@ -70,7 +70,7 @@ Once installed, open **Settings → General** to find the two new rows:
 
 | Setting | Options | Description |
 |---|---|---|
-| **Accent** | `Mist` · `Daiqing` · `Dusk` · `Turquoise` · `Amber` · `Graphite` | Switches instantly when you click a swatch. |
+| **Accent** | `Mist` · `Teal` · `Dusk` · `Aqua` · `Amber` · `Slate` | Switches instantly when you click a swatch. |
 | **Sidebar material** | `Glass` (Default) · `Flat` | **Glass**: Translucent sheet with a 0.5px hairline border and 28px right corners. **Flat**: Removes the sidebar backing so the page gradient flows seamlessly across all columns. |
 
 <img src="docs/images/settings.webp" width="800" alt="Settings → General: appearance, font size, accent and sidebar material in one panel">
