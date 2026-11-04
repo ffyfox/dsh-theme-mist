@@ -2,7 +2,9 @@
   "name": "dsh-theme-mist",
   "description": "DSH Go visual language as a hot-pluggable client theme for DeepSeek Harness — six accents, light/dark/system, zero DOM rewrite.",
   "version": "0.1.0",
-  "private": true,
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
   "type": "module",
   "keywords": [
     "deepseek",
