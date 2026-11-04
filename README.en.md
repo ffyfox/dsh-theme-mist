@@ -23,14 +23,14 @@ Mist includes six curated accent palettes. The top-right ambient glow, primary a
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/accents/mist.webp" width="400" alt="Mist"><br><sub><b>Mist 雾蓝</b> (Default · Cool Mist Paper)</sub></td>
-    <td align="center"><img src="docs/images/accents/daiqing.webp" width="400" alt="Daiqing"><br><sub><b>Daiqing 黛青</b> (Deep Celadon Glaze)</sub></td>
-    <td align="center"><img src="docs/images/accents/dusk.webp" width="400" alt="Dusk"><br><sub><b>Dusk 暮紫</b> (Twilight Haze)</sub></td>
+    <td align="center"><img src="docs/images/accents/mist.webp" width="31%" alt="Mist"><br><sub><b>Mist 雾蓝</b> (Default · Cool Mist Paper)</sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.webp" width="31%" alt="Daiqing"><br><sub><b>Daiqing 黛青</b> (Deep Celadon Glaze)</sub></td>
+    <td align="center"><img src="docs/images/accents/dusk.webp" width="31%" alt="Dusk"><br><sub><b>Dusk 暮紫</b> (Twilight Haze)</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accents/turquoise.webp" width="400" alt="Turquoise"><br><sub><b>Turquoise 松石</b> (Warm Pine Teal)</sub></td>
-    <td align="center"><img src="docs/images/accents/amber.webp" width="400" alt="Amber"><br><sub><b>Amber 琥珀</b> (Warm Rosin Gold)</sub></td>
-    <td align="center"><img src="docs/images/accents/graphite.webp" width="400" alt="Graphite"><br><sub><b>Graphite 石墨</b> (Monochrome Ink)</sub></td>
+    <td align="center"><img src="docs/images/accents/turquoise.webp" width="31%" alt="Turquoise"><br><sub><b>Turquoise 松石</b> (Warm Pine Teal)</sub></td>
+    <td align="center"><img src="docs/images/accents/amber.webp" width="31%" alt="Amber"><br><sub><b>Amber 琥珀</b> (Warm Rosin Gold)</sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.webp" width="31%" alt="Graphite"><br><sub><b>Graphite 石墨</b> (Monochrome Ink)</sub></td>
   </tr>
 </table>
 
@@ -52,11 +52,11 @@ Mist includes six curated accent palettes. The top-right ambient glow, primary a
 ### Option 1: Desktop App
 
 1. Clone and build the plugin locally (skip `pnpm build` if `lib/` is already present):
-   ```bash
+    ```bash
    git clone <repo-url> dsh-theme-mist
    cd dsh-theme-mist
    pnpm install && pnpm build
-   ```
+    ```
 2. In the Desktop app, open **Plugins → Add plugin → Local directory** and select the `dsh-theme-mist` folder.
 
 > **Note**: The `desktop` profile is managed exclusively by the Electron app and cannot be modified via CLI (`dsh plugin`). Always use the in-app plugin manager on Desktop.
@@ -91,8 +91,8 @@ The two sidebar materials side by side (same accent, same light appearance):
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/sidebar-sheet.webp" width="220" alt="Glass sidebar"><br><sub><b>Glass</b> (default)</sub></td>
-    <td align="center"><img src="docs/images/sidebar-flat.webp" width="220" alt="Flat sidebar"><br><sub><b>Flat</b></sub></td>
+    <td align="center"><img src="docs/images/sidebar-sheet.webp" width="300" alt="Glass sidebar"><br><sub><b>Glass</b> (default)</sub></td>
+    <td align="center"><img src="docs/images/sidebar-flat.webp" width="300" alt="Flat sidebar"><br><sub><b>Flat</b></sub></td>
   </tr>
 </table>
 

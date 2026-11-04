@@ -54,6 +54,14 @@ const CHROME = arg('chrome', process.env.CHROME_PATH ?? 'google-chrome-stable')
 const WIDTH = 1280
 const HEIGHT = 800
 const DPR = 2
+/**
+ * The sidebar column, cropped to the part that differs. The full 800px column is
+ * two thirds empty page, and at README width that reads as a pair of blank
+ * columns; 480px keeps the logo, the nav rows, the workspace and the session.
+ */
+const SIDEBAR_CROP = 480
+/** How much of the content area the sidebar crop keeps, to show the panel edge. */
+const SIDEBAR_EDGE = 140
 
 /** Order matches the settings row, so the wall reads the same way. */
 const ACCENTS = ['mist', 'daiqing', 'dusk', 'turquoise', 'amber', 'graphite']
@@ -538,14 +546,27 @@ async function capture(appearance, home, seed) {
 
     const extra = {}
     if (seed) {
-      // The sidebar column, in both materials: the whole difference lives there.
-      const sheetCrop = await cropWebP(browser, frames.mist, { x: 0, y: 0, width: 280 * DPR, height: HEIGHT * DPR })
+      /**
+       * The sidebar column, in both materials. The crop runs past the panel's edge
+       * — 140px of the content area — because the difference is *at* that edge: a
+       * hairline and a 28px corner on one side, a soft gradient on the other. Cut
+       * exactly on the boundary and half of that is outside the frame.
+       *
+       * Both frames have to be the same accent: the sweep above ends on graphite,
+       * and a flat sidebar in graphite next to a sheet one in mist reads as a
+       * colour difference rather than a material one.
+       */
+      await setAccent(browser, 'mist')
+      await sleep(400)
+      const sheetFrame = await browser.shotBuffer()
+      const sidebarBox = { x: 0, y: 0, width: (280 + SIDEBAR_EDGE) * DPR, height: SIDEBAR_CROP * DPR }
+      const sheetCrop = await cropWebP(browser, sheetFrame, sidebarBox)
       await setMaterial(browser, 'flat')
       await sleep(600)
       const flatMaterial = await browser.evaluate('document.body.getAttribute("data-dsh-theme-mist-sidebar")')
       check('sidebar material switches to flat', flatMaterial === 'flat', String(flatMaterial))
       const flatFrame = await browser.shotBuffer()
-      const flatCrop = await cropWebP(browser, flatFrame, { x: 0, y: 0, width: 280 * DPR, height: HEIGHT * DPR })
+      const flatCrop = await cropWebP(browser, flatFrame, sidebarBox)
       await setMaterial(browser, 'sheet')
       await sleep(400)
 
@@ -582,7 +603,18 @@ async function capture(appearance, home, seed) {
       // Swatches only: the row's title element shares the id prefix.
       const accentRows = await browser.evaluate('document.querySelectorAll("[id^=dsh-theme-mist-accent-][role=radio]").length')
       check('settings shows the six swatches', accentRows === 6, String(accentRows))
-      extra.settings = await browser.shotBuffer()
+      const settingsFrame = await browser.shotBuffer()
+      // Only the dialog: the page behind it is a screenshot of a screenshot, and
+      // at README width it just shrinks the rows that matter.
+      const dialog = await browser.evaluate(
+        '(() => { const node = document.querySelector("[role=dialog]"); if (!node) return null;' +
+          ' const box = node.getBoundingClientRect();' +
+          ' return [box.x, box.y, box.width, box.height].map((value) => Math.round(value * (window.devicePixelRatio || 1))) })()',
+      )
+      extra.settings = dialog === null
+        ? settingsFrame
+        : await cropWebP(browser, settingsFrame, { x: dialog[0], y: dialog[1], width: dialog[2], height: dialog[3] })
+      check('settings frame is the dialog only', dialog !== null, dialog === null ? 'no [role=dialog]' : String(dialog[2]) + 'x' + String(dialog[3]) + 'px')
 
       // Close again, so the last frames are the plain page.
       await browser.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 })

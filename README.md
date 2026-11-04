@@ -23,14 +23,14 @@
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/accents/mist.webp" width="400" alt="雾蓝 Mist"><br><sub><b>雾蓝 Mist</b>（默认 · 冷白雾纸）</sub></td>
-    <td align="center"><img src="docs/images/accents/daiqing.webp" width="400" alt="黛青 Daiqing"><br><sub><b>黛青 Daiqing</b>（深青瓷釉）</sub></td>
-    <td align="center"><img src="docs/images/accents/dusk.webp" width="400" alt="暮紫 Dusk"><br><sub><b>暮紫 Dusk</b>（暮色微岚）</sub></td>
+    <td align="center"><img src="docs/images/accents/mist.webp" width="300" alt="雾蓝 Mist"><br><sub><b>雾蓝 Mist</b>（默认 · 冷白雾纸）</sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.webp" width="300" alt="黛青 Daiqing"><br><sub><b>黛青 Daiqing</b>（深青瓷釉）</sub></td>
+    <td align="center"><img src="docs/images/accents/dusk.webp" width="300" alt="暮紫 Dusk"><br><sub><b>暮紫 Dusk</b>（暮色微岚）</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accents/turquoise.webp" width="400" alt="松石 Turquoise"><br><sub><b>松石 Turquoise</b>（温润松绿）</sub></td>
-    <td align="center"><img src="docs/images/accents/amber.webp" width="400" alt="琥珀 Amber"><br><sub><b>琥珀 Amber</b>（暖金松脂）</sub></td>
-    <td align="center"><img src="docs/images/accents/graphite.webp" width="400" alt="石墨 Graphite"><br><sub><b>石墨 Graphite</b>（纯粹水墨）</sub></td>
+    <td align="center"><img src="docs/images/accents/turquoise.webp" width="300" alt="松石 Turquoise"><br><sub><b>松石 Turquoise</b>（温润松绿）</sub></td>
+    <td align="center"><img src="docs/images/accents/amber.webp" width="300" alt="琥珀 Amber"><br><sub><b>琥珀 Amber</b>（暖金松脂）</sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.webp" width="300" alt="石墨 Graphite"><br><sub><b>石墨 Graphite</b>（纯粹水墨）</sub></td>
   </tr>
 </table>
 
@@ -40,7 +40,7 @@
 
 - **六套配色 × 明暗三态**：支持「雾蓝、黛青、暮紫、松石、琥珀、石墨」六套配色，并与官方「浅色 / 深色 / 跟随系统」无缝叠加；浅色采用微染冷白纸面，深色采用不刺眼的暖黑墨色，全部 12 种组合均通过 WCAG AA 对比度校验。
 - **克制的强调色比例**：强调色仅用于主按钮、关键选中态与右上角柔和光晕（占比 ≤ 5%），大面积背景与卡片依靠明度层级和发丝细线拉开空间感，长时间阅读不疲劳。
-- **真实毛玻璃与双档侧栏材质**：底部输入区采用悬浮毛玻璃，滚动对话时消息从输入卡背后自然透出；左侧栏提供**「玻璃」**（半透明抽屉质感 + 28px 圆角）与**「平铺」**（无底板融入背景渐变）两种材质。
+- **真实毛玻璃与双档侧栏材质**：底部输入区采用悬浮毛玻璃，滚动对话时消息从输入卡背后自然透出；左侧栏提供 **玻璃**（半透明抽屉质感 + 28px 圆角）与 **平铺**（无底板融入背景渐变）两种材质。
 - **原生设置集成 & 零残留卸载**：直接嵌入官方「设置 → 通用」面板，无需手改配置文件；禁用或卸载后，所有令牌与样式表完整还原为官方默认外观。
 
 ---
@@ -52,11 +52,11 @@
 ### 方式一：桌面端（Desktop）
 
 1. 先在本地克隆并构建产物（若已包含构建好的 `lib/` 目录可跳过构建）：
-   ```bash
+    ```bash
    git clone <仓库地址> dsh-theme-mist
    cd dsh-theme-mist
    pnpm install && pnpm build
-   ```
+    ```
 2. 打开桌面端左侧栏 **「插件（Plugins）」→「添加插件（Add plugin）」→「本地目录」**，选择 `dsh-theme-mist` 目录即可。
 
 > **提示**：桌面端的 `desktop` 配置环境由客户端应用独占管理，无法通过命令行 `dsh plugin` 操作，请直接使用应用内界面安装。
@@ -91,8 +91,8 @@ dsh plugin --profile web add "$(pwd)"
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/sidebar-sheet.webp" width="220" alt="玻璃侧栏"><br><sub><b>玻璃</b>（默认）</sub></td>
-    <td align="center"><img src="docs/images/sidebar-flat.webp" width="220" alt="平铺侧栏"><br><sub><b>平铺</b></sub></td>
+    <td align="center"><img src="docs/images/sidebar-sheet.webp" width="300" alt="玻璃侧栏"><br><sub><b>玻璃</b>（默认）</sub></td>
+    <td align="center"><img src="docs/images/sidebar-flat.webp" width="300" alt="平铺侧栏"><br><sub><b>平铺</b></sub></td>
   </tr>
 </table>
 
