@@ -4,9 +4,9 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循
 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.1.0] - 2026-11-04
 
-尚未发布。以下为已完成、将随首个版本一并发布的内容。
+首个公开发布版本。
 
 ### Added
 
