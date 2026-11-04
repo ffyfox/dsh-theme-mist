@@ -46,19 +46,13 @@
 ## 安装
 
 ### 桌面端
-1. 先在本地克隆并构建产物（若已包含构建好的 `lib/` 目录可跳过构建）：
-    ```bash
-   git clone <仓库地址> dsh-theme-mist
-   cd dsh-theme-mist
-   pnpm install && pnpm build
-    ```
-2. 打开桌面端左侧栏 **「插件」→「添加插件」**，输入 `dsh-theme-mist` 本地目录即可。
+
+打开桌面端左侧栏 **「插件」→「添加插件」**，输入 `dsh-theme-mist`。
 
 ### Web 端
 
 ```bash
-pnpm install && pnpm build
-dsh plugin --profile web add "$(pwd)"
+dsh plugin --profile web add dsh-theme-mist
 ```
 
 ---

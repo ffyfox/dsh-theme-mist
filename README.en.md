@@ -47,19 +47,12 @@ Mist includes six curated accent palettes. The top-right ambient glow, primary a
 
 ### Desktop
 
-1. Clone and build the plugin locally (skip `pnpm build` if `lib/` is already present):
-    ```bash
-   git clone <repo-url> dsh-theme-mist
-   cd dsh-theme-mist
-   pnpm install && pnpm build
-    ```
-2. In the Desktop app, open **Plugins → Add plugin** and enter the `dsh-theme-mist` local folder.
+In the Desktop app, open **Plugins → Add plugin** and enter `dsh-theme-mist`.
 
 ### Web
 
 ```bash
-pnpm install && pnpm build
-dsh plugin --profile web add "$(pwd)"
+dsh plugin --profile web add dsh-theme-mist
 ```
 
 ---
