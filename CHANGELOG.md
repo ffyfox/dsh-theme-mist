@@ -4,7 +4,7 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循
 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.1.2] - 2026-11-15
 
 ### Fixed
 
@@ -25,12 +25,6 @@
   注释 "Rounded chip chrome, matching the sibling model trigger"），只给其中一枚加线就成了缺陷。
   撤掉整条规则后 `getComputedStyle` 回到 `rgba(0,0,0,0)` / `none` / `8px`，与不装主题逐字一致；
   pill 档的 token 与半径档的 `pill` 保留定义但当前无消费点。
-
-### Known issues
-
-- `bg-base` 归零后，仍有一批面板/控件靠它当底色：自动化任务页的搜索框、指令框、保存页脚，
-  侧栏面板（终端 / 文件 / 网页预览）等。它们只影响"有没有独立底色"，不会造成文字重叠，本轮未改；
-  整窗 overlay 已由 `[role='dialog'][aria-modal='true']` 守卫接住。
 
 ## [0.1.1] - 2026-11-14
 
