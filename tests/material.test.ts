@@ -322,16 +322,26 @@ describe('card, pill and elevation (T2.4 / T2.5)', () => {
     }
   })
 
-  it('paints the card and pill tiers with a rim and a highlight, never a blur', () => {
+  it('paints the card tiers with a rim and a highlight, never a blur', () => {
     expect(CARD_SECTION).toContain('[data-message-bubble]')
     // The markdown class must be escaped: this file is a CSS Module, and a
     // bare .md-code-block would be localised into a hash that matches nothing.
     expect(CARD_SECTION).toContain(':global(.md-code-block)')
-    expect(CARD_SECTION).toContain("[data-slot='conversation.input.model'] button")
     expect(CARD_SECTION).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
     expect(CARD_SECTION).toContain('inset 0 1px 0 var(--dsh-theme-mist-highlight)')
     // The performance rule of the tier (surfaces.dart:17-19): no blur here.
     expect(CARD_SECTION).not.toContain('backdrop-filter')
+  })
+
+  it('leaves the composer model trigger to the host chrome', () => {
+    // Withdrawn 2026-11-15. The pill recipe's fill landed 4/255 from the
+    // composer card it sat on, so the only part that drew was its hairline —
+    // and the host draws this trigger as one of four chromeless chips
+    // (ModelSelect / PermissionSelect / plan / preset), which made that line
+    // read as a defect. Re-adding any rule here puts the ring back on exactly
+    // one of the four.
+    expect(CSS_RULES).not.toContain('conversation.input.model')
+    expect(CSS_RULES).not.toContain('--dsh-theme-mist-pill-token);')
   })
 
   it('rebinds every elevation recipe on the whole scope, not just body', () => {
@@ -369,14 +379,16 @@ describe('shape ladder (T2.1)', () => {
   })
 
   it('re-points only the steps between the two ladders', () => {
-    // 16 -> 14, 8 -> 6, 8 -> stadium; composer (28) and bubbles (20) already
-    // match, so they must not be re-declared at all.
+    // 16 -> 14 and 8 -> 6; composer (28) and bubbles (20) already match, so
+    // they must not be re-declared at all. The pill step stays defined but is
+    // applied nowhere: the model trigger keeps the host's 8px chip (2026-11-15).
     expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-theme-mist-radius-md)')
     expect(SHAPE_SECTION).toContain(':not(pre) > code')
     expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-theme-mist-radius-xs)')
     expect(SHAPE_SECTION).toContain("[role='menu']")
-    expect(SHAPE_SECTION).toContain('border-radius: var(--dsh-theme-mist-radius-pill)')
-    expect(SHAPE_SECTION).toContain('corner-shape: round')
+    expect(SHAPE_SECTION).toContain('--dsh-theme-mist-radius-pill: 999px')
+    expect(SHAPE_SECTION).not.toContain('corner-shape: round')
+    expect(SHAPE_SECTION).not.toContain("border-radius: var(--dsh-theme-mist-radius-pill)")
     expect(SHAPE_SECTION).not.toContain('[data-composer-card]')
     expect(SHAPE_SECTION).not.toContain('[data-message-bubble]')
   })
@@ -390,7 +402,10 @@ describe('motion (T2.6)', () => {
     expect(MOTION).toContain('--dsh-theme-mist-duration-quick: 160ms')
     expect(MOTION).toContain('--dsh-theme-mist-duration-standard: 240ms')
     expect(MOTION).toContain('cubic-bezier(0.4, 0, 0.2, 1)')
-    expect(MOTION).toContain('transition: background-color var(--dsh-theme-mist-duration-quick)')
+    // The composer card is the one surface left to animate; the model capsule's
+    // transition left with its fill (2026-11-15).
+    expect(MOTION).toContain('background-color var(--dsh-theme-mist-duration-standard)')
+    expect(MOTION).not.toContain('--dsh-theme-mist-duration-quick)')
     // The official duration/easing tokens also drive the sidebar and panel drag
     // animations — redefining them would move the layout, not the theme.
     expect(CSS_RULES).not.toContain('--ds-transition-duration')
@@ -416,6 +431,7 @@ describe('material stylesheet', () => {
   it('anchors the gradient to the viewport', () => {
     expect(CSS).toContain('background-attachment: fixed')
   })
+
 
   it('anchors the composer veil to the viewport, and to the docked corner when promoted (T5.12, T5.13)', () => {
     // Two geometries, two failures. A floating seat (the welcome screen) is only

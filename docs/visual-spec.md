@@ -79,17 +79,19 @@ DSH Go 的主题源码把设计意图写进了注释，这些原则决定了移�
 | Markdown 代码块 `:global(.md-code-block)` | 16 | **14**（md） | 角部略收紧 |
 | 行内代码 `:not(pre) > code` | 8 | **6**（xs） | 略收紧 |
 | 菜单 `[role='menu']` | 16 | **14**（md） | 略收紧 |
-| 模型胶囊 `[data-slot='conversation.input.model'] button` | 8 | **999（stadium）** | 明显：从圆角方块变胶囊 |
+| 模型胶囊 `[data-slot='conversation.input.model'] button` | 8 | **8（不改）** | 2026-11-15 撤回胶囊档：它只显影出一圈发丝线，见 §1.2 末尾 |
 | 侧栏行、按钮、终端等 | 12 / 8 / … | **不动** | 官方尺寸在 DSH Go 里没有对应阶梯 |
 
-**结论：这是"对齐阶梯"，不是"全变圆"。** 12 处里只有 4 处动，其中 3 处是 2px 级别的收紧，唯一直观的改动是把模型胶囊从 8px 方角变成 stadium。前五档官方与 DSH Go 的差值分别是 +2/+2/+2/+4/+8，但**差值最大的两级（xl、lg）恰好是官方已经等于 DSH Go 的两级**，真正需要改的反而是差值最小的三级。
+**结论：这是"对齐阶梯"，不是"全变圆"。** 12 处里只有 3 处动，全是 2px 级别的收紧。
 
-**一个实测细节：`corner-shape: round` 的 computed 值是 `superellipse(1)`。** 也就是说 DSH Go 的"真圆角"（`round`）与官方的"连续圆角"（`superellipse(1.5)`）是同一属性的两个取值，而不是两套机制。给胶囊写 `corner-shape: round` 后 computed 显示 `superellipse(1)`，渲染是标准 stadium —— 与官方的发送按钮（同样 `superellipse(1)`、radius 999）完全一致。这条写进验收可以避免以后误判成"没生效"。
+> **2026-11-15 撤回：模型胶囊回到宿主的 8px 无底色 chip。** 胶囊档（pill）当时是唯一"肉眼可见"的改动，实测下来它只显影出一圈线：填充白 0.55 落在 composer 卡片上只差 **4/255**（`252,253,255` vs `248,250,255`，雾蓝浅色），而 0.5px 发丝线比填充暗 **18/255**（`234,236,240`）——等于规则真正画出来的只有那圈描边。更关键的是宿主把这枚触发器当作"四个无底色 chip 之一"：`ModelSelect.module.css` 写的是 `border: none; background: transparent; border-radius: 8px`，`PermissionSelect.module.css` 的注释原文是 “Rounded chip chrome, matching the sibling model trigger”；只给四枚里的这一枚加线，观感就成了缺陷。撤掉后 `getComputedStyle` 回到 `rgba(0, 0, 0, 0)` / `none` / `8px`，与不装主题逐字一致。pill 档的 token（`--dsh-theme-mist-pill-fill/-solid`、半径档的 `pill`）保留定义但**当前没有消费点**。前五档官方与 DSH Go 的差值分别是 +2/+2/+2/+4/+8，但**差值最大的两级（xl、lg）恰好是官方已经等于 DSH Go 的两级**，真正需要改的反而是差值最小的三级。
+
+**一个实测细节（留作日后参考：2026-11-15 起本主题没有 999px 胶囊，这条目前无规则使用）：`corner-shape: round` 的 computed 值是 `superellipse(1)`。** 也就是说 DSH Go 的"真圆角"（`round`）与官方的"连续圆角"（`superellipse(1.5)`）是同一属性的两个取值，而不是两套机制。给胶囊写 `corner-shape: round` 后 computed 显示 `superellipse(1)`，渲染是标准 stadium —— 与官方的发送按钮（同样 `superellipse(1)`、radius 999）完全一致。这条写进验收可以避免以后误判成"没生效"。
 
 ### 1.3 其它实现要点
 
 - **不要重写超椭圆**：官方 `corner-shape.css` 已在 `@supports (corner-shape: superellipse(1.5))` 内对所有元素及其伪元素应用（`dsh-client-ui-theme/README.zh.md:88`）。再声明一遍 `superellipse(...)` 只会打架
-- **唯一的例外是要写的那一半**：`border-radius: 50%` 的圆和 `999px` 的胶囊需要配 `corner-shape: round`，否则超椭圆会把圆弧压变形（同文档 `:88`）。T2.1 给模型胶囊就是这么做的（§1.2）
+- **唯一的例外是要写的那一半**：`border-radius: 50%` 的圆和 `999px` 的胶囊需要配 `corner-shape: round`，否则超椭圆会把圆弧压变形（同文档 `:88`）。T2.1 当年给模型胶囊就是这么做的；2026-11-15 随胶囊档撤回，现无规则使用（§1.2）
 - 实测补充：`round` 的 computed 值显示为 `superellipse(1)`，别把"没看到 round"当成没生效
 
 ---
@@ -179,12 +181,13 @@ body[data-dsh-theme-mist] {
 }
 ```
 
-**只动两处，都是我们改过材质、因而必须补交互的地方**：
+**只动一处，是我们改过材质、因而必须补交互的地方**：
 
 | 表面 | 过渡 | 为什么 |
 |---|---|---|
-| 模型胶囊 `[data-slot='conversation.input.model'] button` | `background-color 160ms` | T2.4 给了它基础填充，官方 hover 是另一条规则；两者之间需要过渡才不"闪" |
 | composer 卡片 `[data-composer-card]` | `background-color` + `box-shadow 240ms` | 系统级「减少透明」生效时填充从 0.70 变 0.96，缓一下比硬切自然 |
+
+> 模型胶囊的 `background-color 160ms` 随胶囊档一起撤掉了（2026-11-15）：没有第二层填充可切，过渡也就没有对象；宿主的 hover 淡色重新独占这枚触发器。
 
 **明确不做**：页面光晕呼吸。它住在 `body` 的 `background-image` 里，动画意味着每帧重绘整个视口；而 DSH Go 的 2.4s「呼吸」本来就是给连接状态点的，不是给页面的。整份样式表**没有任何 `@keyframes`**（单测断言）。
 
@@ -733,7 +736,7 @@ bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 �
 | 档 | 落在哪 | 填充 | 实现 |
 |---|---|---|---|
 | card | 用户气泡、Markdown 代码块、工具行内嵌的提问卡、披露头 | `--dsh-theme-mist-card-fill`（白 0.62 / 0.05）；气泡与代码块仍用各自的语义 token | 只补 `inset` 发丝线 + 顶边高光 |
-| pill | composer 里的模型胶囊 | `--dsh-theme-mist-pill-fill`（白 0.55 / 0.06） | 填充 + 发丝线 + 高光 |
+| pill | **（暂无表面消费）** | `--dsh-theme-mist-pill-fill`（白 0.55 / 0.06） | 2026-11-15 起不再落在这枚触发器上：填充与底同色、只剩发丝线，见 §1.2 |
 > **T2.4 当时以为 card 的填充是"免费"的**（凡是画 `--dsw-alias-bg-base` 的卡片自然半透明），这个判断在 T5.5 被推翻：那层 0.36 的 mist 压在同样偏 mist 的页面上，卡片与页面只差 ΔE00 0.71，等于没有卡片。现在 card 档有自己的填充 `--dsh-theme-mist-card-fill`（白 0.62 / 0.05），与页面的差是 5.04。
 
 **T2.5：一条高度配方覆盖所有官方浮层。** `--dsw-elevation-*` 我们在**自己的作用域**上重绑（`body[data-dsh-theme-mist], body[data-dsh-theme-mist] *`），给每档加顶边高光、把中性黑的环境阴影换成调色板的冷墨：

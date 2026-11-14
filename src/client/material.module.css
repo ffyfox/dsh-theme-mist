@@ -425,17 +425,29 @@ body[data-dsh-theme-mist] :global(.md-code-block) {
     inset 0 1px 0 var(--dsh-theme-mist-highlight);
 }
 
-/* Pill tier: the model capsule in the composer footer — the one pill on this
-   layout with a stable semantic hook. The shape belongs to the button inside
-   the slot (8px radius); the slot's own child wrapper is a square box, so
-   painting it would show corners behind the pill. Fill is derived from the
-   chrome glass, so the pill reads as part of the same material family. */
-body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button {
-  background-color: var(--dsh-theme-mist-pill-token);
-  box-shadow:
-    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
-    inset 0 1px 0 var(--dsh-theme-mist-highlight);
-}
+/* --- The pill tier is withdrawn from the model trigger (2026-11-15) ------
+ *
+ * T2.4 painted the composer's model capsule as DSH Go's pill: a white 0.55
+ * fill, a 0.5px hairline, the top highlight, and (T2.1) a stadium radius.
+ * Measured on the built app, that fill lands 4/255 from the composer card it
+ * sits on (252,253,255 over 248,250,255 in the mist palette) while its
+ * hairline lands 18/255 below it (234,236,240). The fill is white on white —
+ * so the only part of the recipe that actually drew was the ring.
+ *
+ * The ring then had to answer a question the rest of the row did not ask: the
+ * host draws this trigger as one of four chromeless chips. ModelSelect.module
+ * .css says "border: none; background: transparent; border-radius: 8px" and
+ * fills it with the brand tint on hover; PermissionSelect.module.css says the
+ * same in as many words ("Rounded chip chrome, matching the sibling model
+ * trigger"), as do the plan and agent-preset triggers. Painting exactly one of
+ * the four turned its hairline into a defect report — the honest fix is to
+ * leave the trigger the host's own chrome, hover feedback included.
+ *
+ * The tier's own tokens stay defined (pill-fill / pill-solid / pill-token, and
+ * the radius ladder's pill step): they are DSH Go's table, and nothing on this
+ * layout consumes them today. A future surface that wants a pill needs a fill
+ * dark enough to read on its own backdrop — a hairline alone is not a
+ * material. */
 
 /* --- Shape: the DSH Go radius ladder (T2.1) ------------------------------
  *
@@ -476,13 +488,11 @@ body[data-dsh-theme-mist] [role='menu'] {
 }
 
 
-/* Chip / model capsule: 8 -> stadium. corner-shape: round is required — the
-   official sheet applies superellipse(1.5) to every element, which would bend
-   the caps of a 999px radius away from a true semicircle. */
-body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button {
-  border-radius: var(--dsh-theme-mist-radius-pill);
-  corner-shape: round;
-}
+/* The composer chips keep the host's radius (8px, the official sm step): the
+   model trigger no longer takes the pill step — see the withdrawal note above.
+   A 999px radius needs `corner-shape: round` to keep its caps semicircular
+   under the official superellipse(1.5), so the ladder keeps the value for
+   whoever applies it next; nothing in this sheet does today. */
 
 
 /* --- Elevation: one recipe for every surface we did not paint (T2.5) -----
@@ -515,11 +525,14 @@ body[data-dsh-theme-mist] * {
 
 /* --- Motion (T2.6) -------------------------------------------------------
  *
- * Only two things on this layout are ours to animate: the hover feedback on
- * the model capsule (our fill replaced the official base colour, so the switch
- * between them now needs a transition of its own) and the composer's material,
- * whose fill the OS "reduce transparency" setting can swap live. Both are short
- * and sit in the same register as the official motion.
+ * One thing on this layout is ours to animate: the composer's material, whose
+ * fill the OS "reduce transparency" setting can swap live. It is short and sits
+ * in the same register as the official motion.
+ *
+ * The model capsule dropped out of this section with its pill material (see
+ * the withdrawal note above): the host's own hover fills the trigger with the
+ * brand tint and the transition between the two no longer exists, because
+ * there is no second fill to switch from.
  *
  * The durations are the DSH Go scale (motion.dart:13-37), shortened by ~20%
  * for a pointer device (visual-spec §9): press 90 / quick 160 / standard 240.
@@ -545,10 +558,6 @@ body[data-dsh-theme-mist] {
   --dsh-theme-mist-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button {
-  transition: background-color var(--dsh-theme-mist-duration-quick) var(--dsh-theme-mist-ease-standard);
-}
-
 body[data-dsh-theme-mist] [data-composer-card] {
   transition:
     background-color var(--dsh-theme-mist-duration-standard) var(--dsh-theme-mist-ease-standard),
@@ -559,7 +568,6 @@ body[data-dsh-theme-mist] [data-composer-card] {
  * Nothing in this stylesheet animates, and this guard is what keeps that true
  * if something is added later. */
 @media (prefers-reduced-motion: reduce) {
-  body[data-dsh-theme-mist] [data-slot='conversation.input.model'] button,
   body[data-dsh-theme-mist] [data-composer-card],
   body[data-dsh-theme-mist] [data-composer-seat] {
     transition: none;

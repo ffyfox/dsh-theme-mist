@@ -4,6 +4,19 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循
 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Fixed
+
+- **模型选择按钮凭空多出一圈边框**。胶囊档（T2.4）给 composer 里的模型触发器画了白 0.55 填充 +
+  0.5px 发丝线 + 顶边高光，并把圆角改成 999px（T2.1）。实测这层填充落在 composer 卡片上只差
+  4/255（`252,253,255` vs `248,250,255`），而发丝线比填充暗 18/255（`234,236,240`）——规则真正
+  画出来的只有那圈线；而宿主把这枚触发器当作四个无底色 chip 之一（`ModelSelect.module.css`
+  的 `border: none; background: transparent; border-radius: 8px`、`PermissionSelect.module.css`
+  注释 "Rounded chip chrome, matching the sibling model trigger"），只给其中一枚加线就成了缺陷。
+  撤掉整条规则后 `getComputedStyle` 回到 `rgba(0,0,0,0)` / `none` / `8px`，与不装主题逐字一致；
+  pill 档的 token 与半径档的 `pill` 保留定义但当前无消费点。
+
 ## [0.1.1] - 2026-11-14
 
 ### Fixed
