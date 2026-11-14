@@ -4,6 +4,60 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循
 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Fixed
+
+- **Windows 桌面端右上角窗口控件白底**（`bf03c2e`）。宿主在 Windows 上用
+  `titleBarStyle: "hidden"` + 40px `titleBarOverlay`，preload 的 `syncWindowsAppearance`
+  会往 `body` 下插一个隐藏 `<span>` 探针，把 `--dsw-specific-sidebar-fill` 的计算值经 1×1
+  canvas 转成 `rgba()` 后通过 `setTitleBarOverlay` 交给主进程。本主题把该令牌绑在侧栏 sheet
+  填充上（浅色 `mistLow @ 0.82`），而 Electron 的 `WinCaptionButtonContainer` 与
+  `WinCaptionButton` 会对同一个颜色各绘制一次，叠加后约 0.97 不透明——右上角三颗原生按钮因此被
+  盖上一块近白矩形，压在页面光晕之上。修法：只在 `html[data-windows-titlebar]` 且本主题激活时，
+  把 `body` 直接子级那个探针上的 `--dsw-specific-sidebar-fill` 重绑为 `transparent`，主进程
+  收到 `rgba(0, 0, 0, 0)` 后跳过静止态填充（`win_caption_button.cc` 的
+  `if (theme_alpha > 0)`，以及容器的 `SetFillsBoundsOpaquely(false)`），直接透出页面渐变与
+  光晕；`symbolColor` 仍随 `--dsw-alias-label-primary`，侧栏自身填充不动，卸载时随 preload 的
+  `MutationObserver` 自动恢复宿主值。选择器作用域与 `transparent` 重绑由
+  `tests/material.test.ts` 锁定。
+
+  Windows 11 实机验收（DSH Desktop `0.2.2-rc.3` / Electron `44.7.0` / 200% 缩放；屏幕像素
+  采样，区间取 40px 标题栏内避开图标行的背景行）：
+
+  | 状态 | 拖拽条底色 | 按钮条底色 | 色差 Δ |
+  | --- | --- | --- | --- |
+  | 浅色 · 雾蓝 | `212.9, 225.1, 253.0` | `208.0, 221.1, 251.2` | 6.6 |
+  | 浅色 · 黛青 | `207.1, 228.8, 243.3` | `202.1, 225.0, 240.6` | 6.8 |
+  | 浅色 · 暮紫 | `226.8, 221.7, 242.0` | `223.0, 217.5, 238.9` | 6.5 |
+  | 浅色 · 松石 | `208.2, 230.8, 228.1` | `203.1, 227.2, 224.3` | 7.3 |
+  | 浅色 · 琥珀 | `237.6, 222.7, 205.4` | `234.5, 218.5, 200.3` | 7.3 |
+  | 深色 · 雾蓝 | `40.9, 49.8, 69.9` | `42.6, 52.2, 73.6` | 4.7 |
+  | 深色 · 琥珀 | `59.1, 48.1, 35.4` | `62.0, 50.3, 37.0` | 4.0 |
+
+  同一位置修复前 Δ=29.4、近白像素占比 91.9%；修复后近白占比 0%，Δ 全部 ≤7.3。残余差异来自
+  右上角辐射光晕自身的径向渐变（同 x 区间在标题栏下方 100px / 300px 处对照 Δ 分别为 3.5 / 2.1），
+  逐点扫过按钮区边界（距右边缘 276px = 138 CSS px × 2）得到的三个采样点均为 `209, 222, 253`，
+  **无台阶**——若 Electron 仍在绘制容器底色，边界处必然出现矩形跃变。悬停态用移动鼠标实测：
+  关闭按钮红底 redness +165（浅深两色一致），中性按钮浅色下暗约 20/255、深色下亮约 20/255；
+  因为 `theme_alpha == 0` 不再乘 `kAlphaScale 1.3`，悬停比修复前略淡，属预期。最大化状态
+  Δ=0.5（该读数因 DWM 不可见边框落进屏幕外而偏小，方向上只会更小）。卸载后标题栏回到宿主
+  `#1b1b1c`，三颗按钮与悬停功能完整。
+
+  两点如实记录：暮紫在采样窗口内切换过两次，两次读数完全一致（Δ 均为 6.5）；石墨未在本次采样
+  中出现——它是中性灰、色相不稳定，分桶时被漏掉，浅色石墨尚未取得实机读数。
+
+- **`pnpm verify` 在 Windows 上必然失败**（`46958bd`）。`tools/check-palettes.mjs` 用
+  `'\n}\n'` 定位对象字面量结尾，而 `core.autocrlf=true` 的 Windows 检出是 CRLF（实际序列
+  `'\n}\r\n'`），`indexOf` 返回 -1、再 `+1` 归零，`slice` 于是切出空串——只影响最后一个
+  配色，所以表现为先报 `graphite: caption present` FAIL、再在读取 caption 时空引用崩溃；同一
+  脚本的漂移检查也有同类隐患（Windows 上 Python 文本模式写 CRLF、工作区也是 CRLF，仅因两边恰好
+  一致才通过，`autocrlf=false` 的机器会误报）。`tools/check-pack.mjs` 则用
+  `execFileSync('npm')`，Windows 上 npm 实体是 `npm.cmd`，Node 自 CVE-2024-27980 起不带
+  `shell` 不解析 `.cmd`，直接 ENOENT，随后的 libuv 断言把 23 项结果全部吞掉。两处统一走
+  `eol()` 归一化、win32 下改用 `npm.cmd` + `shell: true`；其他平台分支逐参数不变，
+  对照实验证明同一份 LF 工作区上旧代码漂移检查 FAIL、新代码通过。
+
 ## [0.1.0] - 2026-11-04
 
 首个公开发布版本。
