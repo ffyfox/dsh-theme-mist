@@ -79,6 +79,27 @@ html[data-windows-titlebar] body[data-dsh-theme-mist] [data-slot='root'] > :has(
   background: transparent;
 }
 
+/* The Windows caption controls sit above the now-transparent titlebar strip,
+ * not above the sidebar.
+ *
+ * Preload (syncWindowsAppearance) appends a hidden <span> directly under <body>
+ * whose inline style binds background-color to --dsw-specific-sidebar-fill and
+ * color to --dsw-alias-label-primary, forwarding both to
+ * BrowserWindow.setTitleBarOverlay. Because our sidebar fill is the sheet tier
+ * (mistLow @ 0.82 in light, painted twice by Electron's WinCaptionButtonContainer
+ * + WinCaptionButton to ~0.97 opaque near-white), leaving this probe on the
+ * sidebar token puts a bright white box over the top-right accent glow.
+ *
+ * Re-pointing --dsw-specific-sidebar-fill to transparent on that probe alone
+ * sends rgba(0, 0, 0, 0) to setTitleBarOverlay, letting the native controls
+ * sit directly over the live page gradient and glow while symbolColor stays on
+ * --dsw-alias-label-primary and the sidebar keeps its own fill. When the theme
+ * unloads, revert() mutates body.style and drops data-dsh-theme-mist, so
+ * preload's MutationObserver automatically restores the host colour. */
+html[data-windows-titlebar] body[data-dsh-theme-mist] > span[style*='--dsw-specific-sidebar-fill'][style*='--dsw-alias-label-primary'] {
+  --dsw-specific-sidebar-fill: transparent;
+}
+
 /* --- The sidebar is a pane of glass, not a plate (T5.7-A) ----------------
  *
  * Upstream's sidebar is the drawer's own glass: GlassSurface(tier: sheet)

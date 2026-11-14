@@ -93,6 +93,21 @@ describe('page surfaces (T2.7 -> T5.5)', () => {
       expect(text).not.toMatch(/sidebar-?[cC]ol|_sidebar/iu)
     }
   })
+
+  it('lets the Windows caption controls probe resolve to transparent', () => {
+    const rule = CSS_RULES.match(/([^{}]*\[data-windows-titlebar\][^{}]*)\{([^}]*)\}/g) ?? []
+    const probeRules = rule.filter((text) =>
+      text.slice(0, text.indexOf('{')).includes("style*='--dsw-specific-sidebar-fill'"),
+    )
+    expect(probeRules).toHaveLength(1)
+    const selector = probeRules[0].slice(0, probeRules[0].indexOf('{'))
+    const body = probeRules[0].slice(probeRules[0].indexOf('{'))
+    expect(selector).toContain('html[data-windows-titlebar]')
+    expect(selector).toContain('body[data-dsh-theme-mist]')
+    expect(selector).toContain('> span[style*=')
+    expect(selector).not.toContain("[data-slot='sidebar']")
+    expect(body).toContain('--dsw-specific-sidebar-fill: transparent')
+  })
 })
 
 describe('sidebar material (T5.7 / T5.8)', () => {

@@ -830,3 +830,28 @@ body[data-dsh-theme-mist] [data-composer-seat]:has([data-menu-material])::before
 顺带一条测量纪律：无头 Chromium 默认不渲染 `backdrop-filter`（条纹测试：不模糊时 stdev 5.3，
 加 `--enable-gpu --use-angle=swiftshader` 后 0.9）。判断模糊相关的行为之前，先确认截图链路真的
 能画出模糊。
+
+## 14. Windows 桌面端右上角窗口控件保持白底的根因与修法
+
+### 14.1 现象与定位
+
+T5.6 把 `html[data-windows-titlebar]` 下的窗口框与 40px 拖拽条（`.frame` / `.frame::before`）改成透明之后，顶栏左中段已经直接透出页面渐变与右上角辐射光晕，但 Windows 桌面端右上角的最小化 / 最大化 / 关闭三颗原生窗口控件仍是一块接近纯白的矩形。
+
+核对桌面端源码后确认了整条链路：
+
+1. 主进程（`main.js`）用 `titleBarStyle: "hidden"` + `titleBarOverlay` 创建 Windows 主窗口，并监听 `dsh-desktop:windows-appearance` IPC 更新 `mainWindow.setTitleBarOverlay({ color, symbolColor })`。
+2. preload（`preload-app.cjs` 的 `syncWindowsAppearance`）在 `document.body` 下直接挂载一个隐藏 `<span>` 探针，行内样式绑定 `background-color:var(--dsw-specific-sidebar-fill);color:var(--dsw-alias-label-primary)`，通过监听 `body` 的 `style` / `data-ds-dark-theme` 变化把计算值经 1×1 canvas 转成 `rgba(r, g, b, a)` 发送给主进程。
+3. 本插件的 `--dsw-specific-sidebar-fill` 绑定的是侧栏 sheet 填充（浅色 `mistLow @ 0.82`，六套配色均为 `#F5～#FB` 近白色；深色 `sheetDark @ 0.86`）。Electron 的 `WinCaptionButtonContainer` 与 `WinCaptionButton` 又会对 `overlay_button_color` 各刷一遍（等效透明度 ~96.8%），因此在右上角光晕之上直接盖出了一块近白底色。
+
+### 14.2 修法
+
+不改 `--dsw-specific-sidebar-fill` 本身（侧栏、工作区行与列表底端淡出仍依赖它），只在 `material.module.css` 中针对 `html[data-windows-titlebar]` 下激活态的 preload 探针把该变量重绑为 `transparent`：
+
+```css
+html[data-windows-titlebar] body[data-dsh-theme-mist] > span[style*='--dsw-specific-sidebar-fill'][style*='--dsw-alias-label-primary'] {
+  --dsw-specific-sidebar-fill: transparent;
+}
+```
+
+- preload 从该探针读出 `rgba(0, 0, 0, 0)` 并传给 `setTitleBarOverlay`；Electron 44（`WinCaptionButtonContainer::UpdateBackground` + `WinCaptionButton::OnPaintBackground`）在 `alpha === 0` 时关闭层不透明标记并跳过静止态底色填充，直接透出下层页面渐变与右上角光晕，同时保留原生悬停/关闭高亮与 `--dsw-alias-label-primary` 符号色。
+- 卸载或切回宿主主题时，`revert()` 改写 `body.style` 并移除 `data-dsh-theme-mist`，自动触发 preload 的 `MutationObserver` 把 `titleBarOverlay.color` 恢复为宿主原色。
