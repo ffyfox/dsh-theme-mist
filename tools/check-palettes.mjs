@@ -42,6 +42,8 @@ const check = (name, ok, detail = '') => {
 
 /** Strip the wall-clock provenance line so two runs compare equal. */
 const stable = (text) => text.replace(/^export const GENERATED_IN_SECONDS = .*$/m, '')
+/** Compare across checkouts: a Windows working tree and Python's text mode both emit CRLF. */
+const eol = (text) => text.replace(/\r\n/g, '\n')
 
 // ---------------------------------------------------------------- 1. drift
 const tmp = mkdtempSync(join(tmpdir(), 'dshgp-'))
@@ -50,8 +52,8 @@ try {
     env: { ...process.env, DSHGO_OUT_DIR: tmp, DSHGO_TS_DIR: tmp },
     stdio: 'pipe',
   })
-  const fresh = stable(readFileSync(join(tmp, 'palettes.ts'), 'utf8'))
-  const committed = stable(readFileSync(TARGET, 'utf8'))
+  const fresh = eol(stable(readFileSync(join(tmp, 'palettes.ts'), 'utf8')))
+  const committed = eol(stable(readFileSync(TARGET, 'utf8')))
   check('palettes.ts matches the generator output', fresh === committed,
     fresh === committed ? '' : 'run: python3 tools/derive-tokens.py')
 } finally {
@@ -59,7 +61,9 @@ try {
 }
 
 // --------------------------------------------------------- 2. derived values
-const source = readFileSync(TARGET, 'utf8')
+// Same normalisation: the block scanning below matches on '\n}\n', which would miss the
+// final palette on a CRLF checkout.
+const source = eol(readFileSync(TARGET, 'utf8'))
 
 const blockOf = (id) => {
   const start = source.indexOf(`  ${id}: {`)

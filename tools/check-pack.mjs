@@ -85,10 +85,13 @@ const manifest = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8'))
 
 /** Ask npm what it would ship. --dry-run writes nothing, so this is safe inside pnpm verify. */
 function packListing() {
-  const stdout = execFileSync('npm', ['pack', '--dry-run', '--json'], {
+  // Windows resolves npm through npm.cmd, which Node only spawns with a shell.
+  const windows = process.platform === 'win32'
+  const stdout = execFileSync(windows ? 'npm.cmd' : 'npm', ['pack', '--dry-run', '--json'], {
     cwd: REPO,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
+    shell: windows,
   })
   // The shape moved between npm majors: 9 answers with an array of entries, 10+ answers
   // with one object keyed by package name. Accept both rather than pin a version.
