@@ -432,6 +432,20 @@ describe('material stylesheet', () => {
     expect(CSS).toContain('background-attachment: fixed')
   })
 
+  it('repaints the page behind the plugin page bar (2026-11-15)', () => {
+    // Upstream's bar hides the scrolled list with `background: bg-base`, and
+    // bg-base is transparent here, so the title and the list overlapped. The
+    // replacement has to be the page's own three-layer stack with the same
+    // attachment: a solid fill would band against the glow.
+    const rules = CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []
+    const bar = rules.find((text) => text.includes('[data-plugin-bar][data-natural]::before'))
+    expect(bar).toBeDefined()
+    expect(bar).toContain('background-color: var(--dsh-theme-mist-page-base)')
+    expect(bar).toContain('radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow)')
+    expect(bar).toContain('radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze)')
+    expect(bar).toContain('linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom))')
+    expect(bar).toContain('background-attachment: fixed')
+  })
 
   it('anchors the composer veil to the viewport, and to the docked corner when promoted (T5.12, T5.13)', () => {
     // Two geometries, two failures. A floating seat (the welcome screen) is only

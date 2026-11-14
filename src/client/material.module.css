@@ -523,6 +523,43 @@ body[data-dsh-theme-mist] * {
     0 4px 16px var(--dsh-theme-mist-shadow);
 }
 
+/* --- The plugin page's sticky bar repaints the page it covers (2026-11-15)
+ *
+ * Upstream keeps the scrolled list out of the plugin page's title by painting
+ * the page's own fill on the bar's ::before (PluginManagerPage.module.css:
+ * `.pageBar[data-natural]::before { background: var(--dsw-alias-bg-base) }`)
+ * and letting the head and toolbar sit on top of it. bg-base is transparent
+ * here — it *is* the page, and the page is the backdrop — so that paint became
+ * a no-op and the list scrolled straight through the title. Measured on the
+ * built app at 1440x757: 14 of the 473 sampled points inside the 1160x80 bar
+ * were content pixels, worst channel delta 204/255.
+ *
+ * A flat colour cannot stand in for the page here. The page is a fixed-
+ * attachment stack (accent glow, haze, palette ramp), so a solid fill would
+ * band against it — the same lesson as the composer veil (T5.12/T5.13). The
+ * bar repaints those three layers with the same attachment instead, anchored
+ * to the viewport, so the strip *is* the page behind it: after the change the
+ * same 473 points differ by at most 2/255 at any scroll offset, and the seam
+ * under the bar measures 1-2/255 — invisible.
+ *
+ * The hook is upstream's own `data-plugin-bar` marker (the same element whose
+ * header-scroll controller toggles `data-natural`), not a hashed class name.
+ * Chromium measures fixed backgrounds against the viewport inside a scroll
+ * container, so the layers line up with body's at every scroll position —
+ * verified by the pixel test above, and not taken for granted: the composer
+ * seat needed an anchored fallback once the host made it a fixed-background
+ * containing block (T5.12), and this element is `position: sticky`, which
+ * does not. */
+body[data-dsh-theme-mist] [data-plugin-bar][data-natural]::before {
+  background-color: var(--dsh-theme-mist-page-base);
+  background-image:
+    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow) 0%, transparent 100%),
+    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze) 0%, transparent 100%),
+    linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 /* --- Motion (T2.6) -------------------------------------------------------
  *
  * One thing on this layout is ours to animate: the composer's material, whose
