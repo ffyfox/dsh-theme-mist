@@ -8,8 +8,10 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/hero-light.webp" width="100%" alt="浅色模式"><br><sub><b>浅色</b> · 雾蓝 · 玻璃侧栏</sub></td>
-    <td width="50%"><img src="docs/images/hero-dark.webp" width="100%" alt="深色模式"><br><sub><b>深色</b> · 雾蓝 · 玻璃侧栏</sub></td>
+    <td width="100%"><img src="docs/images/hero-light.webp" width="100%" alt="浅色模式"><br><sub><b>浅色</b> · 雾蓝 · 玻璃侧栏</sub></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="docs/images/hero-dark.webp" width="100%" alt="深色模式"><br><sub><b>深色</b> · 雾蓝 · 玻璃侧栏</sub></td>
   </tr>
 </table>
 
@@ -21,14 +23,16 @@
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/accents/mist.webp" width="300" alt="雾蓝"><br><sub><b>雾蓝</b></sub></td>
-    <td align="center"><img src="docs/images/accents/daiqing.webp" width="300" alt="黛青"><br><sub><b>黛青</b></sub></td>
-    <td align="center"><img src="docs/images/accents/dusk.webp" width="300" alt="暮紫"><br><sub><b>暮紫</b></sub></td>
+    <td align="center"><img src="docs/images/accents/mist.webp" width="400" alt="雾蓝"><br><sub><b>雾蓝</b></sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.webp" width="400" alt="黛青"><br><sub><b>黛青</b></sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accents/turquoise.webp" width="300" alt="松石"><br><sub><b>松石</b></sub></td>
-    <td align="center"><img src="docs/images/accents/amber.webp" width="300" alt="琥珀"><br><sub><b>琥珀</b></sub></td>
-    <td align="center"><img src="docs/images/accents/graphite.webp" width="300" alt="石墨"><br><sub><b>石墨</b></sub></td>
+    <td align="center"><img src="docs/images/accents/dusk.webp" width="400" alt="暮紫"><br><sub><b>暮紫</b></sub></td>
+    <td align="center"><img src="docs/images/accents/turquoise.webp" width="400" alt="松石"><br><sub><b>松石</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/accents/amber.webp" width="400" alt="琥珀"><br><sub><b>琥珀</b></sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.webp" width="400" alt="石墨"><br><sub><b>石墨</b></sub></td>
   </tr>
 </table>
 
@@ -66,7 +70,7 @@ dsh plugin --profile web add dsh-theme-mist
 | **配色** | `雾蓝` · `黛青` · `暮紫` · `松石` · `琥珀` · `石墨` | 点击色块即时切换。 |
 | **侧栏材质** | `玻璃`（默认） · `平铺` | **玻璃**：半透明抽屉底板配 0.5px 发丝描边与右侧大圆角；**平铺**：去除底板，让页面渐变与光晕直接贯穿三栏。 |
 
-<img src="docs/images/settings.webp" width="800" alt="设置 → 通用：外观、字号、配色、侧栏材质同框">
+<img src="docs/images/settings.webp" width="580" alt="设置 → 通用：配色与侧栏材质两行">
 
 两种侧栏材质对比（同一配色）：
 

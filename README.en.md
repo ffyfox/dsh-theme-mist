@@ -8,8 +8,10 @@ Inspired by the visual language of [DSH Go](https://github.com/ccch1mneyyy/dsh-G
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/hero-light.webp" width="100%" alt="Light appearance"><br><sub><b>Light</b> · Mist · glass sidebar</sub></td>
-    <td width="50%"><img src="docs/images/hero-dark.webp" width="100%" alt="Dark appearance"><br><sub><b>Dark</b> · Mist · glass sidebar</sub></td>
+    <td width="100%"><img src="docs/images/hero-light.webp" width="100%" alt="Light appearance"><br><sub><b>Light</b> · Mist · glass sidebar</sub></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="docs/images/hero-dark.webp" width="100%" alt="Dark appearance"><br><sub><b>Dark</b> · Mist · glass sidebar</sub></td>
   </tr>
 </table>
 
@@ -21,14 +23,16 @@ Mist includes six curated accent palettes. The top-right ambient glow, primary a
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/accents/mist.webp" width="300" alt="Mist"><br><sub><b>Mist</b></sub></td>
-    <td align="center"><img src="docs/images/accents/daiqing.webp" width="300" alt="Teal"><br><sub><b>Teal</b></sub></td>
-    <td align="center"><img src="docs/images/accents/dusk.webp" width="300" alt="Dusk"><br><sub><b>Dusk</b></sub></td>
+    <td align="center"><img src="docs/images/accents/mist.webp" width="400" alt="Mist"><br><sub><b>Mist</b></sub></td>
+    <td align="center"><img src="docs/images/accents/daiqing.webp" width="400" alt="Teal"><br><sub><b>Teal</b></sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accents/turquoise.webp" width="300" alt="Aqua"><br><sub><b>Aqua</b></sub></td>
-    <td align="center"><img src="docs/images/accents/amber.webp" width="300" alt="Amber"><br><sub><b>Amber</b></sub></td>
-    <td align="center"><img src="docs/images/accents/graphite.webp" width="300" alt="Slate"><br><sub><b>Slate</b></sub></td>
+    <td align="center"><img src="docs/images/accents/dusk.webp" width="400" alt="Dusk"><br><sub><b>Dusk</b></sub></td>
+    <td align="center"><img src="docs/images/accents/turquoise.webp" width="400" alt="Aqua"><br><sub><b>Aqua</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/accents/amber.webp" width="400" alt="Amber"><br><sub><b>Amber</b></sub></td>
+    <td align="center"><img src="docs/images/accents/graphite.webp" width="400" alt="Slate"><br><sub><b>Slate</b></sub></td>
   </tr>
 </table>
 
@@ -66,7 +70,7 @@ Once installed, open **Settings → General** to find the two new rows:
 | **Accent** | `Mist` · `Teal` · `Dusk` · `Aqua` · `Amber` · `Slate` | Switches instantly when you click a swatch. |
 | **Sidebar material** | `Glass` (Default) · `Flat` | **Glass**: Translucent sheet with a 0.5px hairline border and 28px right corners. **Flat**: Removes the sidebar backing so the page gradient flows seamlessly across all columns. |
 
-<img src="docs/images/settings.webp" width="800" alt="Settings → General: appearance, font size, accent and sidebar material in one panel">
+<img src="docs/images/settings.webp" width="580" alt="Settings → General: the accent and sidebar material rows">
 
 The two sidebar materials compared (same accent):
 

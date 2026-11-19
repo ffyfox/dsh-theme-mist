@@ -29,7 +29,7 @@
  *   accents/<accent>.webp        light (top-left) + dark (bottom-right), split
  *   hero-light.webp              the light frame on its own
  *   hero-dark.webp               the dark frame on its own
- *   settings.webp                Settings -> General with both theme rows
+ *   settings.webp                Settings -> General: our two rows, cropped
  *   sidebar-sheet.webp           sidebar column, glass material
  *   sidebar-flat.webp            sidebar column, flat material
  */
@@ -62,6 +62,14 @@ const DPR = 2
 const SIDEBAR_CROP = 480
 /** How much of the content area the sidebar crop keeps, to show the panel edge. */
 const SIDEBAR_EDGE = 140
+
+/**
+ * Air kept around the settings crop, in CSS pixels. Two rows read as a slice of
+ * the panel rather than as something cut off once there is a little blank above
+ * the first label and below the last control; 12 is the host's own row padding,
+ * so the crop lands on the section dividers either side of our rows.
+ */
+const SETTINGS_PAD = 12
 
 /** Order matches the settings row, so the wall reads the same way. */
 const ACCENTS = ['mist', 'daiqing', 'dusk', 'turquoise', 'amber', 'graphite']
@@ -604,17 +612,63 @@ async function capture(appearance, home, seed) {
       const accentRows = await browser.evaluate('document.querySelectorAll("[id^=dsh-theme-mist-accent-][role=radio]").length')
       check('settings shows the six swatches', accentRows === 6, String(accentRows))
       const settingsFrame = await browser.shotBuffer()
-      // Only the dialog: the page behind it is a screenshot of a screenshot, and
-      // at README width it just shrinks the rows that matter.
-      const dialog = await browser.evaluate(
-        '(() => { const node = document.querySelector("[role=dialog]"); if (!node) return null;' +
-          ' const box = node.getBoundingClientRect();' +
-          ' return [box.x, box.y, box.width, box.height].map((value) => Math.round(value * (window.devicePixelRatio || 1))) })()',
-      )
-      extra.settings = dialog === null
+      /**
+       * Only our two rows. The dialog is 800x752 CSS and most of it is host rows
+       * (permissions, language, the appearance cards, font size) that the README's
+       * Customization section never mentions; shown whole they shrink our two rows
+       * into a corner of the picture. The box is measured on the rows themselves,
+       * never on remembered pixel offsets, so a host that inserts or reorders a row
+       * above ours moves the crop with it instead of silently framing the wrong
+       * section.
+       *
+       * The rows are *children* of `[data-slot="settings.general.item"]`: that
+       * attribute sits on one `display: contents` outlet that holds every row, so
+       * querying the attribute finds the outlet itself — a zero-sized box — and
+       * `title.closest('[data-slot=…]')` climbs straight past the row to it. Hence
+       * the explicit child walk, with our own title ids (already pinned by the unit
+       * tests) as the cross-check and the fallback.
+       */
+      const rowsProbe = await browser.evaluate(`(() => {
+        const OUTLET = '[data-slot="settings.general.item"]'
+        const wanted = ['配色', '侧栏材质', 'Accent', 'Sidebar material']
+        const rows = [...document.querySelectorAll(OUTLET)].flatMap((outlet) => [...outlet.children])
+        const rowOf = (node) => {
+          let cur = node
+          for (let step = 0; step < 4 && cur !== null && cur.parentElement !== null; step++) {
+            if (cur.parentElement.matches(OUTLET)) return cur
+            cur = cur.parentElement
+          }
+          return node.parentElement ?? node
+        }
+        const byLabel = rows.filter((row) => {
+          const text = (row.textContent ?? '').trim()
+          return wanted.some((label) => text.startsWith(label))
+        })
+        const byTitle = [...document.querySelectorAll('[id="dsh-theme-mist-accent-title"], [id="dsh-theme-mist-sidebar-title"]')]
+          .map(rowOf)
+        const picked = byLabel.length === 2 ? byLabel : byTitle
+        const box = picked.length === 2
+          ? (() => {
+              const dpr = window.devicePixelRatio || 1
+              const pad = ${SETTINGS_PAD} * dpr
+              const boxes = picked.map((row) => row.getBoundingClientRect())
+              const left = Math.min(...boxes.map((one) => one.left)) * dpr - pad
+              const top = Math.min(...boxes.map((one) => one.top)) * dpr - pad
+              const right = Math.max(...boxes.map((one) => one.right)) * dpr + pad
+              const bottom = Math.max(...boxes.map((one) => one.bottom)) * dpr + pad
+              return [left, top, right - left, bottom - top].map((value) => Math.round(value))
+            })()
+          : null
+        return { rows: rows.length, byLabel: byLabel.length, byTitle: byTitle.length, box }
+      })()`)
+      console.log('info settings rows: ' + rowsProbe.rows + ' rows, ' + rowsProbe.byLabel + ' by label, '
+        + rowsProbe.byTitle + ' by title id, box ' + JSON.stringify(rowsProbe.box))
+      const rowsBox = rowsProbe.box
+      extra.settings = rowsBox === null
         ? settingsFrame
-        : await cropWebP(browser, settingsFrame, { x: dialog[0], y: dialog[1], width: dialog[2], height: dialog[3] })
-      check('settings frame is the dialog only', dialog !== null, dialog === null ? 'no [role=dialog]' : String(dialog[2]) + 'x' + String(dialog[3]) + 'px')
+        : await cropWebP(browser, settingsFrame, { x: rowsBox[0], y: rowsBox[1], width: rowsBox[2], height: rowsBox[3] })
+      check('settings frame is our two rows', rowsBox !== null,
+        rowsBox === null ? 'no accent + sidebar row pair' : String(rowsBox[2]) + 'x' + String(rowsBox[3]) + 'px')
 
       // Close again, so the last frames are the plain page.
       await browser.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 })
