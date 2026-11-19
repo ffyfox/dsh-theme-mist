@@ -727,6 +727,8 @@ wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-b
 
 **搜索框刻意不修**：`.searchField` 在宿主里只设 `border: 0.5px solid border-l3` 而不设 `background`，输入框自身计算背景恒为透明；页面里唯一画 `bg-base` 的输入框是 `.zoneSearch`，它渲染在 portalled 的菜单里，本来就落在该子树之外。所以把 `input` 留在选择器里是死代码：实测把变量绑上去，像素与页面只差 1–2（等于没变化）。选择器因此只留 `textarea, footer`。
 
+**右栏（编辑面板）同日接上**：`TaskDetail` 的列是 `<aside>`，宿主用 `bg-base` 填充它，归零后整列只剩渐变加一根 `border-l4`。元素名即钩子——`[data-testid='task-manager-page'] aside` 重绑 sheet 档（整列，按列处理而非按卡片）。边也照抽屉改：宿主那条 `border-l4`（ink 0.30）换成 `border-l1`（ink 0.08）发丝 + `inset 0 0 0 0.5px` 环 + 1px 顶边高光，朝向内容的两侧圆 28px，与右侧 dock 同一套配方。同样**跟随「侧栏材质」**：`flat` 下退回无底色、无圆角、只留一根 `inset 0.5px 0 0 border-l1` 发丝线，避免出现「左边一张纸、右边一个抽屉」。底部操作栏是唯一铺到面板底边、又用卡片档填充的子元素，方角会把 28px 圆角顶方（角落像素实测 `251,252,254`，是卡片色而非页面色），因此单独给它 `border-bottom-left-radius: 28px`；不选 `overflow: hidden`，那会连表单弹出的浮层一起裁掉。
+
 侧栏面板（右侧 dock：终端 / 文件 / 网页预览）**当时实测全透明**：`[data-dockkit-host]` 计算值 `rgba(0, 0, 0, 0)`，里面三层 `[data-dockkit-content]` / `[data-sidebar-right-tab]` / `[data-sidebar-right-guide]` 同样透明。它是右侧的一列，不是浮层，所以没有文字重叠，只是少了与正文列之间的那层底板。
 
 **同日已补**：dock 跟随「侧栏材质」这个已有的选择，不新增开关。形态也照左侧栏的抽屉来——宿主用 `border-l4`（ink 0.30）在直角上收边，这里换成同一套 `border-l1`（ink 0.08）发丝 + `inset 0 0 0 0.5px` 环 + 1px 顶边高光，圆角只圆朝向内容的两侧（左栏 `0 28px 28px 0`，右栏 `28px 0 0 28px`，镜像）。`[data-dockkit-host]` 子树内把 `bg-base` 重绑到 sheet 档，规则只在 `[data-dsh-theme-mist-sidebar='sheet']` 下成立，于是 `sheet` 时右面板与左抽屉同档、`flat` 时两边都让页面渐变直接穿过。实测 `sheet` 下 tabHost 计算值浅色 `rgba(246, 249, 254, 0.82)` / 深色 `rgba(35, 40, 50, 0.86)`，`flat` 下回到 `rgba(0, 0, 0, 0)`。没有自己画背景——宿主那条 `background: var(--dsw-alias-bg-base)` 原样保留，只是取色变了。

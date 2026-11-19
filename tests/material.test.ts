@@ -136,7 +136,9 @@ describe('sidebar material (T5.7 / T5.8)', () => {
 
   it('keeps the flat variant behind its attribute and neutralises the sheet', () => {
     const flat = rulesFor("[data-dsh-theme-mist-sidebar='flat']")
-    expect(flat.length).toBe(3)
+    // Three sidebar rules plus the task editor column, which follows the same
+    // choice instead of staying the one raised panel under `flat`.
+    expect(flat.length).toBe(4)
     const joined = flat.join('\n')
     // Re-pointed inside the subtree so the session list's 24px fade fades to
     // nothing instead of painting a band of sheet colour over the page.
@@ -558,6 +560,36 @@ describe('bg-base re-binding coverage (2026-11-19)', () => {
     // host, and the one input that paints bg-base lives in a portalled menu.
     // Claiming it would be dead weight dressed up as a fix.
     expect(rule).not.toContain('input')
+  })
+
+  it('reaches the task editor column, which is an <aside> (2026-11-19)', () => {
+    // TaskDetail's column paints bg-base and carries no attribute; the page
+    // shell plus the element name is enough. Sheet tier: it is a column.
+    const sheetAt = CSS_RULES.indexOf("[data-dsh-theme-mist-sidebar='sheet'] [data-testid='task-manager-page'] aside")
+    expect(sheetAt).toBeGreaterThan(-1)
+    const rule = CSS_RULES.slice(sheetAt, CSS_RULES.indexOf('}', sheetAt))
+    expect(rule).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token)')
+    // Same edge as the dock: the host's border-l4 divider is replaced by the
+    // drawer's hairline + 28px corner + top highlight, not left as a hard line.
+    expect(rule).toContain('border-left: 0')
+    expect(rule).toContain('border-radius: 28px 0 0 28px')
+    expect(rule).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
+
+    // The save footer is the only child that reaches the panel's bottom edge and
+    // it paints the card tier, so without its own corner it squares the 28px one.
+    expect(CSS_RULES).toContain(
+      "[data-dsh-theme-mist-sidebar='sheet'] [data-testid='task-manager-page'] aside footer",
+    )
+    expect(CSS_RULES).toContain('border-bottom-left-radius: 28px')
+
+    // …and it follows the sidebar material: under `flat` it stops being a
+    // drawer instead of staying the only raised column on the page.
+    const flatAt = CSS_RULES.indexOf("[data-dsh-theme-mist-sidebar='flat'] [data-testid='task-manager-page'] aside")
+    expect(flatAt).toBeGreaterThan(-1)
+    const flat = CSS_RULES.slice(flatAt, CSS_RULES.indexOf('}', flatAt))
+    expect(flat).not.toContain('sheet-token')
+    expect(flat).toContain('border-radius: 0')
+    expect(flat).toContain('inset 0.5px 0 0 var(--dsw-alias-border-l1)')
   })
 
   it('keeps the :has() thumbnail rule out of the shared list', () => {

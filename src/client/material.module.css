@@ -253,6 +253,41 @@ body[data-dsh-theme-mist] button[data-variant]:has(img) {
   --dsw-alias-bg-base: var(--dsh-theme-mist-card-token);
 }
 
+/* The task editor's detail column paints bg-base as well. It is an <aside>, so
+ * the page shell plus the element name reaches it without a class. Sheet tier,
+ * not card: this is a full-height column, like the sidebar and the dock — and
+ * it gets the same edge, for the same reason. The host closes it with border-l4
+ * (ink 0.30) on square corners; the drawer's edge is border-l1 (ink 0.08) with
+ * a 28px corner and a 1px top highlight. Mirror of the dock, not a new recipe. */
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='sheet'] [data-testid='task-manager-page'] aside {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token);
+  border-left: 0;
+  border-radius: 28px 0 0 28px;
+  box-shadow:
+    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
+    inset 0 1px 0 var(--dsh-theme-mist-highlight);
+}
+
+/* The save footer is the one child that reaches the panel's bottom edge, and it
+ * paints the card tier, so its square corner painted straight over the drawer's
+ * 28px corner (measured: 251,252,254 where the page should show through). Give
+ * it the same corner rather than clipping the whole column — a clip would also
+ * cut any popover the form opens. */
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='sheet'] [data-testid='task-manager-page'] aside footer {
+  border-bottom-left-radius: 28px;
+}
+
+/* Under `flat` the whole interface is one sheet, so this column stops being a
+ * drawer too: no fill, no corner, and the host's border-l4 divider gives way to
+ * the same hairline the sidebar keeps in that mode. Leaving the panel raised
+ * here was visible the moment someone switched the setting — one sheet on the
+ * left, a drawer on the right. */
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-testid='task-manager-page'] aside {
+  border-left: 0;
+  border-radius: 0;
+  box-shadow: inset 0.5px 0 0 var(--dsw-alias-border-l1);
+}
+
 body[data-dsh-theme-mist] [role='menu'],
 body[data-dsh-theme-mist] [role='listbox'] {
   --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token);
