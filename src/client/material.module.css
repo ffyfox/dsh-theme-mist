@@ -172,6 +172,32 @@ body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='root']
   box-shadow: inset -0.5px 0 0 var(--dsw-alias-border-l1);
 }
 
+/* The right dock (terminal / files / web preview) follows the same choice.
+ *
+ * The host paints its tab host with bg-base, which is transparent, so the dock
+ * read as "no panel at all" while a sheet sidebar read as a drawer — one
+ * setting, two different answers on screen. Re-binding the token inside the
+ * dock hands it the sheet fill through the host's own background declaration;
+ * under `flat` this rule does not apply and the page shows straight through,
+ * exactly as it does on the left. Nothing is painted by us. */
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='sheet'] [data-dockkit-host] {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token);
+}
+
+/* Mirror of the drawer above. The host closes its column with border-l4 (ink
+ * 0.30) on square corners; the sidebar's edge is border-l1 (ink 0.08) with a
+ * 28px corner and a 1px top highlight, so the two columns read as different
+ * materials. Same recipe here, turned around: round the edge that faces the
+ * content, drop the heavy divider, keep the hairline. Flat mode is untouched —
+ * there the two columns are one sheet on purpose. */
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='sheet'] [data-dockkit-host] > :first-child {
+  border-left: 0;
+  border-radius: 28px 0 0 28px;
+  box-shadow:
+    inset 0 0 0 0.5px var(--dsw-alias-border-l1),
+    inset 0 1px 0 var(--dsh-theme-mist-highlight);
+}
+
 body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='sidebar'] > :first-child {
   background-color: transparent;
   border-radius: 0;

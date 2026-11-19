@@ -727,7 +727,9 @@ wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-b
 
 **搜索框刻意不修**：`.searchField` 在宿主里只设 `border: 0.5px solid border-l3` 而不设 `background`，输入框自身计算背景恒为透明；页面里唯一画 `bg-base` 的输入框是 `.zoneSearch`，它渲染在 portalled 的菜单里，本来就落在该子树之外。所以把 `input` 留在选择器里是死代码：实测把变量绑上去，像素与页面只差 1–2（等于没变化）。选择器因此只留 `textarea, footer`。
 
-侧栏面板（右侧 dock：终端 / 文件 / 网页预览）**实测仍然全透明**：`[data-dockkit-host]` 计算值是 `rgba(0, 0, 0, 0)`，里面三层 `[data-dockkit-content]` / `[data-sidebar-right-tab]` / `[data-sidebar-right-guide]` 同样透明。它是右侧的一列，不是浮层，所以没有文字重叠，只是少了与正文列之间的那层底板——要不要补 sheet 档属设计取舍，数据记在这里备用。
+侧栏面板（右侧 dock：终端 / 文件 / 网页预览）**当时实测全透明**：`[data-dockkit-host]` 计算值 `rgba(0, 0, 0, 0)`，里面三层 `[data-dockkit-content]` / `[data-sidebar-right-tab]` / `[data-sidebar-right-guide]` 同样透明。它是右侧的一列，不是浮层，所以没有文字重叠，只是少了与正文列之间的那层底板。
+
+**同日已补**：dock 跟随「侧栏材质」这个已有的选择，不新增开关。形态也照左侧栏的抽屉来——宿主用 `border-l4`（ink 0.30）在直角上收边，这里换成同一套 `border-l1`（ink 0.08）发丝 + `inset 0 0 0 0.5px` 环 + 1px 顶边高光，圆角只圆朝向内容的两侧（左栏 `0 28px 28px 0`，右栏 `28px 0 0 28px`，镜像）。`[data-dockkit-host]` 子树内把 `bg-base` 重绑到 sheet 档，规则只在 `[data-dsh-theme-mist-sidebar='sheet']` 下成立，于是 `sheet` 时右面板与左抽屉同档、`flat` 时两边都让页面渐变直接穿过。实测 `sheet` 下 tabHost 计算值浅色 `rgba(246, 249, 254, 0.82)` / 深色 `rgba(35, 40, 50, 0.86)`，`flat` 下回到 `rgba(0, 0, 0, 0)`。没有自己画背景——宿主那条 `background: var(--dsw-alias-bg-base)` 原样保留，只是取色变了。
 
 #### 接不住的四类（2026-11-19 复核：只剩一类）
 

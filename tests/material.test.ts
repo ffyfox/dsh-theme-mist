@@ -157,6 +157,43 @@ describe('sidebar material (T5.7 / T5.8)', () => {
     expect(sidebar.length).toBeGreaterThan(0)
     for (const text of sidebar) expect(text).not.toContain('border-l3')
   })
+
+  it('lets the right dock follow the same choice (2026-11-19)', () => {
+    // The host paints its dock tab host with bg-base, which is transparent, so
+    // the dock used to read as "no panel" even when the sidebar was a drawer.
+    // Re-binding the token hands it the sheet fill under `sheet`; under `flat`
+    // nothing is declared, and the page shows straight through on both sides.
+    expect(CSS_RULES).toContain("[data-dsh-theme-mist-sidebar='sheet'] [data-dockkit-host]")
+    const rule = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-dockkit-host]"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-dockkit-host]")),
+    )
+    expect(rule).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token)')
+    // No paint of our own — the host's own background declaration does the work.
+    expect(rule).not.toContain('background:')
+    expect(CSS_RULES).not.toContain("[data-dsh-theme-mist-sidebar='flat'] [data-dockkit-host]")
+  })
+
+  it('gives the dock the drawer edge, not the host divider (2026-11-19)', () => {
+    // The host closes the column with border-l4 (ink 0.30) on square corners,
+    // while the sidebar's edge is border-l1 (ink 0.08) plus a 28px radius and a
+    // 1px top highlight. Matching the recipe is what makes the two columns read
+    // as one material; flat mode is deliberately left alone.
+    const edge = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-dockkit-host] > :first-child"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-dockkit-host] > :first-child")),
+    )
+    expect(edge).toContain('border-left: 0')
+    expect(edge).toContain('border-radius: 28px 0 0 28px')
+    expect(edge).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
+    expect(edge).toContain('inset 0 1px 0 var(--dsh-theme-mist-highlight)')
+    // The sidebar rounds its right corners, the dock its left: mirrored, not copied.
+    const sidebar = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-slot='sidebar'] > :first-child"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-slot='sidebar'] > :first-child")),
+    )
+    expect(sidebar).toContain('border-radius: 0 28px 28px 0')
+  })
 })
 
 describe('composer seat and popovers (T5.9)', () => {
