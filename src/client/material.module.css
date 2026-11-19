@@ -21,24 +21,31 @@
  * right, the neighbouring haze at the bottom left, and the palette's own
  * vertical ramp underneath. Fixed attachment keeps the gradient still while the
  * panes scroll over it; without it the gradient would slide with the scrolling
- * content and read as a moving backdrop rather than as the page. */
+ * content and read as a moving backdrop rather than as the page.
+ *
+ * The geometry is upstream's, not an approximation of it. backdrop.dart:303-333
+ * paints a *circle* of radius 0.62 x the longest side anchored at (92%, 0),
+ * and the haze at (0, 100%) at 0.55 x the same side, each fading linearly to
+ * zero at its radius. vmax *is* the longest side, so 62vmax reproduces the
+ * same radius at any viewport — 793.6px at 1280x800, the number the Flutter
+ * painter uses.
+ *
+ * What this replaces: an ellipse of 120% x 80% cut off at 70%, which died
+ * 448px down the page instead of 794 and left the lower half of the window
+ * with no colour in it at all. Measured cost: the mean glow alpha over the
+ * page was 0.052 where DSH Go paints 0.084. */
 body[data-dsh-theme-mist] {
-  background-color: var(--dsh-theme-mist-page-base);
-  /* The geometry is upstream's, not an approximation of it. backdrop.dart:303-333
-     paints a *circle* of radius 0.62 x the longest side anchored at (92%, 0),
-     and the haze at (0, 100%) at 0.55 x the same side, each fading linearly to
-     zero at its radius. vmax *is* the longest side, so 62vmax reproduces the
-     same radius at any viewport — 793.6px at 1280x800, the number the Flutter
-     painter uses.
-
-     What this replaces: an ellipse of 120% x 80% cut off at 70%, which died
-     448px down the page instead of 794 and left the lower half of the window
-     with no colour in it at all. Measured cost: the mean glow alpha over the
-     page was 0.052 where DSH Go paints 0.084. */
-  background-image:
+  /* The three layers, named once. The page paints them, and so does every
+     surface that has to *be* the page rather than sit on it: the composer's
+     veil, the plugin page's title bar, and a right panel covering the
+     conversation. One list, one geometry — each of them then lands on the
+     page's own pixels instead of on a solid colour that bands at the glow. */
+  --dsh-theme-mist-page-image:
     radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow) 0%, transparent 100%),
     radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze) 0%, transparent 100%),
     linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
+  background-color: var(--dsh-theme-mist-page-base);
+  background-image: var(--dsh-theme-mist-page-image);
   background-repeat: no-repeat;
   background-attachment: fixed;
 }
@@ -172,14 +179,50 @@ body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='root']
   box-shadow: inset -0.5px 0 0 var(--dsw-alias-border-l1);
 }
 
+/* --- ...until the sidebar leaves its column and becomes the drawer ------
+ *
+ * Below a 768px frame the host stops squeezing the centre and lays the column
+ * over the conversation (`data-sidebar-drawer` on the frame, AppFrame.module.css:
+ * `position: absolute` at z-index 71 over a mask at 70). "The page runs
+ * through the sidebar" then has the same hole as the fullscreen right panel:
+ * the page is not what is behind the drawer, the conversation is, and the
+ * mask only dims and blurs it. Measured at 757x903, mist / flat: the drawer's
+ * own rows (Plugins, Tasks, More, the session title) sat on top of the
+ * transcript's paragraphs — two sets of text on each other, neither readable.
+ *
+ * Same treatment as the covering right panel: paint the shared page image,
+ * viewport-anchored, on the element that already carries the column's fill —
+ * the sidebar's root. It is inside the drawer's own stacking level (71), above
+ * the mask, so one paint covers the whole column. The mask still dims the
+ * conversation to the right of the drawer; it is not ours and is not touched.
+ *
+ * Under `sheet` the drawer keeps the host's paint and changes tier only — the
+ * token is re-pointed to the solid twin on the drawer's subtree, because a
+ * drawer over a dimmed conversation has nothing left to be translucent over.
+ * That is the same rule the two OS-level degradation paths apply when a blur is
+ * unavailable, and it is scoped to `sheet` so that flat's own page paint is the
+ * only thing flat declares here. */
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='sheet'] [data-sidebar-drawer] [data-slot='sidebar'] {
+  --dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-solid);
+}
+
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-sidebar-drawer] [data-slot='sidebar'] > :first-child {
+  background-color: var(--dsh-theme-mist-page-base);
+  background-image: var(--dsh-theme-mist-page-image);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 /* The right dock (terminal / files / web preview) follows the same choice.
  *
  * The host paints its tab host with bg-base, which is transparent, so the dock
  * read as "no panel at all" while a sheet sidebar read as a drawer — one
  * setting, two different answers on screen. Re-binding the token inside the
  * dock hands it the sheet fill through the host's own background declaration;
- * under `flat` this rule does not apply and the page shows straight through,
- * exactly as it does on the left. Nothing is painted by us. */
+ * under `flat` nothing is re-bound here, and the page shows straight through,
+ * exactly as it does on the left. Nothing is painted by us — except when the
+ * panel covers the conversation instead of standing beside it, which is the
+ * next block. */
 body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='sheet'] [data-dockkit-host] {
   --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token);
 }
@@ -202,6 +245,53 @@ body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='sideba
   background-color: transparent;
   border-radius: 0;
   box-shadow: none;
+}
+
+/* --- A right panel that covers the conversation is not a column ---------
+ *
+ * "The page runs straight through the panel" holds only while the panel owns a
+ * track: the centre gives way, and the panel stands on page. Below a 768px
+ * frame the host drops that track and stretches the panel to `100vw` over the
+ * centre (`autoFullscreen` in sidebar-right's SidebarRight.tsx; explicit
+ * fullscreen does the same at any width, and a shown panel without a track is
+ * always fullscreen). Nothing paints there — the pane host's only fill is
+ * bg-base, which is transparent — so what ran through was the *conversation*.
+ * Measured at 757x903, mist / flat: the frame carries `data-rightbar-fullscreen`
+ * and `data-rightbar-collapsed`, the panel box is 757x903 at 0,0, and both the
+ * panel and its tab host compute to rgba(0,0,0,0); the Start guide's rows sat
+ * on top of the transcript's paragraphs and its code block.
+ *
+ * A solid page colour cannot stand in for it: the page is a fixed-attachment
+ * stack (glow, haze, ramp), so a flat fill bands against the glow corner — the
+ * same lesson as the composer veil (T5.12) and the plugin page bar (0.1.2). The
+ * pane host repaints the shared page image at the same attachment instead, so a
+ * covering panel *is* the page, only opaque.
+ *
+ * It has to be the pane host and not the panel box around it. The host is the
+ * element the kit already ranks for a covering panel (`z-index: 40`, from
+ * `--dsh-dockkit-dock-layer`), and the conversation keeps bands of its own
+ * above the unpositioned box: the composer seat (9) and a code block's sticky
+ * banner (6) are positioned with a positive z-index, so a page painted on the
+ * box left them floating over it — measured at 757x903 with the box painted:
+ * the composer card and the `bash` banner still sat on the page. The host is
+ * above both, covers the whole panel (757x903 at 0,0 including the tab strip),
+ * and its fill is the one the kit was already pointing at bg-base.
+ *
+ * The hook is sidebar-right's own `data-sidebar-right-panel="fullscreen"` —
+ * semantic, not a hashed class. Under `sheet` nothing is painted: the panel
+ * keeps the host's own background declaration and changes tier only, because a
+ * covering panel has nothing left to be translucent over, so it takes the
+ * sheet's solid twin — the same fallbackFill the two OS-level degradation paths
+ * swap in. */
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-sidebar-right-panel='fullscreen'] [data-dockkit-host] {
+  background-color: var(--dsh-theme-mist-page-base);
+  background-image: var(--dsh-theme-mist-page-image);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='sheet'] [data-sidebar-right-panel='fullscreen'] [data-dockkit-host] {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-sheet-solid);
 }
 
 /* --- Glass tiers, re-bound (T5.5) ---------------------------------------
@@ -380,10 +470,7 @@ body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='compose
   z-index: -1;
   pointer-events: none;
   background-color: var(--dsh-theme-mist-page-base);
-  background-image:
-    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow) 0%, transparent 100%),
-    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze) 0%, transparent 100%),
-    linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
+  background-image: var(--dsh-theme-mist-page-image);
   background-repeat: no-repeat;
   background-attachment: fixed;
   -webkit-mask-image: var(--dsh-theme-mist-veil-mask);
@@ -640,10 +727,7 @@ body[data-dsh-theme-mist] * {
  * does not. */
 body[data-dsh-theme-mist] [data-plugin-bar][data-natural]::before {
   background-color: var(--dsh-theme-mist-page-base);
-  background-image:
-    radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow) 0%, transparent 100%),
-    radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze) 0%, transparent 100%),
-    linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom));
+  background-image: var(--dsh-theme-mist-page-image);
   background-repeat: no-repeat;
   background-attachment: fixed;
 }

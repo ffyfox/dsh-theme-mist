@@ -136,9 +136,10 @@ describe('sidebar material (T5.7 / T5.8)', () => {
 
   it('keeps the flat variant behind its attribute and neutralises the sheet', () => {
     const flat = rulesFor("[data-dsh-theme-mist-sidebar='flat']")
-    // Three sidebar rules plus the task editor column, which follows the same
-    // choice instead of staying the one raised panel under `flat`.
-    expect(flat.length).toBe(4)
+    // Three sidebar rules, the task editor column, and — since 2026-11-19 — the
+    // two surfaces that cover the conversation instead of standing beside it:
+    // the fullscreen right panel and the sidebar's drawer.
+    expect(flat.length).toBe(6)
     const joined = flat.join('\n')
     // Re-pointed inside the subtree so the session list's 24px fade fades to
     // nothing instead of painting a band of sheet colour over the page.
@@ -164,7 +165,9 @@ describe('sidebar material (T5.7 / T5.8)', () => {
     // The host paints its dock tab host with bg-base, which is transparent, so
     // the dock used to read as "no panel" even when the sidebar was a drawer.
     // Re-binding the token hands it the sheet fill under `sheet`; under `flat`
-    // nothing is declared, and the page shows straight through on both sides.
+    // nothing is declared *here*, and the page shows straight through on both
+    // sides — as long as the panel has a column of its own, which is what the
+    // fullscreen rule below is about.
     expect(CSS_RULES).toContain("[data-dsh-theme-mist-sidebar='sheet'] [data-dockkit-host]")
     const rule = CSS_RULES.slice(
       CSS_RULES.indexOf("[data-dockkit-host]"),
@@ -332,7 +335,10 @@ describe('chrome glass (T2.3)', () => {
     // The tiers follow the same paths, or a reduced-transparency card would keep
     // its translucent fill over an unblurred backdrop.
     expect(CSS.split('--dsh-theme-mist-card-token: var(--dsh-theme-mist-card-solid)').length - 1).toBe(2)
-    expect(CSS.split('--dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-solid)').length - 1).toBe(2)
+    // Three, not two: the sidebar's drawer re-points the sheet tier to its solid
+    // twin on its own subtree (a drawer over a dimmed conversation has nothing
+    // left to be translucent over), which is the same swap these paths make.
+    expect(CSS.split('--dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-solid)').length - 1).toBe(3)
     expect(CSS.split('--dsh-theme-mist-pill-token: var(--dsh-theme-mist-pill-solid)').length - 1).toBe(2)
   })
 })
@@ -480,9 +486,9 @@ describe('material stylesheet', () => {
     const bar = rules.find((text) => text.includes('[data-plugin-bar][data-natural]::before'))
     expect(bar).toBeDefined()
     expect(bar).toContain('background-color: var(--dsh-theme-mist-page-base)')
-    expect(bar).toContain('radial-gradient(circle 62vmax at 92% 0%, var(--dsh-theme-mist-glow)')
-    expect(bar).toContain('radial-gradient(circle 55vmax at 0% 100%, var(--dsh-theme-mist-haze)')
-    expect(bar).toContain('linear-gradient(to bottom, var(--dsh-theme-mist-page-top), var(--dsh-theme-mist-page-bottom))')
+    // The three layers live in one named list on the page rule; every surface
+    // that has to *be* the page repaints that list rather than its own copy.
+    expect(bar).toContain('background-image: var(--dsh-theme-mist-page-image)')
     expect(bar).toContain('background-attachment: fixed')
   })
 
@@ -514,6 +520,73 @@ describe('material stylesheet', () => {
     // later in the file, and this test is about the page surface alone.
     expect(PAGE_RULE.match(/radial-gradient\(/g)).toHaveLength(2)
     expect(PAGE_RULE.match(/linear-gradient\(/g)).toHaveLength(1)
+  })
+
+  it('names the three layers once, and repaints the list elsewhere (2026-11-19)', () => {
+    // Four surfaces have to be the page rather than sit on it: the body, the
+    // composer veil, the plugin page's title bar, and a right panel covering
+    // the conversation. They share one variable so the geometry cannot drift
+    // between them — a second copy is how the glow corner starts to band.
+    expect(PAGE_RULE).toContain('--dsh-theme-mist-page-image:')
+    expect(PAGE_RULE).toContain('background-image: var(--dsh-theme-mist-page-image)')
+    // One definition, five users: body, composer veil, plugin page bar, and the
+    // two surfaces that cover the conversation (fullscreen right panel, drawer).
+    expect((CSS_RULES.match(/radial-gradient\(circle 62vmax/gu) ?? [])).toHaveLength(1)
+    expect((CSS_RULES.match(/background-image: var\(--dsh-theme-mist-page-image\)/gu) ?? [])).toHaveLength(5)
+  })
+
+  it('paints the page on the sidebar while it is a drawer (2026-11-19)', () => {
+    // Below 768px the sidebar leaves its column and lies over the conversation
+    // behind a mask that only dims and blurs it, so flat's transparent sidebar
+    // stacked its own rows on top of the transcript's text. Same treatment as
+    // the covering right panel: the shared page image, viewport-anchored, on
+    // the element that already carries the column's fill.
+    const rules = CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []
+    const drawer = rules.filter((text) => text.includes('[data-sidebar-drawer]'))
+    expect(drawer).toHaveLength(2)
+
+    const flatPaint = drawer.find((text) => text.includes('--dsh-theme-mist-page-image'))
+    expect(flatPaint).toBeDefined()
+    expect(flatPaint).toContain("[data-dsh-theme-mist-sidebar='flat'] [data-sidebar-drawer]")
+    expect(flatPaint).toContain("[data-slot='sidebar'] > :first-child")
+    expect(flatPaint).toContain('background-color: var(--dsh-theme-mist-page-base)')
+    expect(flatPaint).toContain('background-attachment: fixed')
+
+    const sheetTier = drawer.find((text) => text.includes('--dsh-theme-mist-sheet-token'))
+    expect(sheetTier).toBeDefined()
+    // The drawer marker lives on the frame, not on body: it has to be a
+    // descendant of the material attribute, never a second attribute on body.
+    expect(sheetTier).toContain("[data-dsh-theme-mist-sidebar='sheet'] [data-sidebar-drawer]")
+    expect(sheetTier).not.toContain("data-dsh-theme-mist-sidebar='sheet'][data-sidebar-drawer]")
+    expect(sheetTier).toContain('--dsh-theme-mist-sheet-token: var(--dsh-theme-mist-sheet-solid)')
+    // Scoped to sheet: flat's page paint stays the only thing flat declares.
+    expect(flatPaint).not.toContain('--dsh-theme-mist-sheet-token')
+  })
+
+  it('paints the page on a right panel that covers the conversation (2026-11-19)', () => {
+    // Below a 768px frame the host drops the right panel's track and stretches
+    // it to 100vw over the centre, so `flat`'s "page through the panel" was
+    // letting the *conversation* through: at 757x903 the panel box and its tab
+    // host both compute to rgba(0,0,0,0) and the guide's rows sat on the
+    // transcript. A solid fill would band against the glow, so the covering
+    // panel repaints the page's own list; `sheet` keeps the host's paint and
+    // takes the tier's solid twin instead.
+    const rules = CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []
+    const covering = rules.filter((text) =>
+      text.includes("[data-sidebar-right-panel='fullscreen']"))
+    expect(covering).toHaveLength(2)
+
+    const flat = covering.find((text) => text.includes("[data-dsh-theme-mist-sidebar='flat']"))
+    expect(flat).toBeDefined()
+    expect(flat).toContain('background-color: var(--dsh-theme-mist-page-base)')
+    expect(flat).toContain('background-image: var(--dsh-theme-mist-page-image)')
+    expect(flat).toContain('background-attachment: fixed')
+
+    const sheet = covering.find((text) => text.includes("[data-dsh-theme-mist-sidebar='sheet']"))
+    expect(sheet).toBeDefined()
+    expect(sheet).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-sheet-solid)')
+    // The host's own background declaration still does the painting.
+    expect(sheet).not.toContain('background:')
   })
 
   it('gives full-window dialogs the sheet tier by re-binding the token only', () => {
