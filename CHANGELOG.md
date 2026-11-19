@@ -4,6 +4,22 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循
 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Fixed
+
+- **三处「丢掉底色」的面板接回卡片档**。T5.5 把 `--dsw-alias-bg-base` 归零后，
+  靠它当填充的表面都会露白。当时按 0.2.2-alpha 取证，判定有 4 处只剩哈希类名、接不住；
+  在装着的 **0.2.2-rc.5** 上重查，四去其三：cordis 业务卡自带 `data-cordis-business-view`、
+  会话图片缩略图的帧是 `<button data-variant>` 且内含 `<img>`、自动化任务页的指令框 /
+  保存页脚虽无属性但页面外壳有 `data-testid="task-manager-page"`。三者分别用
+  属性、`button[data-variant]:has(img)`、`[data-testid] :is(textarea, footer)` 重绑到
+  card 档。同页的搜索框不在其中：宿主本来就只给它画边框、不画填充（`.searchField`），
+  重绑取色对它没有任何可见效果，就不写进选择器充数。`trajectory` 工具目录条目仍无属性（祖先只有 `<details>`），不做结构选择器，继续记作缺口。
+  缩略图那条**单独成规则**：不支持 `:has()` 的引擎会丢弃整条含该选择器的规则，塞进逗号列表
+  会连带卡片档一起失效。同时实测右侧 dock 面板仍是全透明（`[data-dockkit-host]` 计算值
+  `rgba(0, 0, 0, 0)`），它是列不是浮层、无文字重叠，是否补底板留作设计取舍。
+
 ## [0.1.2] - 2026-11-15
 
 ### Fixed

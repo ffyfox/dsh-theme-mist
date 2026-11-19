@@ -187,16 +187,43 @@ body[data-dsh-theme-mist][data-dsh-theme-mist-sidebar='flat'] [data-slot='sideba
  * host keep painting. Numbers are DSH Go's (surfaces.dart:159-259).
  *
  * Hooks, never class names: the host's class names carry a per-build hash.
- * The three surfaces we could not reach — cordis' business card, trajectory's
- * tool-catalog row and the conversation's image thumbnail — have no semantic
- * attribute; they are listed in README's known limits. */
+ * Re-checked 2026-11-19 against the installed runtime (0.2.2-rc.5) — three of
+ * the four surfaces once written off as hash-only now have a way in:
+ *
+ * | surface                     | hook                                        |
+ * | cordis business card        | [data-cordis-business-view]                 |
+ * | task-manager editor/footer | [data-testid='task-manager-page'] + element |
+ * | message image thumbnail     | button[data-variant]:has(img)               |
+ * | trajectory tool-catalog row | none — only <details> structure, not taken  |
+ */
 body[data-dsh-theme-mist] [data-message-bubble],
 body[data-dsh-theme-mist] [data-tool],
 body[data-dsh-theme-mist] [data-chat-call-id],
 body[data-dsh-theme-mist] [data-disclosure-header],
 body[data-dsh-theme-mist] [data-compaction-disclosure],
 body[data-dsh-theme-mist] [data-schedule-reminder-entry],
-body[data-dsh-theme-mist] [data-session-schedule-task] {
+body[data-dsh-theme-mist] [data-session-schedule-task],
+body[data-dsh-theme-mist] [data-cordis-business-view] {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-card-token);
+}
+
+/* The automation page's instruction editor and save footer paint bg-base
+   themselves but carry no attribute of their own; the page shell does.
+   `data-testid` is the host's own stable test contract — not a hash, and not a
+   class name, so it survives both rebuilds and restyles.
+   `input` is deliberately absent: the page's search box is a border-only field
+   in the host (`.searchField` sets a border and no background), so re-binding
+   the token there would change nothing; the one input that does paint bg-base
+   (`.zoneSearch`) lives in a portalled menu, outside this subtree. */
+body[data-dsh-theme-mist] [data-testid='task-manager-page'] :is(textarea, footer) {
+  --dsw-alias-bg-base: var(--dsh-theme-mist-card-token);
+}
+
+/* Deliberately its own rule, not another name in the list above: an engine
+   without :has() drops the entire rule a selector appears in, and that would
+   take the whole card tier with it. The thumbnail frame is a <button
+   data-variant> whose child is an <img>; no other host button pairs the two. */
+body[data-dsh-theme-mist] button[data-variant]:has(img) {
   --dsw-alias-bg-base: var(--dsh-theme-mist-card-token);
 }
 

@@ -491,6 +491,47 @@ describe('material stylesheet', () => {
   })
 })
 
+describe('bg-base re-binding coverage (2026-11-19)', () => {
+  /** The card-tier list: from its first selector to the closing brace. */
+  const CARD_LIST = CSS_RULES.slice(
+    CSS_RULES.indexOf('[data-message-bubble],'),
+    CSS_RULES.indexOf('}', CSS_RULES.indexOf('[data-message-bubble],')),
+  )
+
+  it('reaches the cordis business card through its own attribute', () => {
+    // CordisRunRow.tsx renders the card as
+    // <div className={css.business} data-cordis-business-view={key}> — the
+    // attribute was there all along; the 11-03 note had only checked for
+    // data-* on the tool row.
+    expect(CARD_LIST).toContain('[data-cordis-business-view]')
+  })
+
+  it('scopes the automation page fields to the page shell', () => {
+    // Search field, instruction editor and save footer each paint bg-base and
+    // each lack an attribute; the shell carries data-testid, which is the
+    // host's stable test contract rather than a per-build hash.
+    expect(CSS_RULES).toContain("[data-testid='task-manager-page'] :is(textarea, footer)")
+    // Card tier, not sheet: these sit inside the page, not on top of it.
+    const rule = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-testid='task-manager-page']"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-testid='task-manager-page']")),
+    )
+    expect(rule).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-card-token)')
+    // `input` is deliberately out: the page's search box is border-only in the
+    // host, and the one input that paints bg-base lives in a portalled menu.
+    // Claiming it would be dead weight dressed up as a fix.
+    expect(rule).not.toContain('input')
+  })
+
+  it('keeps the :has() thumbnail rule out of the shared list', () => {
+    // A browser without :has() drops the entire rule the selector appears in,
+    // so putting it in the comma list would silently disable the card tier.
+    expect(CARD_LIST).not.toContain(':has(')
+    expect(CSS_RULES).toContain('button[data-variant]:has(img)')
+    expect(CSS_RULES).not.toContain('[data-message-bubble],\nbody[data-dsh-theme-mist] button[data-variant]')
+  })
+})
+
 /** Independent rgba() formatter, so the test does not echo the implementation. */
 function rgba(hex: string, alpha: number): string {
   const r = Number.parseInt(hex.slice(1, 3), 16)
