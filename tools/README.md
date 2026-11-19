@@ -260,7 +260,7 @@ pnpm build
 pnpm preview:album --desktop-runtime /path/to/desktop/resources/app/dsh
 ```
 
-产物（全部 WebP，2x 原生 2560×1600）：`accents/<配色>.webp`（左上浅 + 右下深的对角双拼）、`hero-light.webp` / `hero-dark.webp`（首屏深浅各一张）、`settings.webp`（设置 → 通用同框）、`sidebar-sheet.webp` / `sidebar-flat.webp`（侧栏列裁切）。
+产物（全部 WebP，2x 原生 2560×1600）：`accents/<配色>.webp`（左上浅 + 右下深的对角双拼）、`hero-light.webp` / `hero-dark.webp`（首屏深浅各一张）、`settings.webp`（设置 → 通用里「配色」「侧栏材质」两行，按行标签裁切）、`sidebar-sheet.webp` / `sidebar-flat.webp`（侧栏列裁切）。
 
 几件踩过的事：
 
@@ -271,9 +271,9 @@ pnpm preview:album --desktop-runtime /path/to/desktop/resources/app/dsh
 - **2x 截图 + WebP**：`deviceScaleFactor: 2` 拿 2560×1600，再在页面里用 canvas 编码 WebP q88。同一张图 PNG 868 KB、WebP 105 KB，0.5px 发丝线在 1:1 下依然锐利。
 - **对角双拼的两端**：左边缘 0.80、右边缘 0.27（`SPLIT_LEFT_Y` / `SPLIT_RIGHT_Y`），保证右上角光晕与用户气泡整块留在浅色里、左侧栏底部露出深色；分界线是「暗影 + 白色光晕 + 硬芯」四层叠出来的，切过正文时才读得成刻意的分界。
 
-19 条断言：插件挂载、演示回合渲染、六色逐个生效（明暗各一轮）、侧栏材质可切、设置里六个色块、无页面异常。
+20 条断言：插件挂载、演示回合渲染、六色逐个生效（明暗各一轮）、侧栏材质可切、设置里六个色块、设置裁切框正好圈住我们那两行、无页面异常。
 
-实测（2026-11-04，0.2.2-alpha.3）：六张配色图各 113–120 KB，首屏 107/104 KB，设置 81 KB，侧栏 19 KB。
+实测（2026-11-20，0.2.2-alpha.3）：六张配色图各 113–117 KB，首屏 107/104 KB，设置 16 KB（只含「配色」「侧栏材质」两行，1166×492 @2x），侧栏 23 KB。
 
 ## 参考源码
 
