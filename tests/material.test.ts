@@ -136,7 +136,9 @@ describe('sidebar material (T5.7 / T5.8)', () => {
 
   it('keeps the flat variant behind its attribute and neutralises the sheet', () => {
     const flat = rulesFor("[data-dsh-theme-mist-sidebar='flat']")
-    expect(flat.length).toBe(3)
+    // Three sidebar rules plus the task editor column, which follows the same
+    // choice instead of staying the one raised panel under `flat`.
+    expect(flat.length).toBe(4)
     const joined = flat.join('\n')
     // Re-pointed inside the subtree so the session list's 24px fade fades to
     // nothing instead of painting a band of sheet colour over the page.
@@ -156,6 +158,43 @@ describe('sidebar material (T5.7 / T5.8)', () => {
       .filter((text) => /data-slot='sidebar'|data-dsh-theme-mist-sidebar='flat'/u.test(text.slice(0, text.indexOf('{'))))
     expect(sidebar.length).toBeGreaterThan(0)
     for (const text of sidebar) expect(text).not.toContain('border-l3')
+  })
+
+  it('lets the right dock follow the same choice (2026-11-19)', () => {
+    // The host paints its dock tab host with bg-base, which is transparent, so
+    // the dock used to read as "no panel" even when the sidebar was a drawer.
+    // Re-binding the token hands it the sheet fill under `sheet`; under `flat`
+    // nothing is declared, and the page shows straight through on both sides.
+    expect(CSS_RULES).toContain("[data-dsh-theme-mist-sidebar='sheet'] [data-dockkit-host]")
+    const rule = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-dockkit-host]"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-dockkit-host]")),
+    )
+    expect(rule).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token)')
+    // No paint of our own — the host's own background declaration does the work.
+    expect(rule).not.toContain('background:')
+    expect(CSS_RULES).not.toContain("[data-dsh-theme-mist-sidebar='flat'] [data-dockkit-host]")
+  })
+
+  it('gives the dock the drawer edge, not the host divider (2026-11-19)', () => {
+    // The host closes the column with border-l4 (ink 0.30) on square corners,
+    // while the sidebar's edge is border-l1 (ink 0.08) plus a 28px radius and a
+    // 1px top highlight. Matching the recipe is what makes the two columns read
+    // as one material; flat mode is deliberately left alone.
+    const edge = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-dockkit-host] > :first-child"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-dockkit-host] > :first-child")),
+    )
+    expect(edge).toContain('border-left: 0')
+    expect(edge).toContain('border-radius: 28px 0 0 28px')
+    expect(edge).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
+    expect(edge).toContain('inset 0 1px 0 var(--dsh-theme-mist-highlight)')
+    // The sidebar rounds its right corners, the dock its left: mirrored, not copied.
+    const sidebar = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-slot='sidebar'] > :first-child"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-slot='sidebar'] > :first-child")),
+    )
+    expect(sidebar).toContain('border-radius: 0 28px 28px 0')
   })
 })
 
@@ -488,6 +527,77 @@ describe('material stylesheet', () => {
     // Specificity is the whole strategy: an !important would win today and
     // then be impossible to layer against the official theme tomorrow.
     expect(CSS_RULES).not.toContain('!important')
+  })
+})
+
+describe('bg-base re-binding coverage (2026-11-19)', () => {
+  /** The card-tier list: from its first selector to the closing brace. */
+  const CARD_LIST = CSS_RULES.slice(
+    CSS_RULES.indexOf('[data-message-bubble],'),
+    CSS_RULES.indexOf('}', CSS_RULES.indexOf('[data-message-bubble],')),
+  )
+
+  it('reaches the cordis business card through its own attribute', () => {
+    // CordisRunRow.tsx renders the card as
+    // <div className={css.business} data-cordis-business-view={key}> — the
+    // attribute was there all along; the 11-03 note had only checked for
+    // data-* on the tool row.
+    expect(CARD_LIST).toContain('[data-cordis-business-view]')
+  })
+
+  it('scopes the automation page fields to the page shell', () => {
+    // Search field, instruction editor and save footer each paint bg-base and
+    // each lack an attribute; the shell carries data-testid, which is the
+    // host's stable test contract rather than a per-build hash.
+    expect(CSS_RULES).toContain("[data-testid='task-manager-page'] :is(textarea, footer)")
+    // Card tier, not sheet: these sit inside the page, not on top of it.
+    const rule = CSS_RULES.slice(
+      CSS_RULES.indexOf("[data-testid='task-manager-page']"),
+      CSS_RULES.indexOf('}', CSS_RULES.indexOf("[data-testid='task-manager-page']")),
+    )
+    expect(rule).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-card-token)')
+    // `input` is deliberately out: the page's search box is border-only in the
+    // host, and the one input that paints bg-base lives in a portalled menu.
+    // Claiming it would be dead weight dressed up as a fix.
+    expect(rule).not.toContain('input')
+  })
+
+  it('reaches the task editor column, which is an <aside> (2026-11-19)', () => {
+    // TaskDetail's column paints bg-base and carries no attribute; the page
+    // shell plus the element name is enough. Sheet tier: it is a column.
+    const sheetAt = CSS_RULES.indexOf("[data-dsh-theme-mist-sidebar='sheet'] [data-testid='task-manager-page'] aside")
+    expect(sheetAt).toBeGreaterThan(-1)
+    const rule = CSS_RULES.slice(sheetAt, CSS_RULES.indexOf('}', sheetAt))
+    expect(rule).toContain('--dsw-alias-bg-base: var(--dsh-theme-mist-sheet-token)')
+    // Same edge as the dock: the host's border-l4 divider is replaced by the
+    // drawer's hairline + 28px corner + top highlight, not left as a hard line.
+    expect(rule).toContain('border-left: 0')
+    expect(rule).toContain('border-radius: 28px 0 0 28px')
+    expect(rule).toContain('inset 0 0 0 0.5px var(--dsw-alias-border-l1)')
+
+    // The save footer is the only child that reaches the panel's bottom edge and
+    // it paints the card tier, so without its own corner it squares the 28px one.
+    expect(CSS_RULES).toContain(
+      "[data-dsh-theme-mist-sidebar='sheet'] [data-testid='task-manager-page'] aside footer",
+    )
+    expect(CSS_RULES).toContain('border-bottom-left-radius: 28px')
+
+    // …and it follows the sidebar material: under `flat` it stops being a
+    // drawer instead of staying the only raised column on the page.
+    const flatAt = CSS_RULES.indexOf("[data-dsh-theme-mist-sidebar='flat'] [data-testid='task-manager-page'] aside")
+    expect(flatAt).toBeGreaterThan(-1)
+    const flat = CSS_RULES.slice(flatAt, CSS_RULES.indexOf('}', flatAt))
+    expect(flat).not.toContain('sheet-token')
+    expect(flat).toContain('border-radius: 0')
+    expect(flat).toContain('inset 0.5px 0 0 var(--dsw-alias-border-l1)')
+  })
+
+  it('keeps the :has() thumbnail rule out of the shared list', () => {
+    // A browser without :has() drops the entire rule the selector appears in,
+    // so putting it in the comma list would silently disable the card tier.
+    expect(CARD_LIST).not.toContain(':has(')
+    expect(CSS_RULES).toContain('button[data-variant]:has(img)')
+    expect(CSS_RULES).not.toContain('[data-message-bubble],\nbody[data-dsh-theme-mist] button[data-variant]')
   })
 })
 

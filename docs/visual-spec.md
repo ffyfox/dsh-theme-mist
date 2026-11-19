@@ -721,11 +721,36 @@ wash 归零后，官方那条 `linear-gradient(transparent, var(--dsw-alias-bg-b
 
 #### 同类但不构成遮挡的一批
 
-`bg-base` 归零后，宿主里仍有一批"拿它当底色"的面板与控件：自动化任务页的搜索框 / 指令框 / 保存页脚、侧栏面板（终端、文件、网页预览）、整窗 overlay 等。它们只影响"有没有独立底色"，不会造成文字重叠；整窗 overlay 已由 `[role='dialog'][aria-modal='true']` 那条守卫接住。本轮只修遮挡问题，这批底色本节即记录处，需要时单独一轮补。
+`bg-base` 归零后，宿主里仍有一批"拿它当底色"的面板与控件：自动化任务页的搜索框 / 指令框 / 保存页脚、侧栏面板（终端、文件、网页预览）、整窗 overlay 等。它们只影响"有没有独立底色"，不会造成文字重叠；整窗 overlay 已由 `[role='dialog'][aria-modal='true']` 那条守卫接住。
 
-#### 接不住的四类
+**2026-11-19 补记**：自动化任务页那一批已修（搜索框除外，见下）。宿主这两处自己没有任何属性，但页面外壳带 `data-testid="task-manager-page"`，于是按元素作用域重绑：`[data-testid='task-manager-page'] :is(textarea, footer)` → card 档。`data-testid` 是宿主自己的稳定测试契约，不是哈希、也不是类名，重建和改样式都冲不掉它。
 
-bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 处 `background: var(--dsw-alias-bg-base)`，其中页面级 / 遮罩级（15 处）透明正好；卡片级 9 处大多数能接语义钩子（`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）。**剩下 4 处只有哈希类名**：cordis 业务卡、trajectory 工具目录条目、会话里的图片缩略图，以及 **AskQuestionCard**（提问卡；它是唯一一个既有 `bg-base` 填充又完全没有语义属性的卡片，确定会失去填充）。记在 README 已知限制里——接受这个缺口，不为此破例用哈希选择器。
+**搜索框刻意不修**：`.searchField` 在宿主里只设 `border: 0.5px solid border-l3` 而不设 `background`，输入框自身计算背景恒为透明；页面里唯一画 `bg-base` 的输入框是 `.zoneSearch`，它渲染在 portalled 的菜单里，本来就落在该子树之外。所以把 `input` 留在选择器里是死代码：实测把变量绑上去，像素与页面只差 1–2（等于没变化）。选择器因此只留 `textarea, footer`。
+
+**右栏（编辑面板）同日接上**：`TaskDetail` 的列是 `<aside>`，宿主用 `bg-base` 填充它，归零后整列只剩渐变加一根 `border-l4`。元素名即钩子——`[data-testid='task-manager-page'] aside` 重绑 sheet 档（整列，按列处理而非按卡片）。边也照抽屉改：宿主那条 `border-l4`（ink 0.30）换成 `border-l1`（ink 0.08）发丝 + `inset 0 0 0 0.5px` 环 + 1px 顶边高光，朝向内容的两侧圆 28px，与右侧 dock 同一套配方。同样**跟随「侧栏材质」**：`flat` 下退回无底色、无圆角、只留一根 `inset 0.5px 0 0 border-l1` 发丝线，避免出现「左边一张纸、右边一个抽屉」。底部操作栏是唯一铺到面板底边、又用卡片档填充的子元素，方角会把 28px 圆角顶方（角落像素实测 `251,252,254`，是卡片色而非页面色），因此单独给它 `border-bottom-left-radius: 28px`；不选 `overflow: hidden`，那会连表单弹出的浮层一起裁掉。
+
+侧栏面板（右侧 dock：终端 / 文件 / 网页预览）**当时实测全透明**：`[data-dockkit-host]` 计算值 `rgba(0, 0, 0, 0)`，里面三层 `[data-dockkit-content]` / `[data-sidebar-right-tab]` / `[data-sidebar-right-guide]` 同样透明。它是右侧的一列，不是浮层，所以没有文字重叠，只是少了与正文列之间的那层底板。
+
+**同日已补**：dock 跟随「侧栏材质」这个已有的选择，不新增开关。形态也照左侧栏的抽屉来——宿主用 `border-l4`（ink 0.30）在直角上收边，这里换成同一套 `border-l1`（ink 0.08）发丝 + `inset 0 0 0 0.5px` 环 + 1px 顶边高光，圆角只圆朝向内容的两侧（左栏 `0 28px 28px 0`，右栏 `28px 0 0 28px`，镜像）。`[data-dockkit-host]` 子树内把 `bg-base` 重绑到 sheet 档，规则只在 `[data-dsh-theme-mist-sidebar='sheet']` 下成立，于是 `sheet` 时右面板与左抽屉同档、`flat` 时两边都让页面渐变直接穿过。实测 `sheet` 下 tabHost 计算值浅色 `rgba(246, 249, 254, 0.82)` / 深色 `rgba(35, 40, 50, 0.86)`，`flat` 下回到 `rgba(0, 0, 0, 0)`。没有自己画背景——宿主那条 `background: var(--dsw-alias-bg-base)` 原样保留，只是取色变了。
+
+#### 接不住的四类（2026-11-19 复核：只剩一类）
+
+bg-base 归零后，靠它当填充的表面都要重新绑。宿主里有 24 处 `background: var(--dsw-alias-bg-base)`，其中页面级 / 遮罩级（15 处）透明正好；卡片级 9 处大多数能接语义钩子（`[data-disclosure-header]`、`[data-compaction-disclosure]`、`[data-schedule-*]`）。
+
+~~剩下 4 处只有哈希类名~~ —— 这个结论是按当时的宿主（0.2.2-alpha）取证的，在装着的 **0.2.2-rc.5** 上重查后四去其三：
+
+| 表面 | 曾经 | 现在 | 落点 |
+|---|---|---|---|
+| cordis 业务卡 | 只有哈希类名 | 节点自带 `data-cordis-business-view` | 并入 card 档重绑列表 |
+| 会话图片缩略图 | 只有哈希类名 | 帧是 `<button data-variant>` 且内有 `<img>` | `button[data-variant]:has(img)`，**单独成规则** |
+| 自动化任务页指令框 / 页脚 | 只有哈希类名 | 页面外壳有 `data-testid` | `[data-testid='task-manager-page'] :is(textarea, footer)` |
+| trajectory 工具目录条目 | 只有哈希类名 | 仍无属性，祖先只有 `<details>` 结构 | **不修**，见下 |
+
+三个新钩子都进 `material.module.css` 的 tier 重绑段，并各有单测钉住形态。`AskQuestionCard` 早已通过 `[data-tool="ask_user_question"]` 的继承接住，不在这张表里。
+
+**`:has()` 为什么单独成规则**：在不支持 `:has()` 的引擎里，一个选择器列表只要有它不可解析的一项，**整条规则都会被丢弃**——把缩略图那条塞进 card 档的逗号列表，会让卡片档一起失效。所以它单独立规则，解析失败只损失自己。
+
+**trajectory 目录条目为什么不做**：该节点 `<div className={css.toolCatalogDefinition}>` 无属性，最近的语义祖先只有 `<details>`（展开后的 JSON 参数面）。唯一的写法是 `details > div` 这类纯结构选择器：宿主换个包裹层就静默失效，而且 `<details>` 在宿主别处也用，误伤面不可控。代价只是展开参数区没有独立底色，接受。
 
 > 订正（2026-11-03，按上游源码复核）：此前写成「要让工具行像 DSH Go 那样成卡」是误记——上游工具行**本来就是平面行**。`chat_rows.dart` 的 `toolGroupThreshold = 3` 把连续 ≥3 次调用收成一行摘要；单行外壳 `stream_row.dart:StreamRowFrame` 是 `minHeight 32` + 上下 4 + 左右 8 的 bleed + `InkWell` / `Squircle.border(sm)`，不画背景。玻璃卡 `ChatCard`（`GlassSurface(tier: card)`、圆角 20）只给审批 / 提问 / 改动 / 产物四种卡。宿主同为平面行（`[data-tool]` 根只有 `flex-direction:column`），所以 `[data-tool]` 上补背景是反方向改动；剩下的差异只有分组（上游连续 ≥3 次合并，宿主是整轮过程折叠）。
 
