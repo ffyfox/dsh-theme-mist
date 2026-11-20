@@ -201,29 +201,53 @@ describe('sidebar material (T5.7 / T5.8)', () => {
   })
 })
 
-describe('composer seat and popovers (T5.9)', () => {
+describe('composer seat and popovers (T5.9 -> 2026-11-20)', () => {
   /** Rules whose selector mentions one marker, comments already stripped. */
   const rulesFor = (marker: string): string[] =>
     (CSS_RULES.match(/[^{}]*\{[^}]*\}/g) ?? []).filter((text) => text.slice(0, text.indexOf('{')).includes(marker))
 
-  it('steps the frosted seat out of the way while a popover is open', () => {
-    // The popover is rendered inside the seat, and a backdrop-filter on an
-    // ancestor is a backdrop root: the popover's own blur would sample the
-    // seat's paint instead of the page. Same for the seat's veil, which paints
-    // the page colour at full opacity. Both have to stand down while one is open.
-    const rules = rulesFor(':has([data-menu-material])')
-    expect(rules.length).toBe(2)
-    const joined = rules.join('\n')
-    expect(joined).toContain('backdrop-filter: none')
-    expect(joined).toContain('display: none')
-    // Scoped to the seat: the sidebar column and the page keep their paint.
-    for (const text of rules) expect(text.slice(0, text.indexOf('{'))).toContain("[data-composer-seat]")
+  it('never switches the band material on or off with a popover', () => {
+    // T5.9 did exactly that — `:has([data-menu-material])` dropped the frost and
+    // hid the veil — and it left the band see-through whenever a composer menu
+    // opened: the card is 70 % white over a blurred backdrop, so without the
+    // blur the transcript read through it (231/255 worst on the built app).
+    // The material is now unconditional; the popover samples the page because
+    // the seat stopped being a backdrop root, not because the band stepped away.
+    expect(CSS_RULES).not.toContain('data-menu-material')
+    const veilRules = rulesFor('::before').filter((text) => text.includes('display: none'))
+    expect(veilRules).toEqual([])
+  })
+
+  it('paints the band’s frost on a pseudo in a session, so the popover can blur', () => {
+    // A backdrop-filter on the seat is a backdrop root for everything inside it,
+    // and every composer popover is inside it. A pseudo has no descendants, so
+    // it blurs the same box without caging the menu.
+    const frost = rulesFor('::after').filter((text) => text.includes('backdrop-filter: var(--dsh-theme-mist-glass-blur)'))
+    expect(frost.length).toBe(1)
+    const selector = frost[0].slice(0, frost[0].indexOf('{'))
+    expect(selector).toContain("[data-composer-seat][data-conversation-region='composer']")
+    // Both phases in which the seat is the containing block the pseudo needs.
+    expect(selector).toContain("[data-phase='active']")
+    expect(selector).toContain("[data-content-phase='active']")
+    // Below the veil, or the 36px feather would be blurred too.
+    expect(frost[0]).toContain('z-index: -2')
+  })
+
+  it('takes the frost off the seat’s own box in a session only', () => {
+    // The hero page keeps the plain seat rule: its seat is static, so an
+    // absolutely positioned pseudo would resolve against an ancestor.
+    const off = rulesFor("[data-phase='active']")
+      .filter((text) => text.includes('backdrop-filter: none') && text.includes("[data-composer-seat]"))
+    expect(off.length).toBe(1)
+    expect(off[0]).not.toContain('::before')
+    expect(off[0]).not.toContain('::after')
   })
 
   it('keeps the seat frosted when nothing is open', () => {
     // The rule that turns the frost on must not be carrying the popover
     // condition itself, or the seat would lose its blur permanently.
     const base = rulesFor("[data-composer-seat][data-conversation-region='composer']")
+      .filter((text) => !text.slice(0, text.indexOf('{')).includes('::'))
     const blurOn = base.filter((text) => text.includes('backdrop-filter: var(--dsh-theme-mist-glass-blur)'))
     expect(blurOn.length).toBe(1)
     expect(blurOn[0]).not.toContain(':has(')
@@ -313,9 +337,16 @@ describe('chrome glass (T2.3)', () => {
 
   it('paints the glass with a variable-driven blur, so degradation is one flip', () => {
     expect(CSS_RULES).toContain('backdrop-filter: var(--dsh-theme-mist-glass-blur)')
-    // One blur declaration only: the seat carries it, the card inside it must
-    // not blur an already-blurred backdrop (that would be two costs, one look).
-    expect(CSS_RULES.match(/backdrop-filter: var\(/g)).toHaveLength(1)
+    // Two surfaces carry the blur — the seat's own box (hero page) and the
+    // pseudo that replaces it in a session — plus the -webkit alias on the
+    // pseudo. All three must read the same variable, and no rule may hard-code
+    // a radius: one token is what makes the degradation paths a single flip.
+    const blurs = CSS_RULES.match(/(?:-webkit-)?backdrop-filter: var\([^)]*\)/g) ?? []
+    expect(blurs).toHaveLength(3)
+    for (const text of blurs) expect(text).toContain('var(--dsh-theme-mist-glass-blur)')
+    // No third surface blurs: the card inside the seat samples an already
+    // blurred backdrop, which would be two costs for one look.
+    expect(CSS_RULES).not.toMatch(/\[data-composer-card\][^{]*\{[^}]*backdrop-filter/u)
     expect(CSS_RULES).not.toContain('!important')
   })
 
