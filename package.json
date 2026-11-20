@@ -15,6 +15,10 @@
     "client-plugin",
     "light-dark"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ffyfox/dsh-theme-mist.git"
+  },
   "engines": {
     "dsh": ">=0.2.1-alpha.1 <0.3.0"
   },

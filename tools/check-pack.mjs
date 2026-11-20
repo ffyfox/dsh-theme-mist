@@ -152,6 +152,14 @@ check('the host runtime stays a peer, not a dependency',
 check('no runtime dependency is bundled', Object.keys(dependencies).length === 0, JSON.stringify(dependencies))
 check('license and description are set', manifest.license === 'MIT' && (manifest.description ?? '').length > 20,
   manifest.license + ' / ' + (manifest.description ?? '').length + ' chars')
+/**
+ * The manifest has to say where the source is: npm renders it as the package
+ * page's Repository link, and without it a reader who lands on npm has no way
+ * back to the repo. Pinned to the canonical URL so a typo cannot ship silently.
+ */
+check('the repository field points at the public repo',
+  manifest.repository?.type === 'git' && manifest.repository?.url === 'git+https://github.com/ffyfox/dsh-theme-mist.git',
+  String(manifest.repository?.url))
 
 console.log('')
 console.log(failures.length === 0 ? 'all package-content checks passed (' + checks + ' checks)' : failures.length + ' check(s) failed')
