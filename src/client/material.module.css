@@ -390,10 +390,11 @@ body[data-dsh-theme-mist] [role='listbox'] {
  * the composer seat, sticky at the bottom of the conversation, with the message
  * flow scrolling behind it.
  *
- * The blur sits on the seat, not on the card inside it. One blur then covers
- * the whole bottom band, while the card — a translucent fill painted above the
- * blurred backdrop — still reads as glass. A second blur on the card would
- * sample an already-blurred backdrop and pay for it twice.
+ * The blur covers the whole bottom band, not the card inside it, so the card — a
+ * translucent fill painted above the blurred backdrop — still reads as glass. A
+ * second blur on the card would sample an already-blurred backdrop and pay for
+ * it twice. In a session it lives on a pseudo-element of the seat rather than on
+ * the seat's own box; the reason is the popover, and it is the next block.
  *
  * The material variables are declared on the two surfaces themselves, never on
  * body. Measured on Chromium 156: a gradient built from an *inherited* custom
@@ -416,6 +417,52 @@ body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='compose
   backdrop-filter: var(--dsh-theme-mist-glass-blur);
 }
 
+/* --- ...but in a session the frost moves off the seat's own box ----------
+ *
+ * Any composer popover — the command menu the `+` button opens, `/`, `@` — is
+ * rendered *inside* this seat (`[data-composer-overlay]` sits in the card's
+ * overlay anchor). A backdrop-filter makes an element a backdrop root, and a
+ * descendant inside one can only sample what the root itself paints: the seat
+ * painted a veil and a blur, both opaque or flat, so the popover's own
+ * `backdrop-filter: blur(40px)` (host style, `--dsw-menu-surface-fill` 70 %
+ * white) had nothing to work with.
+ *
+ * T5.9 answered that by switching the whole band's material off while a popover
+ * was open — no frost, no veil — and paid for it with a see-through band: the
+ * composer card is 70 % white over a *blurred* backdrop, so dropping the blur
+ * left the transcript legible through it at 30 % (measured on the built app,
+ * 1524x903 @2x, mist light: worst 231/255 inside the band, 86,225 points off by
+ * more than 2). The band is not allowed to change when a menu opens.
+ *
+ * So the frost moves from the seat's box to a pseudo-element. A pseudo has no
+ * descendants, so it cannot be the popover's backdrop root, while it blurs
+ * exactly the same box at the same radius — measured 1:1 against the old paint:
+ * the whole band came out identical, worst 0/255, and the popover's own blur
+ * came back (its panel measured the same as with no frost above it at all).
+ *
+ * z-index -2 is deliberate: the veil paints at -1, i.e. *above* the frost, so
+ * the composite is still blur(transcript) with the page colour over it. Put the
+ * frost above the veil instead and it would blur the veil's own 36px feather.
+ *
+ * Only the phases where the seat is `position: sticky` — there it is already a
+ * containing block, which is what an absolutely positioned pseudo needs. The
+ * hero page keeps the rule above: its seat is static, nothing scrolls behind
+ * it, and a stray box resolved against an ancestor would blur the page. */
+body[data-dsh-theme-mist] :is([data-phase='active'], [data-content-phase='active']) [data-composer-seat][data-conversation-region='composer'] {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body[data-dsh-theme-mist] :is([data-phase='active'], [data-content-phase='active']) [data-composer-seat][data-conversation-region='composer']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  -webkit-backdrop-filter: var(--dsh-theme-mist-glass-blur);
+  backdrop-filter: var(--dsh-theme-mist-glass-blur);
+}
+
 /* The veil: DSH Go's BackdropVeil, in CSS (backdrop.dart:111-230).
  *
  * The band under the composer has to hide the message flow scrolling behind it
@@ -426,8 +473,9 @@ body[data-dsh-theme-mist] [data-composer-seat][data-conversation-region='compose
  *
  * A pseudo rather than a mask on the seat, which would feather the composer
  * card sitting inside it. z-index -1 keeps it above the seat's own (now empty)
- * background and below that card: the seat is already a stacking context
- * (position: sticky, z-index 7).
+ * background — and above the frost at -2, so the page colour still lands on a
+ * blurred backdrop — and below that card: the seat is already a stacking
+ * context (position: sticky, z-index 7).
  *
  * The layers are anchored to the viewport, and the one CSS-native way to say that
  * is `background-attachment: fixed` — the same declaration the page canvas above
@@ -488,32 +536,6 @@ body[data-dsh-theme-mist] [data-phase='active'] [data-composer-seat][data-conver
   background-attachment: scroll;
   background-size: 100vw 100vh;
   background-position: 100% 100%;
-}
-
-/* --- A menu opened from the composer keeps the page behind it (T5.9) -----
- *
- * `/` and `@` open the host's MenuSurface *inside* the composer: the popover's
- * ancestors are the composer card and this seat. Both of them are painted by
- * the theme in a way that puts a flat, opaque surface between the popover and
- * the page — the seat is a backdrop root (its own backdrop-filter) and its veil
- * paints the page colour at full opacity below 36px. The menu's own
- * `backdrop-filter: blur(40px)` (host style, `--dsw-menu-surface-fill` 58 %
- * white over it) then has nothing to sample, and a 58 % white panel over a flat
- * colour reads as "translucent with nothing behind it" — while the part of the
- * menu that reaches past the composer lets sharp text show through.
- *
- * Measured with the plugin disabled (host glass only): the menu blurs normally.
- * So while a menu is open the seat steps out of the way — no frost, no veil —
- * and hands the page back to the popover. Nothing is visible behind the menu's
- * own panel that the menu does not already cover, and the bar returns to its
- * frosted self the moment the menu closes. */
-body[data-dsh-theme-mist] [data-composer-seat]:has([data-menu-material]) {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-body[data-dsh-theme-mist] [data-composer-seat]:has([data-menu-material])::before {
-  display: none;
 }
 
 /* The card itself: fill, hairline, top highlight, soft lift. Radius and
